@@ -1,5 +1,5 @@
 // ── BTID API CLIENT ──────────────────────────────────────────────
-const API_BASE = 'https://btid-production.up.railway.app';
+const API_BASE = 'https://btid-backend-production.up.railway.app';
 
 // ── AUTH ─────────────────────────────────────────────────────────
 const Auth = {
