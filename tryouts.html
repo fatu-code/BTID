@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tryout Batches — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+.batch-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.batch-card:hover {
+  border-color: var(--green-mid);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--green-shadow);
+}
+.batch-card.active   { border-left: 4px solid var(--green); }
+.batch-card.upcoming { border-left: 4px solid var(--amber); }
+.batch-card.completed{ border-left: 4px solid var(--muted); }
+
+.batch-name {
+  font-family: var(--font1);
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.batch-meta {
+  font-family: var(--font2);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.batch-stats {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.bs-val {
+  font-family: var(--font1);
+  font-size: 1.1rem;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.bs-lbl {
+  font-family: var(--font2);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Detail panel */
+.batch-detail {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.batch-detail-hero {
+  background: var(--deeper);
+  padding: 18px 20px;
+  color: #fff;
+}
+.batch-detail-title {
+  font-family: var(--font1);
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.batch-detail-sub {
+  font-family: var(--font2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.45);
+}
+.batch-detail-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.bds {
+  text-align: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+.bds-val {
+  font-family: var(--font1);
+  font-size: 1.3rem;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.bds-lbl {
+  font-family: var(--font2);
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Tryout Batches</div>
+          <div class="topbar-sub" id="countLabel">Manage tryout events</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-green" onclick="openAddModal()">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+          <span class="mob-hide">New Batch</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="grid-2" style="align-items:start" id="mainGrid">
+        <!-- Left: batch list -->
+        <div>
+          <div class="filter-bar" style="margin-bottom:12px">
+            <div class="search-wrap">
+              <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+              <input class="search-input" id="searchInput" type="text"
+                placeholder="Search batches..." oninput="filterBatches()">
+            </div>
+            <select class="filter-select" id="filterStatus" onchange="filterBatches()">
+              <option value="">All status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div id="batchList" style="display:flex;flex-direction:column;gap:10px">
+            <div class="empty-state"><div class="empty-title">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- Right: selected batch detail -->
+        <div id="batchDetail">
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+            </div>
+            <div class="empty-title">Select a batch</div>
+            <div class="empty-sub">Click any tryout batch to see details and manage players.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Batch Modal -->
+<div class="modal-bg" id="addModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">New Tryout Batch</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Batch Name *</label>
+        <input class="form-input" id="bName" type="text"
+          placeholder="e.g. Kampala Tryout April 2026">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">District</label>
+          <select class="form-select" id="bDistrict">
+            <option value="">Select district</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tryout Date</label>
+          <input class="form-input" id="bDate" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="bStatus">
+          <option value="upcoming">Upcoming</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="bNotes" rows="2"
+          placeholder="Any notes about this tryout..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" id="saveBatchBtn" onclick="saveBatch()">
+        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+        Create Batch
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Player to Batch Modal -->
+<div class="modal-bg" id="addPlayerModal">
+  <div class="modal-card" style="max-width:600px">
+    <div class="modal-head">
+      <div class="modal-title">Add Players to Batch</div>
+      <button class="modal-close" onclick="document.getElementById('addPlayerModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-wrap" style="max-width:100%;margin-bottom:12px">
+        <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+        <input class="search-input" id="playerSearchInput" type="text"
+          placeholder="Search players by name..." oninput="searchPlayersToAdd()" style="width:100%">
+      </div>
+      <div id="playerSearchResults" style="max-height:320px;overflow-y:auto">
+        <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">
+          Type a name to search players.
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('addPlayerModal').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+const user    = Auth.require();
+const isAdmin = getRoleLevel(user.role) >= 2;
+buildSidebar('tryouts');
+
+let allBatches    = [];
+let selectedBatch = null;
+let batchPlayers  = [];
+let allPlayers    = [];
+
+// Populate district dropdown
+UGANDA_DISTRICTS.forEach(d => {
+  const el = document.getElementById('bDistrict');
+  const opt = document.createElement('option');
+  opt.value = d; opt.textContent = d;
+  el.appendChild(opt);
+});
+
+// Pre-open add modal from URL
+if (new URLSearchParams(window.location.search).get('action') === 'add') {
+  setTimeout(openAddModal, 300);
+}
+
+// Load all players for adding to batch
+async function loadAllPlayers() {
+  try {
+    const r  = await PlayerAPI.getAll();
+    allPlayers = r.players || r || [];
+  } catch(e) {}
+}
+
+async function loadBatches() {
+  try {
+    const r = await TryoutAPI.getAll();
+    allBatches = r.tryouts || r || [];
+  } catch(e) { allBatches = []; }
+  filterBatches();
+  document.getElementById('countLabel').textContent =
+    allBatches.length + ' batch' + (allBatches.length !== 1 ? 'es' : '');
+}
+
+function statusConfig(status) {
+  if (status === 'active')    return { label: 'Active',    pill: 'pill-green', cls: 'active' };
+  if (status === 'completed') return { label: 'Completed', pill: 'pill-muted', cls: 'completed' };
+  return { label: 'Upcoming', pill: 'pill-amber', cls: 'upcoming' };
+}
+
+function filterBatches() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+
+  let list = allBatches.filter(b => {
+    if (q      && !b.name.toLowerCase().includes(q)) return false;
+    if (status && b.status !== status)                return false;
+    return true;
+  });
+
+  const el = document.getElementById('batchList');
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg></div>
+        <div class="empty-title">No batches found</div>
+        <div class="empty-sub">Create your first tryout batch to get started.</div>
+        ${isAdmin ? `<button class="btn btn-green" style="margin-top:12px" onclick="openAddModal()">+ New Batch</button>` : ''}
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(b => {
+    const cfg = statusConfig(b.status);
+    const invited    = parseInt(b.player_count) || 0;
+    const admitted   = parseInt(b.admitted_count)   || 0;
+    const eliminated = parseInt(b.eliminated_count) || 0;
+    const attended   = parseInt(b.attended_count)   || 0;
+    return `
+      <div class="batch-card ${cfg.cls} ${selectedBatch?.id === b.id ? 'selected' : ''}"
+        onclick="selectBatch('${b.id}')">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+          <div>
+            <div class="batch-name">${b.name}</div>
+            <div class="batch-meta">
+              ${b.district || 'Uganda'}
+              ${b.tryout_date ? ' · ' + formatDateShort(b.tryout_date) : ''}
+            </div>
+          </div>
+          <span class="pill ${cfg.pill}">${cfg.label}</span>
+        </div>
+        <div class="batch-stats">
+          <div style="text-align:center">
+            <div class="bs-val">${fmt(invited)}</div>
+            <div class="bs-lbl">Invited</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bs-val">${fmt(attended)}</div>
+            <div class="bs-lbl">Attended</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bs-val" style="color:var(--green)">${fmt(admitted)}</div>
+            <div class="bs-lbl">Admitted</div>
+          </div>
+          <div style="text-align:center">
+            <div class="bs-val" style="color:var(--red)">${fmt(eliminated)}</div>
+            <div class="bs-lbl">Eliminated</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function selectBatch(id) {
+  selectedBatch = allBatches.find(b => b.id === id);
+  if (!selectedBatch) return;
+
+  // Highlight selected
+  document.querySelectorAll('.batch-card').forEach(c =>
+    c.classList.toggle('selected', c.onclick.toString().includes(id))
+  );
+
+  // Load players in this batch
+  try {
+    const r = await TryoutAPI.getPlayers(id);
+    batchPlayers = r.players || r || [];
+  } catch(e) { batchPlayers = []; }
+
+  renderBatchDetail();
+}
+
+function renderBatchDetail() {
+  const b   = selectedBatch;
+  const cfg = statusConfig(b.status);
+  const invited    = parseInt(b.player_count)      || 0;
+  const admitted   = batchPlayers.filter(p => p.outcome === 'admitted').length;
+  const eliminated = batchPlayers.filter(p => p.outcome === 'eliminated').length;
+  const attended   = batchPlayers.filter(p => p.attended).length;
+
+  document.getElementById('batchDetail').innerHTML = `
+    <div class="batch-detail">
+      <div class="batch-detail-hero">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <div class="batch-detail-title">${b.name}</div>
+            <div class="batch-detail-sub">
+              ${b.district || 'Uganda'}
+              ${b.tryout_date ? ' · ' + formatDateFull(b.tryout_date) : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="pill ${cfg.pill}">${cfg.label}</span>
+            ${isAdmin ? `
+            <button class="btn btn-outline" style="height:28px;font-size:0.68rem;color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.2);background:none" onclick="openAddPlayerModal()">
+              + Add Players
+            </button>` : ''}
+          </div>
+        </div>
+        <div class="batch-detail-stats">
+          <div class="bds"><div class="bds-val">${invited}</div><div class="bds-lbl">Invited</div></div>
+          <div class="bds"><div class="bds-val">${attended}</div><div class="bds-lbl">Attended</div></div>
+          <div class="bds"><div class="bds-val" style="color:#7dbf3a">${admitted}</div><div class="bds-lbl">Admitted</div></div>
+          <div class="bds"><div class="bds-val" style="color:#ef5350">${eliminated}</div><div class="bds-lbl">Eliminated</div></div>
+        </div>
+      </div>
+
+      <div style="padding:16px">
+        ${b.notes ? `
+        <div style="background:var(--green-pale);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px;font-family:var(--font2);font-size:0.75rem;font-weight:600;color:var(--dark);line-height:1.6">
+          ${b.notes}
+        </div>` : ''}
+
+        <!-- Status update -->
+        ${isAdmin ? `
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          ${['upcoming','active','completed'].map(s => `
+            <button class="btn ${b.status === s ? 'btn-green' : 'btn-outline'}"
+              style="height:30px;font-size:0.7rem"
+              onclick="updateStatus('${b.id}','${s}')">
+              ${s.charAt(0).toUpperCase()+s.slice(1)}
+            </button>`).join('')}
+          <button class="btn btn-outline" style="height:30px;font-size:0.7rem;color:var(--red);border-color:var(--red);margin-left:auto" onclick="deleteBatch('${b.id}')">
+            Delete
+          </button>
+        </div>` : ''}
+
+        <!-- Players table -->
+        <div class="card-head">
+          <span class="card-title">Players in this batch (${batchPlayers.length})</span>
+        </div>
+        ${batchPlayers.length ? `
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Player</th><th>District</th><th>Tier</th><th>Attended</th><th>Outcome</th>
+              ${isAdmin ? '<th></th>' : ''}
+            </tr></thead>
+            <tbody>
+              ${batchPlayers.map(p => `
+              <tr class="clickable" onclick="window.location.href='profile.html?id=${p.id}'">
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div style="width:28px;height:28px;border-radius:7px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:0.62rem;color:var(--green-light);flex-shrink:0">
+                      ${initials(p.name)}
+                    </div>
+                    <div>
+                      <div style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text)">${p.name}</div>
+                      <div style="font-family:var(--font2);font-size:0.62rem;color:var(--muted)">${p.class||''} · Age ${calcAge(p.dob)||p.age||'?'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">${p.district||'—'}</td>
+                <td>${tierBadge(p.tier)}</td>
+                <td>
+                  ${isAdmin ? `
+                  <button onclick="event.stopPropagation();toggleAttended('${p.id}',${p.attended})"
+                    class="pill ${p.attended ? 'pill-green' : 'pill-muted'}" style="border:none;cursor:pointer">
+                    ${p.attended ? '✓ Yes' : 'No'}
+                  </button>` : `<span class="pill ${p.attended ? 'pill-green' : 'pill-muted'}">${p.attended ? '✓ Yes' : 'No'}</span>`}
+                </td>
+                <td>
+                  ${p.outcome === 'admitted'   ? '<span class="pill pill-green">Admitted</span>'   :
+                    p.outcome === 'eliminated' ? '<span class="pill pill-red">Eliminated</span>'   :
+                    '<span class="pill pill-muted">Pending</span>'}
+                </td>
+                ${isAdmin ? `
+                <td onclick="event.stopPropagation()">
+                  <button class="btn-ghost" title="Remove from batch"
+                    onclick="removeFromBatch('${b.id}','${p.id}')">
+                    <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+                  </button>
+                </td>` : ''}
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : `
+        <div class="empty-state" style="padding:24px">
+          <div class="empty-title">No players yet</div>
+          <div class="empty-sub">Add players to this batch to track their tryout.</div>
+          ${isAdmin ? `<button class="btn btn-green" style="margin-top:10px" onclick="openAddPlayerModal()">+ Add Players</button>` : ''}
+        </div>`}
+      </div>
+    </div>`;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────
+async function updateStatus(id, status) {
+  try {
+    await TryoutAPI.update(id, { status });
+    const b = allBatches.find(b => b.id === id);
+    if (b) { b.status = status; selectedBatch.status = status; }
+    filterBatches();
+    renderBatchDetail();
+    showToast('Status updated', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteBatch(id) {
+  if (!confirm('Delete this batch? Players will not be deleted.')) return;
+  try {
+    await apiFetch('/api/tryouts/' + id, { method: 'DELETE' }).catch(() => {});
+    allBatches = allBatches.filter(b => b.id !== id);
+    selectedBatch = null;
+    filterBatches();
+    document.getElementById('batchDetail').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-title">Batch deleted</div>
+      </div>`;
+    showToast('Batch deleted', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function toggleAttended(playerId, current) {
+  try {
+    await PlayerAPI.update(playerId, { attended: !current });
+    const p = batchPlayers.find(p => p.id === playerId);
+    if (p) p.attended = !current;
+    renderBatchDetail();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function removeFromBatch(batchId, playerId) {
+  try {
+    await TryoutAPI.removePlayer(batchId, playerId);
+    batchPlayers = batchPlayers.filter(p => p.id !== playerId);
+    renderBatchDetail();
+    showToast('Player removed from batch', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── ADD PLAYER TO BATCH ───────────────────────────────────────────
+function openAddPlayerModal() {
+  document.getElementById('addPlayerModal').classList.add('open');
+  document.getElementById('playerSearchInput').value = '';
+  document.getElementById('playerSearchResults').innerHTML =
+    '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">Type a name to search players.</div>';
+}
+
+function searchPlayersToAdd() {
+  const q = document.getElementById('playerSearchInput').value.toLowerCase().trim();
+  const el = document.getElementById('playerSearchResults');
+
+  if (!q) {
+    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">Type a name to search players.</div>';
+    return;
+  }
+
+  const batchIds = new Set(batchPlayers.map(p => p.id));
+  const results  = allPlayers.filter(p =>
+    p.name.toLowerCase().includes(q) && !batchIds.has(p.id)
+  ).slice(0, 10);
+
+  if (!results.length) {
+    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">No players found.</div>';
+    return;
+  }
+
+  el.innerHTML = results.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
+      onmouseover="this.style.background='var(--green-pale)'"
+      onmouseout="this.style.background=''"
+      onclick="addPlayerToBatch('${p.id}','${p.name.replace(/'/g,"\\'")}')">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:0.68rem;color:var(--green-light);flex-shrink:0">
+        ${initials(p.name)}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font2);font-size:0.8rem;font-weight:800;color:var(--text)">${p.name}</div>
+        <div style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">${p.class||''} · ${p.district||'—'} · ${p.school||'—'}</div>
+      </div>
+      ${tierBadge(p.tier)}
+      <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--green)">+ Add</span>
+    </div>`).join('');
+}
+
+async function addPlayerToBatch(playerId, playerName) {
+  try {
+    await TryoutAPI.addPlayer(selectedBatch.id, playerId);
+    const player = allPlayers.find(p => p.id === playerId);
+    if (player) batchPlayers.push({ ...player, attended: false });
+    searchPlayersToAdd();
+    renderBatchDetail();
+    showToast(playerName + ' added to batch', 'success');
+    // Update count in batch list
+    const b = allBatches.find(b => b.id === selectedBatch.id);
+    if (b) b.player_count = (parseInt(b.player_count)||0) + 1;
+    filterBatches();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── MODALS ────────────────────────────────────────────────────────
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeModal()   { document.getElementById('addModal').classList.remove('open'); }
+document.getElementById('addModal').addEventListener('click', e => {
+  if (e.target.id === 'addModal') closeModal();
+});
+document.getElementById('addPlayerModal').addEventListener('click', e => {
+  if (e.target.id === 'addPlayerModal') e.target.classList.remove('open');
+});
+
+async function saveBatch() {
+  const name = document.getElementById('bName').value.trim();
+  if (!name) { showToast('Batch name is required.', 'error'); return; }
+
+  const btn = document.getElementById('saveBatchBtn');
+  btn.disabled = true;
+
+  try {
+    const r = await TryoutAPI.create({
+      name,
+      district:     document.getElementById('bDistrict').value || null,
+      tryout_date:  document.getElementById('bDate').value || null,
+      status:       document.getElementById('bStatus').value,
+      notes:        document.getElementById('bNotes').value.trim(),
+    });
+    const newBatch = r.tryout || r;
+    newBatch.player_count = 0;
+    allBatches.unshift(newBatch);
+    filterBatches();
+    closeModal();
+    showToast('Batch created!', 'success');
+    selectBatch(newBatch.id);
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+loadBatches();
+loadAllPlayers();
+
+// Auto-select from URL
+const urlBatchId = new URLSearchParams(window.location.search).get('id');
+if (urlBatchId) {
+  setTimeout(() => selectBatch(urlBatchId), 800);
+}
+</script>
+</body>
+</html>
