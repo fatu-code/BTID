@@ -76,7 +76,7 @@ document.getElementById('todayLabel').textContent =
 async function loadDash() {
   let stats = {}, recentPlayers = [], recentActivity = [], tryouts = [];
 
-  try { stats = await StatsAPI.get(); } catch(e){}
+  try { const r = await StatsAPI.get(); stats = r.stats || r; } catch(e){}
   try {
     const r = await PlayerAPI.getAll({ limit: 6, sort: 'newest' });
     recentPlayers = r.players || r || [];
