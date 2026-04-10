@@ -140,16 +140,16 @@ async function loadDash() {
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
         ${[
-          { tier:'1',  label:'Tier 1',   count: parseInt(stats.tier1)||0,  color:'#009c41', bg:'#e8f5ee' },
-          { tier:'1.5',label:'Tier 1.5', count: parseInt(stats.tier15)||0, color:'#7dbf3a', bg:'#f0f8e8' },
-          { tier:'2',  label:'Tier 2',   count: parseInt(stats.tier2)||0,  color:'#f5a623', bg:'#fef3dc' },
-          { tier:'3',  label:'Tier 3',   count: parseInt(stats.tier3)||0,  color:'#e53935', bg:'#fdeaea' },
+          { tier:'1',  label:'Tier 1',   count: stats.tier1,  color:'#009c41', bg:'#e8f5ee' },
+          { tier:'1.5',label:'Tier 1.5', count: stats.tier15, color:'#7dbf3a', bg:'#f0f8e8' },
+          { tier:'2',  label:'Tier 2',   count: stats.tier2,  color:'#f5a623', bg:'#fef3dc' },
+          { tier:'3',  label:'Tier 3',   count: stats.tier3,  color:'#e53935', bg:'#fdeaea' },
         ].map(t => `
           <div style="background:${t.bg};border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:transform .15s"
             onclick="window.location.href='players.html?tier=${t.tier}'"
             onmouseover="this.style.transform='translateY(-2px)'"
             onmouseout="this.style.transform=''">
-            <div style="font-family:var(--font1);font-size:1.6rem;color:${t.color};margin-bottom:4px">${fmt(t.count)}</div>
+            <div style="font-family:var(--font1);font-size:1.6rem;color:${t.color};margin-bottom:4px">${t.count}</div>
             <div style="font-family:var(--font2);font-size:0.62rem;font-weight:800;color:${t.color};text-transform:uppercase;letter-spacing:.06em">${t.label}</div>
           </div>`).join('')}
       </div>
