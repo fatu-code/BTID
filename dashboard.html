@@ -20,7 +20,7 @@
           <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
         </button>
         <div>
-          <div class="topbar-title">Dashboard</div>
+          <div class="topbar-title" id="greetingLabel">Loading...</div>
           <div class="topbar-sub" id="todayLabel">Loading...</div>
         </div>
       </div>
@@ -77,8 +77,12 @@ const user  = Auth.require();
 const level = getRoleLevel(user.role);
 buildSidebar('dashboard');
 
-document.getElementById('todayLabel').textContent =
-  formatDateFull(new Date());
+// Greeting based on time of day
+const hour = new Date().getHours();
+const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+const firstName = (user.name || 'Joshua').split(' ')[0];
+document.getElementById('greetingLabel').textContent = greeting + ', ' + firstName + ' 👋';
+document.getElementById('todayLabel').textContent = formatDateFull(new Date());
 
 async function loadDash() {
   let stats = {}, recentPlayers = [], recentActivity = [], tryouts = [];
