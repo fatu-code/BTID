@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Dashboard</div>
+          <div class="topbar-sub" id="todayLabel">Loading...</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-green mob-hide" id="addPlayerBtn" onclick="window.location.href='players.html?action=add'">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+          Add Player
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Dashboard tabs -->
+      <div class="tabs" style="margin-bottom:14px">
+        <button class="tab active" id="tab-overview-btn" onclick="showDashTab('overview')">
+          <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+          Overview
+        </button>
+        <button class="tab" id="tab-reflection-btn" onclick="showDashTab('reflection')">
+          <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 4h12M2 8h10M2 12h8"/><path d="M13 10l2 2-2 2"/></svg>
+          Reflection
+        </button>
+      </div>
+
+      <!-- Overview tab -->
+      <div id="dashTab-overview">
+        <div id="dashContent">
+          <div class="empty-state"><div class="empty-title">Loading dashboard...</div></div>
+        </div>
+      </div>
+
+      <!-- Reflection tab -->
+      <div id="dashTab-reflection" style="display:none">
+        <div id="reflectionContent">
+          <div class="empty-state"><div class="empty-title">Loading reflections...</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+const user  = Auth.require();
+const level = getRoleLevel(user.role);
+buildSidebar('dashboard');
+
+document.getElementById('todayLabel').textContent =
+  formatDateFull(new Date());
+
+async function loadDash() {
+  let stats = {}, recentPlayers = [], recentActivity = [], tryouts = [];
+
+  try { stats = await StatsAPI.get(); } catch(e){}
+  try {
+    const r = await PlayerAPI.getAll({ limit: 6, sort: 'newest' });
+    recentPlayers = r.players || r || [];
+  } catch(e){}
+  try {
+    const r = await ActivityAPI.getAll({ limit: 8 });
+    recentActivity = r.logs || r || [];
+  } catch(e){}
+  try {
+    const r = await TryoutAPI.getAll();
+    tryouts = (r.tryouts || r || []).slice(0, 4);
+  } catch(e){}
+
+  const isAdmin = level >= 2;
+  const el = document.getElementById('dashContent');
+
+  el.innerHTML = `
+    <!-- Stats -->
+    <div class="metrics-grid" style="margin-bottom:14px">
+      ${[
+        { label:'Total Players',  val: fmt(stats.total||0),    icon:'<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>', cls:'', href:'players.html' },
+        { label:'Admitted',       val: fmt(stats.admitted||0),  icon:'<path d="M2 8l4 4 8-8"/>',  cls:'',     href:'players.html?outcome=admitted' },
+        { label:'Eliminated',     val: fmt(stats.eliminated||0),icon:'<path d="M4 4l8 8M12 4l-8 8"/><circle cx="8" cy="8" r="6"/>',  cls:'red',   href:'players.html?outcome=eliminated' },
+        { label:'Tryout Batches', val: fmt(stats.tryouts||0),   icon:'<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>',  cls:'',     href:'tryouts.html' },
+      ].map(s => `
+        <div class="metric-card" onclick="window.location.href='${s.href}'">
+          <div class="mc-top">
+            <div class="mc-icon ${s.cls}">
+              <svg viewBox="0 0 16 16">${s.icon}</svg>
+            </div>
+          </div>
+          <div class="mc-value">${s.val}</div>
+          <div class="mc-label">${s.label}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Tier breakdown -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Players by Tier</span>
+        <button class="card-action" onclick="window.location.href='players.html'">View all</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        ${[
+          { tier:'1',  label:'Tier 1',   count: stats.tier1||0,  color:'#009c41', bg:'#e8f5ee' },
+          { tier:'1.5',label:'Tier 1.5', count: stats.tier15||0, color:'#7dbf3a', bg:'#f0f8e8' },
+          { tier:'2',  label:'Tier 2',   count: stats.tier2||0,  color:'#f5a623', bg:'#fef3dc' },
+          { tier:'3',  label:'Tier 3',   count: stats.tier3||0,  color:'#e53935', bg:'#fdeaea' },
+        ].map(t => `
+          <div style="background:${t.bg};border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:transform .15s"
+            onclick="window.location.href='players.html?tier=${t.tier}'"
+            onmouseover="this.style.transform='translateY(-2px)'"
+            onmouseout="this.style.transform=''">
+            <div style="font-family:var(--font1);font-size:1.6rem;color:${t.color};margin-bottom:4px">${fmt(t.count)}</div>
+            <div style="font-family:var(--font2);font-size:0.62rem;font-weight:800;color:${t.color};text-transform:uppercase;letter-spacing:.06em">${t.label}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Recent players + activity -->
+    <div class="grid-2-1" style="margin-bottom:14px">
+      <!-- Recent players -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Recent Players</span>
+          <button class="card-action" onclick="window.location.href='players.html'">View all</button>
+        </div>
+        ${recentPlayers.length ? `
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Player</th><th>District</th><th>Tier</th><th>Outcome</th>
+              </tr></thead>
+              <tbody>
+                ${recentPlayers.map(p => `
+                  <tr class="clickable" onclick="window.location.href='profile.html?id=${p.id}'">
+                    <td>
+                      <div style="display:flex;align-items:center;gap:9px">
+                        <div style="width:30px;height:30px;border-radius:8px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:0.65rem;color:var(--green-light);flex-shrink:0">
+                          ${initials(p.name)}
+                        </div>
+                        <div>
+                          <div style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text)">${p.name}</div>
+                          <div style="font-family:var(--font2);font-size:0.62rem;font-weight:600;color:var(--muted)">${p.class||'—'} · Age ${calcAge(p.dob)||p.age||'?'}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">${p.district||'—'}</td>
+                    <td>${tierBadge(p.tier)}</td>
+                    <td>${outcomePill(p.outcome)}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>` : `
+          <div class="empty-state">
+            <div class="empty-title">No players yet</div>
+            <div class="empty-sub">Add your first player to get started.</div>
+          </div>`}
+      </div>
+
+      <!-- Activity + quick links -->
+      <div class="col-stack">
+        ${isAdmin ? `
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Recent Logins</span>
+            <button class="card-action" onclick="window.location.href='activity.html'">View all</button>
+          </div>
+          ${recentActivity.length ? recentActivity.slice(0,5).map(a => `
+            <div class="activity-item">
+              <div class="activity-dot"></div>
+              <div style="flex:1;min-width:0">
+                <div class="activity-title">${a.name||a.username}</div>
+                <div class="activity-sub">${a.role} · ${a.ip||'Unknown IP'}</div>
+              </div>
+              <div class="activity-time">${formatDate(a.created_at)}</div>
+            </div>`).join('') : `
+            <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:10px 0">No recent logins.</div>`}
+        </div>` : ''}
+
+        <!-- Quick links -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Quick Access</span></div>
+          <div class="col-stack" style="gap:8px">
+            ${[
+              { label:'Add New Player',     sub:'Create a player profile',          href:'players.html?action=add',  icon:'<circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/>',            show: isAdmin },
+              { label:'New Tryout Batch',   sub:'Schedule a tryout event',          href:'tryouts.html?action=add',  icon:'<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>',            show: isAdmin },
+              { label:'View All Players',   sub:'Browse the player database',       href:'players.html',             icon:'<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>',  show: true },
+              { label:'Reports',            sub:'Tryout outcomes and stats',        href:'reports.html',             icon:'<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 5h6M5 8h6M5 11h4"/>',  show: isAdmin },
+              { label:'Manage Scout Access',sub:'Set scout account expiry',         href:'scouts.html',              icon:'<circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M13 7l1.5 1.5L17 6"/>',  show: isAdmin },
+            ].filter(l => l.show).map(l => `
+              <a href="${l.href}"
+                style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);text-decoration:none;transition:all .15s;background:var(--white)"
+                onmouseover="this.style.borderColor='var(--green-mid)';this.style.background='var(--green-pale)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--white)'">
+                <div style="width:34px;height:34px;border-radius:9px;background:var(--green-pale);border:1.5px solid var(--green-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg viewBox="0 0 16 16" style="width:15px;height:15px;stroke:var(--green-dark);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round">${l.icon}</svg>
+                </div>
+                <div>
+                  <div style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text)">${l.label}</div>
+                  <div style="font-family:var(--font2);font-size:0.62rem;font-weight:600;color:var(--muted)">${l.sub}</div>
+                </div>
+              </a>`).join('')}
+          </div>
+        </div>
+
+        <!-- Upcoming tryouts -->
+        ${tryouts.length ? `
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Upcoming Tryouts</span>
+            <button class="card-action" onclick="window.location.href='tryouts.html'">View all</button>
+          </div>
+          ${tryouts.map(t => `
+            <div class="activity-item" style="cursor:pointer" onclick="window.location.href='tryouts.html?id=${t.id}'">
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--green-pale);border:1.5px solid var(--green-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg viewBox="0 0 16 16" style="width:14px;height:14px;stroke:var(--green-dark);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div class="activity-title">${t.name}</div>
+                <div class="activity-sub">${t.district||'Uganda'} · ${fmt(t.player_count||0)} players invited</div>
+              </div>
+              <div class="activity-time">${formatDateShort(t.tryout_date)}</div>
+            </div>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function outcomePill(outcome) {
+  if (!outcome) return '<span class="pill pill-muted">Pending</span>';
+  if (outcome === 'admitted')   return '<span class="pill pill-green">Admitted</span>';
+  if (outcome === 'eliminated') return '<span class="pill pill-red">Eliminated</span>';
+  return `<span class="pill pill-muted">${outcome}</span>`;
+}
+
+loadDash();
+
+// ── DASHBOARD TAB SWITCHING ───────────────────────────────────────
+function showDashTab(id) {
+  ['overview','reflection'].forEach(t => {
+    document.getElementById('dashTab-'+t).style.display = t===id ? '' : 'none';
+    document.getElementById('tab-'+t+'-btn').classList.toggle('active', t===id);
+  });
+  if (id === 'reflection' && !reflectionLoaded) loadReflection();
+  if (id === 'overview') document.getElementById('addPlayerBtn').style.display = '';
+  else document.getElementById('addPlayerBtn').style.display = 'none';
+}
+
+// ── REFLECTION ────────────────────────────────────────────────────
+let reflectionLoaded = false;
+let reflections = [];
+let goals       = [];
+
+async function loadReflection() {
+  reflectionLoaded = true;
+  try {
+    const [rr, gr] = await Promise.allSettled([
+      apiFetch('/api/reflections'),
+      apiFetch('/api/goals'),
+    ]);
+    reflections = rr.status === 'fulfilled' ? (rr.value.reflections || rr.value || []) : [];
+    goals       = gr.status === 'fulfilled' ? (gr.value.goals       || gr.value || []) : [];
+  } catch(e) {}
+  renderReflection();
+}
+
+function renderReflection() {
+  const el = document.getElementById('reflectionContent');
+  if (!el) return;
+
+  const openGoals = goals.filter(g => !g.done).length;
+  const doneGoals = goals.filter(g => g.done).length;
+
+  el.innerHTML = `
+    <div class="grid-2-1" style="align-items:start">
+      <div class="col-stack">
+        <!-- New entry -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">New Reflection</span>
+            <div style="display:flex;gap:6px">
+              <select class="filter-select" id="entryType" style="height:28px;font-size:0.68rem">
+                <option value="writeup">Write-up</option>
+                <option value="goal">Goal</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="rTitle" type="text" placeholder="e.g. Season 1 wrap-up, Q2 goals...">
+          </div>
+          <div class="editor-toolbar">
+            <button class="editor-btn" onclick="fmt('bold')" title="Bold"><strong>B</strong></button>
+            <button class="editor-btn" onclick="fmt('italic')" title="Italic"><em>I</em></button>
+            <button class="editor-btn" onclick="fmt('underline')" title="Underline"><u>U</u></button>
+            <button class="editor-btn" onclick="fmt('insertUnorderedList')" title="Bullet list">•</button>
+            <button class="editor-btn" onclick="fmt('insertOrderedList')" title="Numbered list">1.</button>
+          </div>
+          <div class="rich-editor" id="rBody" contenteditable="true"
+            placeholder="Share your thoughts about how the program is going, goals you want to set, observations from this season..."></div>
+
+          <!-- Doc upload -->
+          <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="document.getElementById('reflectionDocUpload').click()" style="height:32px;font-size:0.68rem">
+              <svg viewBox="0 0 16 16"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+              Attach document
+            </button>
+            <input type="file" id="reflectionDocUpload" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx" multiple style="display:none" onchange="handleDocAttach(this)">
+            <div id="attachedDocs" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          </div>
+          <button class="btn btn-green" style="width:100%;margin-top:10px" onclick="saveReflection()">
+            <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+            Save Reflection
+          </button>
+        </div>
+
+        <!-- Previous reflections -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Previous Reflections</span>
+            <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--muted)">${reflections.length} entries</span>
+          </div>
+          ${reflections.length ? reflections.map(r => `
+          <div class="reflection-entry">
+            <div class="reflection-entry-head">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  <span class="reflection-type-badge rt-${r.type||'writeup'}">${r.type||'Write-up'}</span>
+                </div>
+                <div class="reflection-entry-title">${r.title}</div>
+                <div class="reflection-entry-meta">${formatDate(r.created_at)} · Joshua</div>
+              </div>
+              <button class="btn-ghost" onclick="deleteReflection('${r.id}')">
+                <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5"/><path d="M3 4l1 10h8l1-10"/></svg>
+              </button>
+            </div>
+            <div class="reflection-entry-body">${r.body||''}</div>
+            ${r.attachments && r.attachments.length ? r.attachments.map(a => `
+              <a class="doc-attachment" href="${a.url||'#'}" target="_blank">
+                <div class="doc-icon"><svg viewBox="0 0 16 16"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg></div>
+                <div><div class="doc-name">${a.name}</div><div class="doc-size">${a.size||''}</div></div>
+              </a>`).join('') : ''}
+          </div>`).join('') : `
+          <div class="empty-state" style="padding:20px">
+            <div class="empty-title">No reflections yet</div>
+            <div class="empty-sub">Start documenting how the program is going.</div>
+          </div>`}
+        </div>
+      </div>
+
+      <!-- Goals panel -->
+      <div class="col-stack">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Program Goals</span>
+            <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--green)">${doneGoals}/${goals.length} done</span>
+          </div>
+          <div id="goalsList">
+            ${goals.length ? goals.map(g => `
+            <div class="goal-item" id="goal-${g.id}">
+              <div class="goal-check ${g.done?'done':''}" onclick="toggleGoal('${g.id}', ${g.done})">
+                ${g.done?'✓':''}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div class="goal-text ${g.done?'done':''}">${g.text}</div>
+                <div style="font-family:var(--font2);font-size:0.62rem;font-weight:600;color:var(--muted)">Added ${formatDate(g.created_at)}</div>
+              </div>
+              <button class="btn-ghost" onclick="deleteGoal('${g.id}')">
+                <svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              </button>
+            </div>`).join('') : `
+            <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:10px 0">No goals set yet.</div>`}
+          </div>
+
+          <!-- Add goal -->
+          <div style="display:flex;gap:7px;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+            <input class="form-input" id="newGoalInput" type="text" placeholder="Add a program goal..."
+              style="flex:1" onkeydown="if(event.key==='Enter') addGoal()">
+            <button class="btn btn-green" onclick="addGoal()" style="flex-shrink:0">Add</button>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        ${goals.length ? `
+        <div class="card">
+          <div class="card-head"><span class="card-title">Goal Progress</span></div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-family:var(--font2);font-size:0.72rem;font-weight:700;color:var(--text)">${doneGoals} of ${goals.length} goals completed</span>
+              <span style="font-family:var(--font1);font-size:0.88rem;color:var(--green)">${goals.length ? Math.round(doneGoals/goals.length*100) : 0}%</span>
+            </div>
+            <div class="bar-track" style="height:10px">
+              <div class="bar-fill g" style="width:${goals.length ? Math.round(doneGoals/goals.length*100) : 0}%"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <div style="text-align:center;flex:1;background:var(--green-pale);border-radius:8px;padding:8px">
+              <div style="font-family:var(--font1);font-size:1.2rem;color:var(--green-dark)">${openGoals}</div>
+              <div style="font-family:var(--font2);font-size:0.62rem;font-weight:700;color:var(--green-dark)">Open</div>
+            </div>
+            <div style="text-align:center;flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px">
+              <div style="font-family:var(--font1);font-size:1.2rem;color:var(--text)">${doneGoals}</div>
+              <div style="font-family:var(--font2);font-size:0.62rem;font-weight:700;color:var(--muted)">Done</div>
+            </div>
+          </div>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── EDITOR ────────────────────────────────────────────────────────
+function fmt(cmd) { document.execCommand(cmd, false, null); }
+
+// ── DOC ATTACH ────────────────────────────────────────────────────
+let attachedFiles = [];
+function handleDocAttach(input) {
+  const files = Array.from(input.files);
+  attachedFiles = [...attachedFiles, ...files];
+  renderAttachedDocs();
+}
+function renderAttachedDocs() {
+  const el = document.getElementById('attachedDocs');
+  if (!el) return;
+  el.innerHTML = attachedFiles.map((f, i) => `
+    <div style="display:flex;align-items:center;gap:5px;background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:4px 8px">
+      <svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+      <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--text);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</span>
+      <button onclick="removeFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.8rem;line-height:1">✕</button>
+    </div>`).join('');
+}
+function removeFile(i) {
+  attachedFiles.splice(i, 1);
+  renderAttachedDocs();
+}
+
+// ── SAVE REFLECTION ───────────────────────────────────────────────
+async function saveReflection() {
+  const title = document.getElementById('rTitle').value.trim();
+  const body  = document.getElementById('rBody').innerHTML.trim();
+  const type  = document.getElementById('entryType').value;
+
+  if (!title) { showToast('Please add a title.', 'error'); return; }
+  if (!body || body === '') { showToast('Please write something.', 'error'); return; }
+
+  try {
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('body', body);
+    fd.append('type', type);
+    attachedFiles.forEach(f => fd.append('docs', f));
+
+    const res = await fetch(API_BASE + '/api/reflections', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + Auth.token() },
+      body: fd,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save');
+
+    reflections.unshift(data.reflection || { title, body, type, created_at: new Date(), id: Date.now() });
+    document.getElementById('rTitle').value = '';
+    document.getElementById('rBody').innerHTML = '';
+    attachedFiles = [];
+    renderAttachedDocs();
+    renderReflection();
+    showToast('Reflection saved!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteReflection(id) {
+  if (!confirm('Delete this reflection?')) return;
+  try {
+    await apiFetch('/api/reflections/' + id, { method: 'DELETE' });
+    reflections = reflections.filter(r => String(r.id) !== String(id));
+    renderReflection();
+    showToast('Deleted', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── GOALS ─────────────────────────────────────────────────────────
+async function addGoal() {
+  const input = document.getElementById('newGoalInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  try {
+    const r = await apiFetch('/api/goals', { method: 'POST', body: { text } });
+    goals.unshift(r.goal || { text, done: false, created_at: new Date(), id: Date.now() });
+    input.value = '';
+    renderReflection();
+    showToast('Goal added!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function toggleGoal(id, currentDone) {
+  try {
+    await apiFetch('/api/goals/' + id, { method: 'PUT', body: { done: !currentDone } });
+    const g = goals.find(g => String(g.id) === String(id));
+    if (g) g.done = !currentDone;
+    renderReflection();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteGoal(id) {
+  try {
+    await apiFetch('/api/goals/' + id, { method: 'DELETE' });
+    goals = goals.filter(g => String(g.id) !== String(id));
+    renderReflection();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+</script>
+</body>
+</html>

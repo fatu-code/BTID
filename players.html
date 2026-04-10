@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Players — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+.player-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.player-card:hover {
+  border-color: var(--green-mid);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--green-shadow);
+}
+.player-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.player-avatar {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  background: var(--green-dark);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font1);
+  font-size: 0.88rem;
+  color: var(--green-light);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.player-avatar img { width:100%;height:100%;object-fit:cover; }
+.player-name {
+  font-family: var(--font2);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.player-sub {
+  font-family: var(--font2);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 4px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.ps-val {
+  font-family: var(--font1);
+  font-size: 0.88rem;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.ps-lbl {
+  font-family: var(--font2);
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap: 10px;
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Players</div>
+          <div class="topbar-sub" id="countLabel">Loading...</div>
+        </div>
+      </div>
+      <div class="topbar-right" id="adminActions"></div>
+    </div>
+
+    <div class="content">
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4"/><path d="M10 10l3 3"/></svg>
+          <input class="search-input" id="searchInput" type="text"
+            placeholder="Search by name..." oninput="filterPlayers()">
+        </div>
+        <select class="filter-select" id="filterDistrict" onchange="filterPlayers()">
+          <option value="">All districts</option>
+        </select>
+        <select class="filter-select" id="filterTier" onchange="filterPlayers()">
+          <option value="">All tiers</option>
+          <option value="1">Tier 1</option>
+          <option value="1.5">Tier 1.5</option>
+          <option value="2">Tier 2</option>
+          <option value="3">Tier 3</option>
+        </select>
+        <select class="filter-select" id="filterOutcome" onchange="filterPlayers()">
+          <option value="">All outcomes</option>
+          <option value="admitted">Admitted</option>
+          <option value="eliminated">Eliminated</option>
+          <option value="pending">Pending</option>
+        </select>
+        <select class="filter-select" id="filterSort" onchange="filterPlayers()">
+          <option value="newest">Newest first</option>
+          <option value="name">Name A-Z</option>
+          <option value="tier">Tier</option>
+          <option value="age">Age</option>
+        </select>
+      </div>
+
+      <div class="players-grid" id="playersGrid">
+        <div style="grid-column:1/-1">
+          <div class="empty-state"><div class="empty-title">Loading players...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Player Modal -->
+<div class="modal-bg" id="addModal">
+  <div class="modal-card" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title">Add New Player</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+      <!-- Basic info -->
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="pName" type="text" placeholder="Player's full name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date of Birth *</label>
+          <input class="form-input" id="pDob" type="date" onchange="updateAgePreview()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Age (auto)</label>
+          <div class="form-input" id="pAgePreview" style="background:var(--bg);color:var(--muted);display:flex;align-items:center">Set DOB above</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Class</label>
+          <input class="form-input" id="pClass" type="text" placeholder="e.g. P3, P5, S1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nationality</label>
+          <input class="form-input" id="pNationality" type="text" placeholder="e.g. Ugandan" value="Ugandan">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">District *</label>
+          <select class="form-select" id="pDistrict">
+            <option value="">Select district</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Division</label>
+          <input class="form-input" id="pDivision" type="text" placeholder="Division">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">School *</label>
+          <input class="form-input" id="pSchool" type="text" placeholder="School name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">School Contact</label>
+          <input class="form-input" id="pSchoolContact" type="text" placeholder="School phone/email">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Parent 1 Contact</label>
+          <input class="form-input" id="pParent1" type="text" placeholder="+256...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parent 2 Contact</label>
+          <input class="form-input" id="pParent2" type="text" placeholder="+256...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Household ID</label>
+          <input class="form-input" id="pHousehold" type="text" placeholder="Household ID">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Refugee ID</label>
+          <input class="form-input" id="pRefugee" type="text" placeholder="Refugee ID (if applicable)">
+        </div>
+      </div>
+      <!-- Height genetics -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Dad's Height (cm)</label>
+          <input class="form-input" id="pDadHt" type="number" placeholder="cm" oninput="updateGPHP()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mom's Height (cm)</label>
+          <input class="form-input" id="pMomHt" type="number" placeholder="cm" oninput="updateGPHP()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Gender (for GPHP)</label>
+          <select class="form-select" id="pGender" onchange="updateGPHP()">
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">GPHP (auto-calculated)</label>
+          <div class="form-input" id="pGPHP" style="background:var(--bg);color:var(--muted);display:flex;align-items:center">Set parent heights</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Scout</label>
+          <input class="form-input" id="pScout" type="text" placeholder="Scout name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tier (optional)</label>
+          <select class="form-select" id="pTier">
+            <option value="">Not assigned yet</option>
+            <option value="1">Tier 1 (Green)</option>
+            <option value="1.5">Tier 1.5 (Yellow-Green)</option>
+            <option value="2">Tier 2 (Orange)</option>
+            <option value="3">Tier 3 (Red)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="pNotes" rows="2" placeholder="Any initial notes about this player..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" id="savePlayerBtn" onclick="savePlayer()">
+        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+        Add Player
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+const user  = Auth.require();
+const level = getRoleLevel(user.role);
+buildSidebar('players');
+
+let allPlayers = [];
+
+// Populate district filter + modal
+UGANDA_DISTRICTS.forEach(d => {
+  ['filterDistrict','pDistrict'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    el.appendChild(opt);
+  });
+});
+
+// Admin buttons
+if (level >= 2) {
+  document.getElementById('adminActions').innerHTML = `
+    <button class="btn btn-green" onclick="openAddModal()">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+      <span class="mob-hide">Add Player</span>
+    </button>`;
+}
+
+// Pre-fill filters from URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('outcome')) document.getElementById('filterOutcome').value = urlParams.get('outcome');
+if (urlParams.get('tier'))    document.getElementById('filterTier').value    = urlParams.get('tier');
+if (urlParams.get('action') === 'add' && level >= 2) setTimeout(openAddModal, 300);
+
+async function loadPlayers() {
+  try {
+    const r = await PlayerAPI.getAll();
+    allPlayers = r.players || r || [];
+  } catch(e) { allPlayers = []; }
+  filterPlayers();
+}
+
+function filterPlayers() {
+  const q        = document.getElementById('searchInput').value.toLowerCase();
+  const district = document.getElementById('filterDistrict').value;
+  const tier     = document.getElementById('filterTier').value;
+  const outcome  = document.getElementById('filterOutcome').value;
+  const sort     = document.getElementById('filterSort').value;
+
+  let list = allPlayers.filter(p => {
+    const name = (p.name||'').toLowerCase();
+    if (q        && !name.includes(q))                    return false;
+    if (district && p.district !== district)               return false;
+    if (tier     && String(p.tier) !== String(tier))       return false;
+    if (outcome === 'pending' && p.outcome)                return false;
+    if (outcome && outcome !== 'pending' && p.outcome !== outcome) return false;
+    return true;
+  });
+
+  if (sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'tier') list.sort((a,b) => (a.tier||9) - (b.tier||9));
+  else if (sort === 'age') list.sort((a,b) => (calcAge(a.dob)||0) - (calcAge(b.dob)||0));
+  else list.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  document.getElementById('countLabel').textContent =
+    list.length + ' player' + (list.length !== 1 ? 's' : '') +
+    (allPlayers.length !== list.length ? ' of ' + allPlayers.length : '');
+
+  renderPlayers(list);
+}
+
+function renderPlayers(list) {
+  const grid = document.getElementById('playersGrid');
+  if (!list.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1">
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 16 16"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></div>
+        <div class="empty-title">No players found</div>
+        <div class="empty-sub">Try adjusting your filters or add a new player.</div>
+      </div></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const age = calcAge(p.dob) || p.age || '?';
+    const photoHTML = p.photo_url
+      ? `<img src="${p.photo_url}" alt="${p.name}">`
+      : initials(p.name);
+    return `
+      <div class="player-card" onclick="window.location.href='profile.html?id=${p.id}'">
+        <div class="player-card-head">
+          <div class="player-avatar">${photoHTML}</div>
+          <div style="flex:1;min-width:0">
+            <div class="player-name">${p.name}</div>
+            <div class="player-sub">${p.school||'—'}</div>
+            <div class="player-sub">${p.class||''} · ${p.district||'—'}</div>
+          </div>
+          ${tierBadge(p.tier)}
+        </div>
+        <div class="player-stats">
+          <div>
+            <div class="ps-val">${age}</div>
+            <div class="ps-lbl">Age</div>
+          </div>
+          <div>
+            <div class="ps-val">${p.velo||'—'}</div>
+            <div class="ps-lbl">Velo</div>
+          </div>
+          <div>
+            <div class="ps-val">${outcomeBadge(p.outcome)}</div>
+            <div class="ps-lbl">Outcome</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function outcomeBadge(o) {
+  if (!o) return '<span style="color:var(--muted)">Pending</span>';
+  if (o === 'admitted')   return '<span style="color:var(--green);font-weight:800">✓</span>';
+  if (o === 'eliminated') return '<span style="color:var(--red);font-weight:800">✗</span>';
+  return o;
+}
+
+function updateAgePreview() {
+  const dob = document.getElementById('pDob').value;
+  const age = calcAge(dob);
+  const el  = document.getElementById('pAgePreview');
+  if (age !== null) {
+    el.textContent = age + ' years old';
+    el.style.color = 'var(--text)';
+  } else {
+    el.textContent = 'Set DOB above';
+    el.style.color = 'var(--muted)';
+  }
+}
+
+function updateGPHP() {
+  const dad    = document.getElementById('pDadHt').value;
+  const mom    = document.getElementById('pMomHt').value;
+  const gender = document.getElementById('pGender').value;
+  const gphp   = calcGPHP(dad, mom, gender);
+  const el     = document.getElementById('pGPHP');
+  if (gphp) {
+    el.textContent = gphp + ' cm projected';
+    el.style.color = 'var(--green-dark)';
+  } else {
+    el.textContent = 'Set parent heights';
+    el.style.color = 'var(--muted)';
+  }
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeModal()   { document.getElementById('addModal').classList.remove('open'); }
+document.getElementById('addModal').addEventListener('click', e => {
+  if (e.target.id === 'addModal') closeModal();
+});
+
+async function savePlayer() {
+  const name     = document.getElementById('pName').value.trim();
+  const dob      = document.getElementById('pDob').value;
+  const district = document.getElementById('pDistrict').value;
+  const school   = document.getElementById('pSchool').value.trim();
+
+  if (!name || !dob || !district || !school) {
+    showToast('Name, DOB, district and school are required.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('savePlayerBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const dad = document.getElementById('pDadHt').value;
+  const mom = document.getElementById('pMomHt').value;
+  const gender = document.getElementById('pGender').value;
+
+  try {
+    await PlayerAPI.create({
+      name,
+      dob,
+      class:         document.getElementById('pClass').value.trim(),
+      nationality:   document.getElementById('pNationality').value.trim(),
+      district,
+      division:      document.getElementById('pDivision').value.trim(),
+      school,
+      school_contact:document.getElementById('pSchoolContact').value.trim(),
+      parent1:       document.getElementById('pParent1').value.trim(),
+      parent2:       document.getElementById('pParent2').value.trim(),
+      household_id:  document.getElementById('pHousehold').value.trim(),
+      refugee_id:    document.getElementById('pRefugee').value.trim(),
+      dad_ht:        dad || null,
+      mom_ht:        mom || null,
+      gender,
+      gphp:          calcGPHP(dad, mom, gender),
+      scout:         document.getElementById('pScout').value.trim(),
+      tier:          document.getElementById('pTier').value || null,
+      notes:         document.getElementById('pNotes').value.trim(),
+    });
+    showToast('Player added!', 'success');
+    closeModal();
+    loadPlayers();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>Add Player';
+  }
+}
+
+loadPlayers();
+</script>
+</body>
+</html>

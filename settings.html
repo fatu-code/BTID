@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Settings — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div>
+          <div class="topbar-title">Settings</div>
+          <div class="topbar-sub">Personalise your experience</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div style="max-width:680px">
+
+        <!-- Appearance -->
+        <div class="settings-section">
+          <div class="settings-section-title">Appearance</div>
+
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Dark Mode</div>
+              <div class="toggle-sub">Switch between light and dark interface</div>
+            </div>
+            <button class="toggle-switch" id="darkModeToggle" onclick="toggleDark()"></button>
+          </div>
+
+          <div class="toggle-row" style="border-bottom:none">
+            <div>
+              <div class="toggle-label">Compact sidebar</div>
+              <div class="toggle-sub">Collapse sidebar labels to icons only</div>
+            </div>
+            <button class="toggle-switch" id="compactToggle" onclick="toggleCompact()"></button>
+          </div>
+        </div>
+
+        <!-- Background -->
+        <div class="settings-section">
+          <div class="settings-section-title">Background</div>
+
+          <div style="font-family:var(--font2);font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:10px">
+            Choose a background theme for the app. Your selection is saved automatically.
+          </div>
+
+          <div class="bg-preset-grid" id="presetGrid"></div>
+
+          <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+            <div class="toggle-label" style="margin-bottom:6px">Upload your own background</div>
+            <div class="upload-area" style="border:2px dashed var(--border);border-radius:var(--radius-sm);padding:20px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg)" onclick="document.getElementById('bgUpload').click()" onmouseover="this.style.borderColor='var(--green)';this.style.background='var(--green-pale)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
+              <input type="file" id="bgUpload" accept="image/*" style="display:none" onchange="handleBgUpload(this)">
+              <svg viewBox="0 0 16 16" style="width:24px;height:24px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 6px"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+              <div style="font-family:var(--font2);font-size:0.75rem;font-weight:700;color:var(--muted)">Click to upload a photo</div>
+              <div style="font-family:var(--font2);font-size:0.65rem;color:var(--muted);margin-top:2px">JPG, PNG — max 5MB</div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-green" onclick="applySettings()">
+              <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+              Save Appearance
+            </button>
+            <button class="btn btn-outline" onclick="resetBg()">Reset to default</button>
+          </div>
+        </div>
+
+        <!-- Profile -->
+        <div class="settings-section">
+          <div class="settings-section-title">Account</div>
+          <div class="form-group">
+            <label class="form-label">Display Name</label>
+            <input class="form-input" id="displayName" type="text" placeholder="Your name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Change Password</label>
+            <input class="form-input" id="newPassword" type="password" placeholder="New password">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <input class="form-input" id="confirmPassword" type="password" placeholder="Confirm new password">
+          </div>
+          <button class="btn btn-green" onclick="saveAccount()">
+            <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+            Update Account
+          </button>
+        </div>
+
+        <!-- Notifications -->
+        <div class="settings-section">
+          <div class="settings-section-title">Notifications</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Login notifications</div>
+              <div class="toggle-sub">Get notified when someone signs in</div>
+            </div>
+            <button class="toggle-switch on" id="loginNotifToggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="toggle-row" style="border-bottom:none">
+            <div>
+              <div class="toggle-label">Scout access expiry alerts</div>
+              <div class="toggle-sub">Alert when a scout account is about to expire</div>
+            </div>
+            <button class="toggle-switch on" id="expiryNotifToggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+Auth.require();
+buildSidebar('settings');
+
+let selectedBg = AppBG.get();
+
+// Render preset grid
+const grid = document.getElementById('presetGrid');
+BG_PRESETS.forEach(p => {
+  const div = document.createElement('div');
+  div.className = 'bg-preset' + (selectedBg === p.id ? ' selected' : '');
+  div.title = p.label;
+  div.style.background = p.css || 'var(--bg)';
+  if (!p.css) {
+    div.style.border = '1.5px solid var(--border)';
+    div.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font2);font-size:.6rem;font-weight:700;color:var(--muted)">None</div>`;
+  }
+  div.onclick = () => {
+    document.querySelectorAll('.bg-preset').forEach(el => el.classList.remove('selected'));
+    div.classList.add('selected');
+    selectedBg = p.id;
+    AppBG.set(p.id);
+  };
+  grid.appendChild(div);
+});
+
+// Dark mode toggle sync
+const darkToggle = document.getElementById('darkModeToggle');
+if (Theme.get() === 'dark') darkToggle.classList.add('on');
+
+function toggleDark() {
+  Theme.toggle();
+  darkToggle.classList.toggle('on');
+}
+
+// Compact toggle
+const compactToggle = document.getElementById('compactToggle');
+if (localStorage.getItem('btid_compact') === '1') compactToggle.classList.add('on');
+function toggleCompact() {
+  const on = compactToggle.classList.toggle('on');
+  localStorage.setItem('btid_compact', on ? '1' : '0');
+  showToast(on ? 'Compact mode on' : 'Compact mode off', 'success');
+}
+
+function handleBgUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.querySelectorAll('.bg-preset').forEach(el => el.classList.remove('selected'));
+    selectedBg = 'custom';
+    AppBG.set('custom', e.target.result);
+    showToast('Background applied!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function applySettings() {
+  AppBG.set(selectedBg);
+  showToast('Appearance saved!', 'success');
+}
+
+function resetBg() {
+  document.querySelectorAll('.bg-preset').forEach((el, i) => el.classList.toggle('selected', i === 0));
+  selectedBg = 'none';
+  AppBG.set('none');
+  localStorage.removeItem('btid_bg_custom');
+  showToast('Background reset', 'success');
+}
+
+// Populate account form
+const u = Auth.get();
+if (u) document.getElementById('displayName').value = u.name || '';
+
+async function saveAccount() {
+  const name = document.getElementById('displayName').value.trim();
+  const pw   = document.getElementById('newPassword').value;
+  const pw2  = document.getElementById('confirmPassword').value;
+
+  if (pw && pw !== pw2) { showToast('Passwords do not match.', 'error'); return; }
+  if (!name) { showToast('Name cannot be empty.', 'error'); return; }
+
+  try {
+    await apiFetch('/api/account', { method: 'PUT', body: { name, password: pw || undefined } });
+    const updated = { ...Auth.get(), name };
+    localStorage.setItem('btid_user', JSON.stringify(updated));
+    showToast('Account updated!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+</script>
+</body>
+</html>

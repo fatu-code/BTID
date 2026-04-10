@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Player Profile — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+/* Metric display bars (tryout tab) */
+.tryout-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.tryout-stat-box {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.tsb-label {
+  font-family: var(--font2);
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.tsb-val {
+  font-family: var(--font1);
+  font-size: 1.5rem;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.tsb-unit {
+  font-family: var(--font2);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.tsb-attempts {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.tsb-attempt {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-family: var(--font1);
+  font-size: 0.68rem;
+  color: var(--text);
+}
+/* Media grid (home visit) */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px,1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.media-thumb {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  position: relative;
+  cursor: pointer;
+}
+.media-thumb img, .media-thumb video {
+  width:100%;height:100%;object-fit:cover;
+}
+.media-del {
+  position: absolute;top:4px;right:4px;
+  width:20px;height:20px;
+  background:rgba(0,0,0,.6);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.65rem;cursor:pointer;
+  opacity:0;transition:opacity .15s;
+  border:none;
+}
+.media-thumb:hover .media-del { opacity:1; }
+.media-type-icon {
+  position:absolute;bottom:4px;left:4px;
+  background:rgba(0,0,0,.5);
+  border-radius:4px;
+  padding:2px 5px;
+  font-size:.55rem;color:#fff;font-weight:700;font-family:var(--font2);
+}
+/* Upload area */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+  background: var(--bg);
+}
+.upload-area:hover { border-color:var(--green); background:var(--green-pale); }
+.upload-area input { display:none; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
+        <div>
+          <a href="players.html" style="font-family:var(--font2);font-size:0.7rem;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:4px;text-decoration:none;margin-bottom:1px">
+            <svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10 4l-4 4 4 4"/></svg>
+            Players
+          </a>
+          <div class="topbar-title" id="profileNameBar">Loading...</div>
+        </div>
+      </div>
+      <div class="topbar-right" id="topbarActions"></div>
+    </div>
+
+    <div class="content" id="profileContent">
+      <div class="empty-state"><div class="empty-title">Loading profile...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Photo lightbox -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out" onclick="closeLightbox()">
+  <img id="lightboxImg" style="max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain">
+</div>
+
+<!-- Elimination modal -->
+<div class="modal-bg" id="eliminateModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Elimination Reason</div>
+      <button class="modal-close" onclick="document.getElementById('eliminateModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:14px">Select all reasons that apply:</p>
+      <div id="eliminationReasons"></div>
+      <div class="form-group" style="margin-top:12px">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-textarea" id="eliminationNotes" rows="2" placeholder="Any additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('eliminateModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-red" onclick="confirmElimination()">Confirm Elimination</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="photoUploadInput" accept="image/*" style="display:none">
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+const user    = Auth.require();
+const level   = getRoleLevel(user.role);
+const playerId = new URLSearchParams(window.location.search).get('id');
+const isAdmin  = level >= 2;
+
+buildSidebar('players');
+
+if (!playerId) { window.location.href = 'players.html'; }
+
+let player = null;
+let homeVisit = null;
+let comments  = [];
+let tryoutResult = null;
+
+const ELIMINATION_REASONS = [
+  'Insufficient speed',
+  'Weak arm strength',
+  'Poor hitting mechanics',
+  'Poor fielding mechanics',
+  'Physical size / development not yet ready',
+  'Low baseball understanding or game awareness',
+  'Attitude / coachability concerns',
+  'Injury or medical concern',
+  'Age ineligible',
+  'Did not attend tryout',
+  'Other',
+];
+
+// Build elimination checkboxes
+document.getElementById('eliminationReasons').innerHTML =
+  ELIMINATION_REASONS.map((r, i) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text)">
+      <input type="checkbox" id="er_${i}" value="${r}"
+        style="width:16px;height:16px;accent-color:var(--red)">
+      ${r}
+    </label>`).join('');
+
+async function loadProfile() {
+  try {
+    const [playerRes, hvRes, commRes] = await Promise.allSettled([
+      PlayerAPI.get(playerId),
+      HomeVisitAPI.get(playerId),
+      CommentAPI.get(playerId),
+    ]);
+
+    player    = playerRes.status   === 'fulfilled' ? (playerRes.value.player   || playerRes.value) : null;
+    homeVisit = hvRes.status       === 'fulfilled' ? (hvRes.value.home_visit   || hvRes.value)     : {};
+    comments  = commRes.status     === 'fulfilled' ? (commRes.value.comments   || commRes.value || []) : [];
+
+    if (!player) {
+      document.getElementById('profileContent').innerHTML =
+        '<div class="empty-state"><div class="empty-title">Player not found.</div></div>';
+      return;
+    }
+
+    renderProfile();
+  } catch(e) {
+    document.getElementById('profileContent').innerHTML =
+      `<div class="empty-state"><div class="empty-title">Error loading profile.</div></div>`;
+  }
+}
+
+function renderProfile() {
+  const age = calcAge(player.dob) || player.age || '?';
+  document.getElementById('profileNameBar').textContent = player.name;
+
+  // Topbar actions
+  if (isAdmin) {
+    document.getElementById('topbarActions').innerHTML = `
+      <button class="btn btn-outline mob-hide" onclick="editPlayer()">
+        <svg viewBox="0 0 16 16"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+        Edit
+      </button>
+      <button class="btn btn-green" onclick="exportPDF()">
+        <svg viewBox="0 0 16 16"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+        <span class="mob-hide">Export PDF</span>
+      </button>`;
+  }
+
+  const velo = player.velo || tryoutResult?.velo_st_avg || '—';
+  const broad = tryoutResult?.broad_avg || player.broad || '—';
+  const dash  = tryoutResult?.dash_avg  || '—';
+
+  document.getElementById('profileContent').innerHTML = `
+    <!-- HERO (Mookie Betts style) -->
+    <div class="profile-hero" style="margin-bottom:14px">
+      <div class="profile-hero-top">
+        <!-- Photo -->
+        <div class="profile-photo-wrap" id="photoWrap" ${isAdmin ? 'onclick="triggerPhotoUpload()"' : ''}>
+          ${player.photo_url
+            ? `<img src="${player.photo_url}" alt="${player.name}" id="profilePhoto">`
+            : `<div class="profile-photo-initials" id="profilePhoto">${initials(player.name)}</div>`}
+          ${isAdmin ? '<div class="photo-edit-hint">📷 Change photo</div>' : ''}
+        </div>
+
+        <!-- Main info -->
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+                <span style="font-family:var(--font2);font-size:0.62rem;font-weight:800;color:var(--green-light);text-transform:uppercase;letter-spacing:.1em">${player.class||'—'}</span>
+                ${tierBadge(player.tier)}
+                ${outcomePillLarge(player.outcome)}
+              </div>
+              <div class="profile-name">${player.name}</div>
+            </div>
+          </div>
+          <div class="profile-school">${player.school||'—'}</div>
+          <div class="profile-meta-row">
+            <div class="profile-meta-item"><strong>Age:</strong> ${age}</div>
+            <div class="profile-meta-item"><strong>DOB:</strong> ${formatDateShort(player.dob)}</div>
+            <div class="profile-meta-item"><strong>District:</strong> ${player.district||'—'}</div>
+            <div class="profile-meta-item"><strong>Scout:</strong> ${player.scout||'—'}</div>
+            <div class="profile-meta-item"><strong>GPHP:</strong> ${player.gphp ? player.gphp+'cm' : '—'}</div>
+          </div>
+        </div>
+
+        <!-- Right side stats panel (like Mookie Betts) -->
+        <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;gap:4px;min-width:160px" class="mob-hide">
+          ${[
+            ['Nationality', player.nationality||'—'],
+            ['Division',    player.division||'—'],
+            ['Household',   player.household_id||'—'],
+            ['Added',       formatDateShort(player.created_at)],
+          ].map(([l,v]) => `
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:rgba(255,255,255,0.4)">
+              ${l} <strong style="color:rgba(255,255,255,0.8)">${v}</strong>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="profile-hero-stats">
+        ${[
+          ['Velo',  velo,    'mph'],
+          ['Broad', broad,   'inches'],
+          ['Dash',  dash,    'secs'],
+          ['Height', player.height_ft||'—', 'ft'],
+          ['Weight', player.weight_lbs||'—','lbs'],
+          ['KR',    player.kr||'—',  ''],
+        ].map(([l,v,u]) => `
+          <div class="hero-stat">
+            <div class="hero-stat-val">${v}</div>
+            <div class="hero-stat-lbl">${l}${u?' ('+u+')':''}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('profile',this)">
+        <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+        Profile
+      </button>
+      <button class="tab" onclick="showTab('homevisit',this)">
+        <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 7l6-5 6 5v7H2z"/><rect x="6" y="9" width="4" height="5"/></svg>
+        Home Visit
+      </button>
+      <button class="tab" onclick="showTab('tryout',this)">
+        <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Final Tryout
+      </button>
+      <button class="tab" onclick="showTab('posttryout',this)">
+        <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 8l4 4 8-8"/></svg>
+        Post Tryout
+      </button>
+    </div>
+
+    <!-- TAB 1: PROFILE -->
+    <div class="tab-content active" id="tab-profile">
+      <div class="grid-2">
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">Player Information</span>
+              ${isAdmin ? `<button class="card-action" onclick="editPlayer()">Edit</button>` : ''}
+            </div>
+            ${infoGrid([
+              ['Full Name',      player.name],
+              ['Date of Birth',  formatDateShort(player.dob)],
+              ['Age',            age + ' years'],
+              ['Class',          player.class||'—'],
+              ['Gender',         player.gender||'—'],
+              ['Nationality',    player.nationality||'—'],
+              ['Refugee ID',     player.refugee_id||'—'],
+              ['Household ID',   player.household_id||'—'],
+            ])}
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">Genetics</span></div>
+            ${infoGrid([
+              ['Dad Height',  player.dad_ht ? player.dad_ht+'cm' : '—'],
+              ['Mom Height',  player.mom_ht ? player.mom_ht+'cm' : '—'],
+              ['GPHP',        player.gphp   ? player.gphp+'cm'  : '—'],
+              ['KR',          player.kr||'—'],
+            ])}
+          </div>
+        </div>
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-head"><span class="card-title">School & Location</span></div>
+            ${infoGrid([
+              ['School',          player.school||'—'],
+              ['School Contact',  player.school_contact||'—'],
+              ['District',        player.district||'—'],
+              ['Division',        player.division||'—'],
+              ['Scout',           player.scout||'—'],
+            ])}
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">Parent / Guardian Contacts</span></div>
+            ${infoGrid([
+              ['Parent 1', player.parent1||'—'],
+              ['Parent 2', player.parent2||'—'],
+            ])}
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">Scout Notes</span></div>
+            <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">
+              ${player.notes || '<span style="color:var(--muted)">No notes added.</span>'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments -->
+      <div class="card" style="margin-top:12px">
+        <div class="card-head"><span class="card-title">Comments</span></div>
+        <div id="commentsList"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input class="form-input" id="commentInput" type="text"
+            placeholder="Add a comment..." style="flex:1"
+            onkeydown="if(event.key==='Enter') addComment()">
+          <button class="btn btn-green" onclick="addComment()">
+            <svg viewBox="0 0 16 16"><path d="M14 1L1 6l5 3 2 5 3-5 3-8z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: HOME VISIT -->
+    <div class="tab-content" id="tab-homevisit">
+      <div class="grid-2">
+        <div class="col-stack">
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">Home Visit Notes</span>
+              ${isAdmin ? `<button class="card-action" onclick="saveHVNotes()">Save</button>` : ''}
+            </div>
+            <textarea class="form-textarea" id="hvNotes" rows="6"
+              placeholder="Notes from the home visit..."
+              ${!isAdmin ? 'disabled' : ''}
+              style="${!isAdmin ? 'background:var(--bg);cursor:default' : ''}"
+            >${homeVisit?.notes||''}</textarea>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">Home Visit Details</span></div>
+            ${infoGrid([
+              ['Visit Date', homeVisit?.visit_date ? formatDateShort(homeVisit.visit_date) : '—'],
+              ['Visited by', homeVisit?.visited_by||'—'],
+              ['Family size', homeVisit?.family_size||'—'],
+              ['Guardian consent', homeVisit?.consent ? 'Yes' : 'No'],
+            ])}
+            ${isAdmin ? `
+            <div style="margin-top:12px">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Visit Date</label>
+                  <input class="form-input" id="hvDate" type="date" value="${homeVisit?.visit_date||''}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Visited By</label>
+                  <input class="form-input" id="hvBy" type="text" value="${homeVisit?.visited_by||''}" placeholder="Name">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Family Size</label>
+                  <input class="form-input" id="hvFamily" type="number" value="${homeVisit?.family_size||''}" placeholder="Number of people">
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:22px">
+                  <input type="checkbox" id="hvConsent" ${homeVisit?.consent ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--green)">
+                  <label class="form-label" style="margin:0;cursor:pointer" for="hvConsent">Guardian consent obtained</label>
+                </div>
+              </div>
+              <button class="btn btn-green" style="width:100%;margin-top:8px" onclick="saveHomeVisit()">Save Home Visit Info</button>
+            </div>` : ''}
+          </div>
+        </div>
+        <div class="col-stack">
+          ${isAdmin ? `
+          <div class="card">
+            <div class="card-head"><span class="card-title">Upload Media</span></div>
+            <div class="upload-area" onclick="document.getElementById('mediaUpload').click()">
+              <input type="file" id="mediaUpload" accept="image/*,video/*" multiple onchange="uploadMedia(this.files)">
+              <svg viewBox="0 0 16 16" style="width:28px;height:28px;stroke:var(--muted);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 8px">
+                <path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/>
+              </svg>
+              <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--muted)">Click to upload photos or videos</div>
+              <div style="font-family:var(--font2);font-size:0.65rem;color:var(--muted);margin-top:3px">Videos are compressed to preserve quality</div>
+            </div>
+          </div>` : ''}
+          <div class="card">
+            <div class="card-head"><span class="card-title">Photos &amp; Videos</span></div>
+            <div class="media-grid" id="mediaGrid">
+              <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Loading media...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FINAL TRYOUT -->
+    <div class="tab-content" id="tab-tryout">
+      ${isAdmin ? `
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="saveTryoutMetrics()">
+          <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+          Save Metrics
+        </button>
+        <button class="btn btn-outline" style="color:var(--green);border-color:var(--green)" onclick="admitPlayer()">
+          <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+          Admit Player
+        </button>
+        <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="document.getElementById('eliminateModal').classList.add('open')">
+          <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          Eliminate Player
+        </button>
+      </div>` : ''}
+
+      <!-- Metric display (like Dodgers stats page) -->
+      <div id="tryoutDisplay"></div>
+
+      ${isAdmin ? `
+      <!-- Metric input form -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><span class="card-title">Enter / Update Metrics</span></div>
+
+        <div class="metric-section-title">Physical</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Height (ft)</label>
+            <input class="form-input" id="m_ht" type="text" placeholder='e.g. 5"8' value="${tryoutResult?.height_ft||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (lbs)</label>
+            <input class="form-input" id="m_wt" type="number" placeholder="lbs" value="${tryoutResult?.weight_lbs||''}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ER</label>
+            <input class="form-input" id="m_er" type="text" placeholder="ER value" value="${tryoutResult?.er||''}">
+          </div>
+        </div>
+
+        <div class="metric-section-title">30 Yard Dash</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <div><label class="form-label">Attempt 1</label><input class="form-input" id="m_30_1" type="number" step=".01" placeholder="secs" value="${tryoutResult?.dash_1||''}" oninput="autoCalcDash()"></div>
+          <div><label class="form-label">Attempt 2</label><input class="form-input" id="m_30_2" type="number" step=".01" placeholder="secs" value="${tryoutResult?.dash_2||''}" oninput="autoCalcDash()"></div>
+          <div><label class="form-label">Average</label>
+            <div class="metric-avg" id="dash_avg_display">${tryoutResult?.dash_avg||'—'}</div>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="metric-section-title">Broad Jump</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <div><label class="form-label">Attempt 1 (in)</label><input class="form-input" id="m_b1" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_1||''}" oninput="autoCalcBroad()"></div>
+          <div><label class="form-label">Attempt 2 (in)</label><input class="form-input" id="m_b2" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_2||''}" oninput="autoCalcBroad()"></div>
+          <div><label class="form-label">Attempt 3 (in)</label><input class="form-input" id="m_b3" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_3||''}" oninput="autoCalcBroad()"></div>
+          <div><label class="form-label">Average</label>
+            <div class="metric-avg" id="broad_avg_display">${tryoutResult?.broad_avg||'—'}</div>
+          </div>
+        </div>
+
+        <div class="metric-section-title">Velocity — Standing</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <div><label class="form-label">Attempt 1 (mph)</label><input class="form-input" id="m_vs1" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_st_1||''}" oninput="autoCalcVeloSt()"></div>
+          <div><label class="form-label">Attempt 2 (mph)</label><input class="form-input" id="m_vs2" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_st_2||''}" oninput="autoCalcVeloSt()"></div>
+          <div><label class="form-label">Average</label>
+            <div class="metric-avg" id="velo_st_avg_display">${tryoutResult?.velo_st_avg||'—'}</div>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="metric-section-title">Velocity — Pitching Down</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+          <div><label class="form-label">Attempt 1 (mph)</label><input class="form-input" id="m_vp1" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_pd_1||''}" oninput="autoCalcVeloPd()"></div>
+          <div><label class="form-label">Attempt 2 (mph)</label><input class="form-input" id="m_vp2" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_pd_2||''}" oninput="autoCalcVeloPd()"></div>
+          <div><label class="form-label">Average</label>
+            <div class="metric-avg" id="velo_pd_avg_display">${tryoutResult?.velo_pd_avg||'—'}</div>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="metric-section-title">Assessment</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Assign Tier *</label>
+            <select class="form-select" id="m_tier">
+              <option value="">Select tier</option>
+              <option value="1"  ${tryoutResult?.tier==='1'  ?'selected':''}>Tier 1 — Green</option>
+              <option value="1.5"${tryoutResult?.tier==='1.5'?'selected':''}>Tier 1.5 — Yellow-Green</option>
+              <option value="2"  ${tryoutResult?.tier==='2'  ?'selected':''}>Tier 2 — Orange</option>
+              <option value="3"  ${tryoutResult?.tier==='3'  ?'selected':''}>Tier 3 — Red</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Overall Scout Grade (1-10)</label>
+            <input class="form-input" id="m_grade" type="number" min="1" max="10" step="0.5" placeholder="e.g. 7.5" value="${tryoutResult?.overall_grade||''}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Scout Notes</label>
+          <textarea class="form-textarea" id="m_notes" rows="3" placeholder="Observations from the tryout...">${tryoutResult?.scout_notes||''}</textarea>
+        </div>
+      </div>` : renderMetricDisplay()}
+    </div>
+
+    <!-- TAB 4: POST TRYOUT -->
+    <div class="tab-content" id="tab-posttryout">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Post Tryout Status</span>
+            ${isAdmin ? `<button class="card-action" onclick="savePostTryout()">Save</button>` : ''}
+          </div>
+          ${isAdmin ? `
+          <div class="form-group">
+            <label class="form-label">Outcome</label>
+            <select class="form-select" id="pt_outcome">
+              <option value="">Pending</option>
+              <option value="admitted"   ${player.outcome==='admitted'  ?'selected':''}>Admitted</option>
+              <option value="eliminated" ${player.outcome==='eliminated'?'selected':''}>Eliminated</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Academy Assignment</label>
+            <input class="form-input" id="pt_academy" type="text" value="${player.academy||''}" placeholder="e.g. Mpigi Academy">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Coach Assigned</label>
+            <input class="form-input" id="pt_coach" type="text" value="${player.coach_assigned||''}" placeholder="Coach name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Check-in Date</label>
+            <input class="form-input" id="pt_checkin" type="date" value="${player.next_checkin||''}">
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="pt_consent" ${player.guardian_consent?'checked':''} style="width:16px;height:16px;accent-color:var(--green)">
+            <label class="form-label" style="margin:0;cursor:pointer" for="pt_consent">Guardian consent confirmed</label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Development Notes</label>
+            <textarea class="form-textarea" id="pt_notes" rows="4" placeholder="What does this player need to work on? What are the next steps?">${player.dev_notes||''}</textarea>
+          </div>
+          <button class="btn btn-green" style="width:100%" onclick="savePostTryout()">Save Post Tryout Info</button>
+          ` : infoGrid([
+            ['Outcome',           player.outcome ? player.outcome.charAt(0).toUpperCase()+player.outcome.slice(1) : 'Pending'],
+            ['Academy',           player.academy||'—'],
+            ['Coach',             player.coach_assigned||'—'],
+            ['Next Check-in',     player.next_checkin ? formatDateShort(player.next_checkin) : '—'],
+            ['Guardian Consent',  player.guardian_consent ? 'Yes' : 'No'],
+          ])}
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-title">Development Notes</span></div>
+          <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">
+            ${player.dev_notes || '<span style="color:var(--muted)">No development notes yet.</span>'}
+          </p>
+          ${player.elimination_reason ? `
+          <div style="margin-top:14px;padding:12px;background:var(--red-pale);border:1.5px solid var(--red-mid);border-radius:var(--radius-sm)">
+            <div style="font-family:var(--font2);font-size:0.7rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Elimination Reasons</div>
+            <div style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">${player.elimination_reason}</div>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>`;
+
+  renderComments();
+  renderMedia();
+  renderTryoutDisplay();
+  loadTryoutResult();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function infoGrid(rows) {
+  return `<div style="display:flex;flex-direction:column;gap:0">
+    ${rows.map(([l,v],i) => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;${i<rows.length-1?'border-bottom:1px solid var(--border)':''}">
+        <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--muted)">${l}</span>
+        <span style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text);text-align:right;max-width:60%">${v||'—'}</span>
+      </div>`).join('')}
+  </div>`;
+}
+
+function outcomePillLarge(o) {
+  if (!o) return '';
+  if (o === 'admitted')   return '<span class="pill pill-green" style="font-size:.65rem">Admitted</span>';
+  if (o === 'eliminated') return '<span class="pill pill-red" style="font-size:.65rem">Eliminated</span>';
+  return '';
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tc = document.getElementById('tab-' + id);
+  if (tc) tc.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  if (id === 'tryout') renderTryoutDisplay();
+}
+
+// ── COMMENTS ─────────────────────────────────────────────────────
+function renderComments() {
+  const el = document.getElementById('commentsList');
+  if (!el) return;
+  if (!comments.length) {
+    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:8px 0">No comments yet.</div>';
+    return;
+  }
+  el.innerHTML = comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-avatar">${initials(c.author_name||'?')}</div>
+      <div style="flex:1;min-width:0">
+        <div class="comment-author">${c.author_name||'Unknown'}
+          <span class="comment-time">${formatDate(c.created_at)}</span>
+        </div>
+        <div class="comment-body">${c.text}</div>
+      </div>
+      ${isAdmin && c.author_id === user.id ? `
+        <button class="btn-ghost" onclick="deleteComment('${c.id}')" title="Delete">
+          <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5"/><path d="M3 4l1 10h8l1-10"/></svg>
+        </button>` : ''}
+    </div>`).join('');
+}
+
+async function addComment() {
+  const input = document.getElementById('commentInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  try {
+    const r = await CommentAPI.add(playerId, text);
+    comments.unshift(r.comment || { text, author_name: user.name, created_at: new Date(), id: Date.now(), author_id: user.id });
+    input.value = '';
+    renderComments();
+    showToast('Comment added', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteComment(id) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    await CommentAPI.delete(playerId, id);
+    comments = comments.filter(c => String(c.id) !== String(id));
+    renderComments();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── MEDIA ─────────────────────────────────────────────────────────
+function renderMedia() {
+  const el = document.getElementById('mediaGrid');
+  if (!el) return;
+  const media = homeVisit?.media || [];
+  if (!media.length) {
+    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">No media uploaded yet.</div>';
+    return;
+  }
+  el.innerHTML = media.map(m => `
+    <div class="media-thumb" onclick="${m.type==='image' ? `openLightbox('${m.url}')` : ''}">
+      ${m.type === 'image'
+        ? `<img src="${m.url}" loading="lazy">`
+        : `<video src="${m.url}" preload="metadata"></video>`}
+      <span class="media-type-icon">${m.type === 'video' ? '▶ Video' : '📷'}</span>
+      ${isAdmin ? `<button class="media-del" onclick="event.stopPropagation();deleteMedia('${m.id}')">✕</button>` : ''}
+    </div>`).join('');
+}
+
+async function uploadMedia(files) {
+  if (!files || !files.length) return;
+  showToast('Uploading...', 'info', 10000);
+  try {
+    for (const file of files) {
+      const type = file.type.startsWith('video/') ? 'video' : 'image';
+      const res  = await HomeVisitAPI.uploadMedia(playerId, file, type);
+      if (!homeVisit.media) homeVisit.media = [];
+      homeVisit.media.push(res.media);
+    }
+    renderMedia();
+    showToast('Uploaded!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteMedia(id) {
+  if (!confirm('Delete this file?')) return;
+  try {
+    await HomeVisitAPI.deleteMedia(playerId, id);
+    homeVisit.media = (homeVisit.media || []).filter(m => String(m.id) !== String(id));
+    renderMedia();
+    showToast('Deleted', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+}
+
+// ── HOME VISIT SAVE ───────────────────────────────────────────────
+async function saveHVNotes() {
+  try {
+    await HomeVisitAPI.save(playerId, { notes: document.getElementById('hvNotes').value });
+    showToast('Notes saved', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveHomeVisit() {
+  try {
+    await HomeVisitAPI.save(playerId, {
+      notes:       document.getElementById('hvNotes').value,
+      visit_date:  document.getElementById('hvDate').value || null,
+      visited_by:  document.getElementById('hvBy').value.trim(),
+      family_size: document.getElementById('hvFamily').value || null,
+      consent:     document.getElementById('hvConsent').checked,
+    });
+    showToast('Home visit info saved', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── TRYOUT METRICS ────────────────────────────────────────────────
+async function loadTryoutResult() {
+  try {
+    const r = await ResultAPI.get('any', playerId);
+    tryoutResult = r.result || r;
+    renderTryoutDisplay();
+    // Populate form if admin
+    if (isAdmin && tryoutResult) populateTryoutForm();
+  } catch(e) {}
+}
+
+function populateTryoutForm() {
+  const r = tryoutResult;
+  if (!r) return;
+  const fields = { m_ht:'height_ft', m_wt:'weight_lbs', m_er:'er',
+    m_30_1:'dash_1', m_30_2:'dash_2', m_b1:'broad_1', m_b2:'broad_2', m_b3:'broad_3',
+    m_vs1:'velo_st_1', m_vs2:'velo_st_2', m_vp1:'velo_pd_1', m_vp2:'velo_pd_2',
+    m_grade:'overall_grade', m_notes:'scout_notes' };
+  Object.entries(fields).forEach(([elId, key]) => {
+    const el = document.getElementById(elId);
+    if (el && r[key]) el.value = r[key];
+  });
+  if (document.getElementById('m_tier') && r.tier)
+    document.getElementById('m_tier').value = r.tier;
+  autoCalcDash(); autoCalcBroad(); autoCalcVeloSt(); autoCalcVeloPd();
+}
+
+function renderTryoutDisplay() {
+  const el = document.getElementById('tryoutDisplay');
+  if (!el) return;
+  const r = tryoutResult;
+  if (!r) {
+    el.innerHTML = `<div class="card" style="margin-bottom:10px">
+      <div class="empty-state">
+        <div class="empty-title">No tryout metrics yet</div>
+        <div class="empty-sub">${isAdmin ? 'Fill in the form below to add metrics.' : 'Metrics will appear here after the tryout.'}</div>
+      </div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-head">
+        <span class="card-title">Tryout Metrics</span>
+        ${r.tier ? tierBadge(r.tier) : ''}
+      </div>
+      <div class="tryout-stat-grid">
+        ${statBox('30yd Dash', r.dash_avg||'—', 'sec', r.dash_1, r.dash_2, null)}
+        ${statBox('Broad Jump', r.broad_avg||'—', 'in', r.broad_1, r.broad_2, r.broad_3)}
+        ${statBox('Velo (Stand)', r.velo_st_avg||'—', 'mph', r.velo_st_1, r.velo_st_2, null)}
+        ${statBox('Velo (Pitch)', r.velo_pd_avg||'—', 'mph', r.velo_pd_1, r.velo_pd_2, null)}
+        ${singleStatBox('Height', r.height_ft||'—', 'ft')}
+        ${singleStatBox('Weight', r.weight_lbs||'—', 'lbs')}
+        ${singleStatBox('ER', r.er||'—', '')}
+        ${r.overall_grade ? singleStatBox('Grade', r.overall_grade, '/10') : ''}
+      </div>
+      ${r.scout_notes ? `
+      <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-top:4px">
+        <div style="font-family:var(--font2);font-size:0.62rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Scout Notes</div>
+        <div style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">${r.scout_notes}</div>
+      </div>` : ''}
+    </div>`;
+}
+
+function statBox(label, avgVal, unit, a1, a2, a3) {
+  const attempts = [a1, a2, a3].filter(v => v != null && v !== '');
+  return `
+    <div class="tryout-stat-box">
+      <div class="tsb-label">${label}</div>
+      <div class="tsb-val">${avgVal}</div>
+      <div class="tsb-unit">${unit} avg</div>
+      ${attempts.length ? `<div class="tsb-attempts">
+        ${attempts.map(a => `<div class="tsb-attempt">${a}</div>`).join('')}
+      </div>` : ''}
+    </div>`;
+}
+
+function singleStatBox(label, val, unit) {
+  return `
+    <div class="tryout-stat-box">
+      <div class="tsb-label">${label}</div>
+      <div class="tsb-val">${val}</div>
+      <div class="tsb-unit">${unit}</div>
+    </div>`;
+}
+
+// Auto-calc averages
+function autoCalcDash() {
+  const a = avg(document.getElementById('m_30_1')?.value, document.getElementById('m_30_2')?.value);
+  const el = document.getElementById('dash_avg_display');
+  if (el) el.textContent = a || '—';
+}
+function autoCalcBroad() {
+  const a = avg(document.getElementById('m_b1')?.value, document.getElementById('m_b2')?.value, document.getElementById('m_b3')?.value);
+  const el = document.getElementById('broad_avg_display');
+  if (el) el.textContent = a || '—';
+}
+function autoCalcVeloSt() {
+  const a = avg(document.getElementById('m_vs1')?.value, document.getElementById('m_vs2')?.value);
+  const el = document.getElementById('velo_st_avg_display');
+  if (el) el.textContent = a || '—';
+}
+function autoCalcVeloPd() {
+  const a = avg(document.getElementById('m_vp1')?.value, document.getElementById('m_vp2')?.value);
+  const el = document.getElementById('velo_pd_avg_display');
+  if (el) el.textContent = a || '—';
+}
+
+async function saveTryoutMetrics() {
+  const tier = document.getElementById('m_tier')?.value;
+  if (!tier) { showToast('Please assign a tier before saving.', 'error'); return; }
+
+  const dash_1 = document.getElementById('m_30_1').value;
+  const dash_2 = document.getElementById('m_30_2').value;
+  const broad_1 = document.getElementById('m_b1').value;
+  const broad_2 = document.getElementById('m_b2').value;
+  const broad_3 = document.getElementById('m_b3').value;
+  const velo_st_1 = document.getElementById('m_vs1').value;
+  const velo_st_2 = document.getElementById('m_vs2').value;
+  const velo_pd_1 = document.getElementById('m_vp1').value;
+  const velo_pd_2 = document.getElementById('m_vp2').value;
+
+  try {
+    const res = await ResultAPI.save('any', playerId, {
+      height_ft:    document.getElementById('m_ht').value,
+      weight_lbs:   document.getElementById('m_wt').value,
+      er:           document.getElementById('m_er').value,
+      dash_1, dash_2, dash_avg: avg(dash_1, dash_2),
+      broad_1, broad_2, broad_3, broad_avg: avg(broad_1, broad_2, broad_3),
+      velo_st_1, velo_st_2, velo_st_avg: avg(velo_st_1, velo_st_2),
+      velo_pd_1, velo_pd_2, velo_pd_avg: avg(velo_pd_1, velo_pd_2),
+      tier, overall_grade: document.getElementById('m_grade').value,
+      scout_notes: document.getElementById('m_notes').value,
+    });
+    tryoutResult = res.result || res;
+    // Also update player tier
+    await PlayerAPI.update(playerId, { tier });
+    player.tier = tier;
+    renderTryoutDisplay();
+    showToast('Metrics saved!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── OUTCOME ACTIONS ───────────────────────────────────────────────
+async function admitPlayer() {
+  if (!confirm('Mark this player as Admitted?')) return;
+  try {
+    await PlayerAPI.update(playerId, { outcome: 'admitted' });
+    player.outcome = 'admitted';
+    showToast('Player admitted!', 'success');
+    renderProfile();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function confirmElimination() {
+  const reasons = ELIMINATION_REASONS.filter((_, i) =>
+    document.getElementById('er_' + i)?.checked
+  );
+  const notes = document.getElementById('eliminationNotes').value.trim();
+  if (!reasons.length) { showToast('Select at least one reason.', 'error'); return; }
+
+  try {
+    await PlayerAPI.update(playerId, {
+      outcome: 'eliminated',
+      elimination_reason: reasons.join('; ') + (notes ? '\n' + notes : ''),
+    });
+    player.outcome = 'eliminated';
+    player.elimination_reason = reasons.join('; ');
+    document.getElementById('eliminateModal').classList.remove('open');
+    showToast('Player eliminated.', 'success');
+    renderProfile();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function savePostTryout() {
+  try {
+    await PlayerAPI.update(playerId, {
+      outcome:          document.getElementById('pt_outcome').value || null,
+      academy:          document.getElementById('pt_academy').value.trim(),
+      coach_assigned:   document.getElementById('pt_coach').value.trim(),
+      next_checkin:     document.getElementById('pt_checkin').value || null,
+      guardian_consent: document.getElementById('pt_consent').checked,
+      dev_notes:        document.getElementById('pt_notes').value.trim(),
+    });
+    showToast('Post tryout info saved!', 'success');
+    loadProfile();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── PHOTO UPLOAD ──────────────────────────────────────────────────
+document.getElementById('photoUploadInput').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  showToast('Uploading photo...', 'info', 8000);
+  try {
+    const res = await PlayerAPI.uploadPhoto(playerId, file);
+    player.photo_url = res.photo_url;
+    const pw = document.getElementById('profilePhoto');
+    if (pw) {
+      pw.outerHTML = `<img src="${res.photo_url}" alt="${player.name}" id="profilePhoto">`;
+    }
+    showToast('Photo updated!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+});
+
+function triggerPhotoUpload() {
+  if (isAdmin) document.getElementById('photoUploadInput').click();
+}
+
+// ── EDIT PLAYER ───────────────────────────────────────────────────
+function editPlayer() {
+  // Redirect to players page with edit param
+  window.location.href = `players.html?edit=${playerId}`;
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────
+function exportPDF() {
+  showToast('Generating PDF...', 'info', 3000);
+  window.open(API_BASE + '/api/players/' + playerId + '/pdf?token=' + Auth.token(), '_blank');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+loadProfile();
+</script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Scout Access — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+.scout-card {
+  background:var(--white);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+  transition:all .15s;
+}
+.scout-card:hover { border-color:var(--green-mid); }
+.scout-avatar {
+  width:44px;height:44px;border-radius:50%;
+  background:var(--green-dark);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font1);font-size:.9rem;color:var(--green-light);
+  flex-shrink:0;
+}
+.expiry-badge {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:100px;
+  font-family:var(--font2);font-size:.65rem;font-weight:800;
+}
+.expiry-active  { background:var(--green-pale); color:var(--green-dark); }
+.expiry-expiring{ background:var(--amber-pale); color:var(--amber-text); }
+.expiry-expired { background:var(--red-pale);   color:var(--red); }
+.days-input-wrap {
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:4px 8px;
+  width:fit-content;
+}
+.days-input {
+  width:48px;height:28px;
+  background:none;border:none;outline:none;
+  font-family:var(--font1);font-size:.95rem;font-weight:700;
+  color:var(--text);text-align:center;
+}
+.days-btn {
+  width:24px;height:24px;border-radius:6px;
+  background:var(--green-pale);border:1px solid var(--green-mid);
+  color:var(--green-dark);font-size:1rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .1s;
+}
+.days-btn:hover { background:var(--green);color:#fff; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        <div>
+          <div class="topbar-title">Scout Access</div>
+          <div class="topbar-sub" id="countLabel">Manage scout accounts and access duration</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-green" onclick="openAddModal()">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+          <span class="mob-hide">Add Scout</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Info banner -->
+      <div style="background:var(--green-pale);border:1.5px solid var(--green-mid);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+        <svg viewBox="0 0 16 16" style="width:16px;height:16px;stroke:var(--green-dark);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="6"/><path d="M8 7v4"/><circle cx="8" cy="5.5" r=".5" fill="var(--green-dark)"/></svg>
+        <div style="font-family:var(--font2);font-size:0.75rem;font-weight:600;color:var(--dark);line-height:1.6">
+          Scouts have <strong>read-only access</strong> to player profiles. Set the number of days each scout account stays active. After their access expires, they cannot log in until you renew it.
+        </div>
+      </div>
+
+      <div id="scoutsGrid" style="display:flex;flex-direction:column;gap:10px">
+        <div class="empty-state"><div class="empty-title">Loading scouts...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Scout Modal -->
+<div class="modal-bg" id="addModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Add Scout Account</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="sName" type="text" placeholder="Scout's full name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          <input class="form-input" id="sUsername" type="text" placeholder="e.g. scout_john">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input class="form-input" id="sPassword" type="password" placeholder="Set a password">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Active Days *</label>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input class="form-input" id="sActiveDays" type="number" min="1" max="365" value="7" placeholder="Number of days" style="max-width:100px">
+          <span style="font-family:var(--font2);font-size:0.75rem;font-weight:600;color:var(--muted)">days from today</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">District / Area</label>
+        <input class="form-input" id="sDistrict" type="text" placeholder="Which area does this scout cover?">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green" id="saveScoutBtn" onclick="saveScout()">
+        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+        Create Account
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+Auth.require();
+buildSidebar('scouts');
+
+let scouts = [];
+
+async function loadScouts() {
+  try {
+    const r = await ScoutAPI.getAll();
+    scouts = r.scouts || r || [];
+  } catch(e) { scouts = []; }
+  renderScouts();
+}
+
+function expiryStatus(until) {
+  if (!until) return 'expired';
+  const diff = (new Date(until) - new Date()) / 86400000;
+  if (diff <= 0)  return 'expired';
+  if (diff <= 3)  return 'expiring';
+  return 'active';
+}
+
+function expiryLabel(until) {
+  if (!until) return 'Expired';
+  const diff = Math.ceil((new Date(until) - new Date()) / 86400000);
+  if (diff <= 0)  return 'Expired';
+  if (diff === 1) return 'Expires tomorrow';
+  if (diff <= 3)  return `Expires in ${diff} days`;
+  return `Active until ${new Date(until).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'})}`;
+}
+
+function renderScouts() {
+  const el = document.getElementById('scoutsGrid');
+  document.getElementById('countLabel').textContent =
+    scouts.length + ' scout account' + (scouts.length !== 1 ? 's' : '');
+
+  if (!scouts.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></div>
+        <div class="empty-title">No scout accounts yet</div>
+        <div class="empty-sub">Add a scout account so they can view player profiles.</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = scouts.map(s => {
+    const status = expiryStatus(s.active_until);
+    const loginCount = s.login_count || 0;
+    const lastLogin  = s.last_login  ? formatDate(s.last_login) : 'Never';
+    return `
+      <div class="scout-card">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div class="scout-avatar">${initials(s.name)}</div>
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+              <span style="font-family:var(--font2);font-size:.88rem;font-weight:800;color:var(--text)">${s.name}</span>
+              <span class="expiry-badge expiry-${status}">${expiryLabel(s.active_until)}</span>
+            </div>
+            <div style="font-family:var(--font2);font-size:.68rem;font-weight:600;color:var(--muted)">
+              @${s.username} · ${s.district||'All areas'} · Logged in ${loginCount}x · Last: ${lastLogin}
+            </div>
+          </div>
+          <!-- Days control -->
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div style="font-family:var(--font2);font-size:.6rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Set active days</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="days-input-wrap">
+                <button class="days-btn" onclick="adjustDays('${s.id}', -1)">-</button>
+                <input class="days-input" id="days_${s.id}" type="number" min="1" max="365" value="7">
+                <button class="days-btn" onclick="adjustDays('${s.id}', 1)">+</button>
+              </div>
+              <button class="btn btn-green" style="height:36px" onclick="setAccess('${s.id}')">
+                Apply
+              </button>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-outline" style="height:28px;font-size:.65rem" onclick="revokeAccess('${s.id}')">Revoke</button>
+              <button class="btn btn-outline" style="height:28px;font-size:.65rem;color:var(--red);border-color:var(--red)" onclick="deleteScout('${s.id}','${s.name}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function adjustDays(id, delta) {
+  const el = document.getElementById('days_' + id);
+  if (!el) return;
+  const val = Math.max(1, parseInt(el.value||7) + delta);
+  el.value = val;
+}
+
+async function setAccess(id) {
+  const days = parseInt(document.getElementById('days_' + id).value) || 7;
+  const until = new Date();
+  until.setDate(until.getDate() + days);
+  try {
+    await ScoutAPI.update(id, { active_until: until.toISOString() });
+    showToast(`Access set for ${days} day${days!==1?'s':''}`, 'success');
+    loadScouts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function revokeAccess(id) {
+  if (!confirm('Revoke this scout\'s access immediately?')) return;
+  try {
+    await ScoutAPI.update(id, { active_until: new Date(Date.now() - 1).toISOString() });
+    showToast('Access revoked', 'success');
+    loadScouts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteScout(id, name) {
+  if (!confirm(`Delete the account for ${name}? This cannot be undone.`)) return;
+  try {
+    await ScoutAPI.delete(id);
+    showToast('Account deleted', 'success');
+    loadScouts();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeModal()   { document.getElementById('addModal').classList.remove('open'); }
+document.getElementById('addModal').addEventListener('click', e => {
+  if (e.target.id === 'addModal') closeModal();
+});
+
+async function saveScout() {
+  const name     = document.getElementById('sName').value.trim();
+  const username = document.getElementById('sUsername').value.trim();
+  const password = document.getElementById('sPassword').value;
+  const days     = parseInt(document.getElementById('sActiveDays').value) || 7;
+
+  if (!name || !username || !password) {
+    showToast('Name, username and password are required.', 'error'); return;
+  }
+
+  const until = new Date();
+  until.setDate(until.getDate() + days);
+
+  const btn = document.getElementById('saveScoutBtn');
+  btn.disabled = true;
+
+  try {
+    await ScoutAPI.create({
+      name, username, password,
+      role: 'scout',
+      active_until: until.toISOString(),
+      district: document.getElementById('sDistrict').value.trim(),
+    });
+    showToast('Scout account created!', 'success');
+    closeModal();
+    loadScouts();
+  } catch(e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadScouts();
+</script>
+</body>
+</html>
