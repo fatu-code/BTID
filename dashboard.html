@@ -76,7 +76,10 @@ document.getElementById('todayLabel').textContent =
 async function loadDash() {
   let stats = {}, recentPlayers = [], recentActivity = [], tryouts = [];
 
-  try { const r = await StatsAPI.get(); stats = r.stats || r; } catch(e){}
+  try {
+    stats = await StatsAPI.get();
+    if (!stats || typeof stats.total === "undefined") stats = {};
+  } catch(e){ stats = {}; }
   try {
     const r = await PlayerAPI.getAll({ limit: 6, sort: 'newest' });
     recentPlayers = r.players || r || [];
@@ -97,10 +100,10 @@ async function loadDash() {
     <!-- Stats -->
     <div class="metrics-grid" style="margin-bottom:14px">
       ${[
-        { label:'Total Players',  val: fmt(stats.total||0),    icon:'<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>', cls:'', href:'players.html' },
-        { label:'Admitted',       val: fmt(stats.admitted||0),  icon:'<path d="M2 8l4 4 8-8"/>',  cls:'',     href:'players.html?outcome=admitted' },
-        { label:'Eliminated',     val: fmt(stats.eliminated||0),icon:'<path d="M4 4l8 8M12 4l-8 8"/><circle cx="8" cy="8" r="6"/>',  cls:'red',   href:'players.html?outcome=eliminated' },
-        { label:'Tryout Batches', val: fmt(stats.tryouts||0),   icon:'<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>',  cls:'',     href:'tryouts.html' },
+        { label:'Total Players',  val: fmt(stats.total ?? 0),    icon:'<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>', cls:'', href:'players.html' },
+        { label:'Admitted',       val: fmt(stats.admitted ?? 0),  icon:'<path d="M2 8l4 4 8-8"/>',  cls:'',     href:'players.html?outcome=admitted' },
+        { label:'Eliminated',     val: fmt(stats.eliminated ?? 0),icon:'<path d="M4 4l8 8M12 4l-8 8"/><circle cx="8" cy="8" r="6"/>',  cls:'red',   href:'players.html?outcome=eliminated' },
+        { label:'Tryout Batches', val: fmt(stats.tryouts ?? 0),   icon:'<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>',  cls:'',     href:'tryouts.html' },
       ].map(s => `
         <div class="metric-card" onclick="window.location.href='${s.href}'">
           <div class="mc-top">
@@ -121,10 +124,10 @@ async function loadDash() {
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
         ${[
-          { tier:'1',  label:'Tier 1',   count: stats.tier1||0,  color:'#009c41', bg:'#e8f5ee' },
-          { tier:'1.5',label:'Tier 1.5', count: stats.tier15||0, color:'#7dbf3a', bg:'#f0f8e8' },
-          { tier:'2',  label:'Tier 2',   count: stats.tier2||0,  color:'#f5a623', bg:'#fef3dc' },
-          { tier:'3',  label:'Tier 3',   count: stats.tier3||0,  color:'#e53935', bg:'#fdeaea' },
+          { tier:'1',  label:'Tier 1',   count: stats.tier1 ?? 0,  color:'#009c41', bg:'#e8f5ee' },
+          { tier:'1.5',label:'Tier 1.5', count: stats.tier15 ?? 0, color:'#7dbf3a', bg:'#f0f8e8' },
+          { tier:'2',  label:'Tier 2',   count: stats.tier2 ?? 0,  color:'#f5a623', bg:'#fef3dc' },
+          { tier:'3',  label:'Tier 3',   count: stats.tier3 ?? 0,  color:'#e53935', bg:'#fdeaea' },
         ].map(t => `
           <div style="background:${t.bg};border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:transform .15s"
             onclick="window.location.href='players.html?tier=${t.tier}'"
