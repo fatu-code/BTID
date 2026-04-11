@@ -6,24 +6,30 @@
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  /* ── Brand greens ── */
-  --green:        #009c41;
-  --green-dark:   #007a33;
-  --green-light:  #b3e6c8;
-  --green-pale:   #e8f5ee;
-  --green-mid:    rgba(0,156,65,0.15);
-  --green-shadow: rgba(0,156,65,0.25);
+  /* ── LA Dodgers Brand Colors ── */
+  --green:        #005A9C;
+  --green-dark:   #003A6B;
+  --green-light:  #b3d4f0;
+  --green-pale:   #e6f0fa;
+  --green-mid:    rgba(0,90,156,0.15);
+  --green-shadow: rgba(0,90,156,0.25);
 
   /* ── Darks ── */
-  --dark:   #1a2e22;
-  --deeper: #0d1f14;
+  --dark:   #00254D;
+  --deeper: #001A3A;
 
   /* ── Neutrals ── */
-  --bg:     #f7faf8;
+  --bg:     #f4f7fb;
   --white:  #ffffff;
-  --border: #dde8e2;
-  --text:   #1a2e22;
-  --muted:  #7a9e8a;
+  --border: #d8e4f0;
+  --text:   #00254D;
+  --muted:  #5B7A96;
+
+  /* ── Dodgers Red Accent ── */
+  --accent:       #EF3E42;
+  --accent-dark:  #C8282C;
+  --accent-pale:  #fde8e8;
+  --accent-mid:   rgba(239,62,66,0.15);
 
   /* ── Status colors ── */
   --red:        #e05252;
@@ -177,7 +183,7 @@ img { display: block; object-fit: cover; }
   content: '';
   position: absolute; left: 0; top: 0; bottom: 0;
   width: 3px;
-  background: var(--green);
+  background: #EF3E42;
   border-radius: 0 2px 2px 0;
 }
 
@@ -518,6 +524,16 @@ img { display: block; object-fit: cover; }
   background: var(--green-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px var(--green-shadow);
+}
+
+.btn-red-accent {
+  background: #EF3E42;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(239,62,66,0.25);
+}
+.btn-red-accent:hover {
+  background: #C8282C;
+  transform: translateY(-1px);
 }
 
 .btn-outline {
@@ -1214,15 +1230,15 @@ tbody tr.clickable { cursor: pointer; }
 
 /* ── DARK MODE ──────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --bg:     #0f1a12;
-  --white:  #1a2820;
-  --border: #2a3d30;
-  --text:   #e8f5ee;
-  --muted:  #6a9e7a;
-  --deeper: #060e08;
-  --dark:   #e8f5ee;
-  --green-pale: rgba(0,156,65,0.12);
-  --green-mid:  rgba(0,156,65,0.2);
+  --bg:     #0a1220;
+  --white:  #0f1e35;
+  --border: #1e3554;
+  --text:   #e6f0fa;
+  --muted:  #6a8faf;
+  --deeper: #060d1a;
+  --dark:   #e6f0fa;
+  --green-pale: rgba(0,90,156,0.15);
+  --green-mid:  rgba(0,90,156,0.25);
   --red-pale:   rgba(224,82,82,0.15);
   --red-mid:    rgba(224,82,82,0.25);
   --amber-pale: rgba(245,158,11,0.15);
