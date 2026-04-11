@@ -45,15 +45,40 @@ function calcAge(dob) {
   return age;
 }
 
-function calcGPHP(dadHtCm, momHtCm, gender) {
-  if (!dadHtCm || !momHtCm) return null;
-  const dad = parseFloat(dadHtCm);
-  const mom = parseFloat(momHtCm);
+// GPHP — Mid-Parental Height Formula
+// unit: 'cm' or 'in'
+// Boys: (Dad + Mom + 13cm) / 2  |  Girls: (Dad + Mom - 13cm) / 2
+// In inches: Boys +5in, Girls -5in
+function calcGPHP(dadHt, momHt, gender, unit) {
+  if (!dadHt || !momHt) return null;
+  const dad = parseFloat(dadHt);
+  const mom = parseFloat(momHt);
   if (isNaN(dad) || isNaN(mom)) return null;
-  const raw = gender === 'F'
-    ? (dad + mom - 13) / 2
-    : (dad + mom + 13) / 2;
+  const adj  = (unit === 'in') ? 5 : 13;
+  const raw  = gender === 'F'
+    ? (dad + mom - adj) / 2
+    : (dad + mom + adj) / 2;
   return raw.toFixed(1);
+}
+
+// Convert heights between units
+function cmToFtIn(cm) {
+  const totalIn = cm / 2.54;
+  const ft = Math.floor(totalIn / 12);
+  const inches = Math.round(totalIn % 12);
+  return ft + '\"' + inches + '\"';
+}
+
+function ftInToCm(ft, inches) {
+  return ((parseFloat(ft) * 12 + parseFloat(inches)) * 2.54).toFixed(1);
+}
+
+function inToCm(inches) {
+  return (parseFloat(inches) * 2.54).toFixed(1);
+}
+
+function cmToIn(cm) {
+  return (parseFloat(cm) / 2.54).toFixed(1);
 }
 
 // ── NUMBER HELPERS ────────────────────────────────────────────────
