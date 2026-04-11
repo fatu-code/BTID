@@ -331,6 +331,60 @@ const level = getRoleLevel(user.role);
 buildSidebar('players');
 
 let allPlayers = [];
+let currentHeightUnit = 'ft';
+
+function setHeightUnit(unit) {
+  currentHeightUnit = unit;
+  document.getElementById('htFtFields').style.display = unit === 'ft' ? '' : 'none';
+  document.getElementById('htCmFields').style.display = unit === 'cm' ? '' : 'none';
+  const ftBtn = document.getElementById('unitFt');
+  const cmBtn = document.getElementById('unitCm');
+  ftBtn.style.background = unit === 'ft' ? 'var(--green)' : 'transparent';
+  ftBtn.style.color      = unit === 'ft' ? '#fff' : 'var(--muted)';
+  cmBtn.style.background = unit === 'cm' ? 'var(--green)' : 'transparent';
+  cmBtn.style.color      = unit === 'cm' ? '#fff' : 'var(--muted)';
+  updateGPHP();
+}
+
+function getDadHeightCm() {
+  if (currentHeightUnit === 'cm') return document.getElementById('pDadHt')?.value || '';
+  const ft = parseFloat(document.getElementById('pDadFt')?.value || 0);
+  const ins = parseFloat(document.getElementById('pDadIn')?.value || 0);
+  if (!ft && !ins) return '';
+  return ((ft * 12 + ins) * 2.54).toFixed(1);
+}
+
+function getMomHeightCm() {
+  if (currentHeightUnit === 'cm') return document.getElementById('pMomHt')?.value || '';
+  const ft = parseFloat(document.getElementById('pMomFt')?.value || 0);
+  const ins = parseFloat(document.getElementById('pMomIn')?.value || 0);
+  if (!ft && !ins) return '';
+  return ((ft * 12 + ins) * 2.54).toFixed(1);
+}
+
+function updateGPHP() {
+  const dad    = getDadHeightCm();
+  const mom    = getMomHeightCm();
+  const gender = document.getElementById('pGender')?.value || 'M';
+  const el     = document.getElementById('pGPHP');
+  if (!el) return;
+  if (!dad || !mom) {
+    el.textContent = 'Set parent heights';
+    el.style.color = 'var(--muted)';
+    return;
+  }
+  const dadN = parseFloat(dad);
+  const momN = parseFloat(mom);
+  const adj  = 13;
+  const gphpCm = gender === 'F'
+    ? ((dadN + momN - adj) / 2).toFixed(1)
+    : ((dadN + momN + adj) / 2).toFixed(1);
+  const gphpIn = (parseFloat(gphpCm) / 2.54).toFixed(1);
+  el.textContent = currentHeightUnit === 'ft'
+    ? gphpIn + '" (' + gphpCm + ' cm) projected'
+    : gphpCm + ' cm projected';
+  el.style.color = 'var(--green-dark)';
+}
 
 // Populate district filter + modal
 UGANDA_DISTRICTS.forEach(d => {
@@ -461,20 +515,7 @@ function updateAgePreview() {
   }
 }
 
-function updateGPHP() {
-  const dad    = document.getElementById('pDadHt').value;
-  const mom    = document.getElementById('pMomHt').value;
-  const gender = document.getElementById('pGender').value;
-  const gphp   = calcGPHP(dad, mom, gender);
-  const el     = document.getElementById('pGPHP');
-  if (gphp) {
-    el.textContent = gphp + ' cm projected';
-    el.style.color = 'var(--green-dark)';
-  } else {
-    el.textContent = 'Set parent heights';
-    el.style.color = 'var(--muted)';
-  }
-}
+
 
 function openAddModal() { document.getElementById('addModal').classList.add('open'); }
 function closeModal()   { document.getElementById('addModal').classList.remove('open'); }
