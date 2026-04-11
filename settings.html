@@ -100,6 +100,65 @@
           </button>
         </div>
 
+        <!-- Two Factor Authentication -->
+        <div class="settings-section">
+          <div class="settings-section-title">Two Factor Authentication</div>
+          <div id="twoFAStatus">
+            <div style="font-family:var(--font2);font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:12px;line-height:1.6">
+              Protect your account with an authenticator app like <strong>Google Authenticator</strong> or <strong>Authy</strong>.
+              Every login will require your password plus a 6-digit code from the app.
+            </div>
+            <div id="twoFADisabled">
+              <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--red-pale);border:1.5px solid var(--red-mid);border-radius:var(--radius-sm);margin-bottom:12px">
+                <svg viewBox="0 0 16 16" style="width:16px;height:16px;stroke:var(--red);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v3"/><circle cx="8" cy="11" r=".5" fill="var(--red)"/></svg>
+                <span style="font-family:var(--font2);font-size:0.75rem;font-weight:700;color:var(--red)">2FA is not enabled. Your account is less secure.</span>
+              </div>
+              <button class="btn btn-green" onclick="setup2FA()">
+                <svg viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+                Enable Two Factor Authentication
+              </button>
+            </div>
+            <div id="twoFAEnabled" style="display:none">
+              <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--green-pale);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);margin-bottom:12px">
+                <svg viewBox="0 0 16 16" style="width:16px;height:16px;stroke:var(--green-dark);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><path d="M2 8l4 4 8-8"/></svg>
+                <span style="font-family:var(--font2);font-size:0.75rem;font-weight:700;color:var(--green-dark)">2FA is enabled. Your account is protected.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Enter current code to disable</label>
+                <div style="display:flex;gap:8px">
+                  <input class="form-input" id="disableCode" type="text" placeholder="000 000" maxlength="7" style="max-width:160px;font-size:1.1rem;letter-spacing:.2em;text-align:center;font-family:var(--font1)">
+                  <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="disable2FA()">Disable 2FA</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Setup flow -->
+          <div id="twoFASetup" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+            <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:10px">
+              Step 1 — Scan this QR code with your authenticator app
+            </div>
+            <div style="text-align:center;margin-bottom:14px">
+              <img id="qrCodeImg" style="width:180px;height:180px;border-radius:var(--radius-sm);border:1.5px solid var(--border)">
+            </div>
+            <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:8px">
+              Step 2 — Enter the 6-digit code to confirm
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <input class="form-input" id="verifyCode" type="text" placeholder="000 000"
+                maxlength="7" style="max-width:160px;font-size:1.1rem;letter-spacing:.2em;text-align:center;font-family:var(--font1)">
+              <button class="btn btn-green" onclick="verify2FASetup()">
+                <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+                Confirm
+              </button>
+            </div>
+            <div style="font-family:var(--font2);font-size:0.68rem;font-weight:600;color:var(--muted)">
+              Can't scan? Enter this code manually in your app:
+            </div>
+            <code id="manualSecret" style="font-family:monospace;font-size:0.78rem;color:var(--text);background:var(--bg);padding:6px 10px;border-radius:6px;border:1px solid var(--border);display:block;margin-top:4px;word-break:break-all"></code>
+          </div>
+        </div>
+
         <!-- Notifications -->
         <div class="settings-section">
           <div class="settings-section-title">Notifications</div>
@@ -200,6 +259,55 @@ function resetBg() {
 // Populate account form
 const u = Auth.get();
 if (u) document.getElementById('displayName').value = u.name || '';
+
+// ── 2FA FUNCTIONS ────────────────────────────────────────────────
+async function check2FAStatus() {
+  const u = Auth.get();
+  if (!u) return;
+  try {
+    const r = await apiFetch('/api/account/2fa-status');
+    if (r.totp_enabled) {
+      document.getElementById('twoFADisabled').style.display = 'none';
+      document.getElementById('twoFAEnabled').style.display = '';
+    }
+  } catch(e) {}
+}
+
+async function setup2FA() {
+  try {
+    const r = await apiFetch('/api/2fa/setup', { method: 'POST' });
+    document.getElementById('qrCodeImg').src = r.qr_code;
+    document.getElementById('manualSecret').textContent = r.secret;
+    document.getElementById('twoFASetup').style.display = '';
+    showToast('Scan the QR code with your authenticator app', 'info');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function verify2FASetup() {
+  const code = document.getElementById('verifyCode').value.replace(/\s/g, '');
+  if (code.length !== 6) { showToast('Enter the 6-digit code', 'error'); return; }
+  try {
+    await apiFetch('/api/2fa/verify', { method: 'POST', body: { code } });
+    document.getElementById('twoFASetup').style.display = 'none';
+    document.getElementById('twoFADisabled').style.display = 'none';
+    document.getElementById('twoFAEnabled').style.display = '';
+    showToast('2FA enabled! Your account is now protected.', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function disable2FA() {
+  const code = document.getElementById('disableCode').value.replace(/\s/g, '');
+  if (code.length !== 6) { showToast('Enter your current code to disable 2FA', 'error'); return; }
+  if (!confirm('Are you sure you want to disable 2FA? Your account will be less secure.')) return;
+  try {
+    await apiFetch('/api/2fa/disable', { method: 'POST', body: { code } });
+    document.getElementById('twoFADisabled').style.display = '';
+    document.getElementById('twoFAEnabled').style.display = 'none';
+    showToast('2FA disabled.', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+check2FAStatus();
 
 async function saveAccount() {
   const name = document.getElementById('displayName').value.trim();

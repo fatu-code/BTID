@@ -99,7 +99,7 @@
           <div class="topbar-sub" id="countLabel">Loading...</div>
         </div>
       </div>
-      <div class="topbar-right" id="adminActions"></div>
+      <div class="topbar-right" style="display:flex;align-items:center;gap:8px" id="adminActions"></div>
     </div>
 
     <div class="content">
@@ -329,6 +329,7 @@
 const user  = Auth.require();
 const level = getRoleLevel(user.role);
 buildSidebar('players');
+buildSeasonSelector('seasonSelectorWrap');
 
 let allPlayers = [];
 let currentHeightUnit = 'ft';
@@ -414,7 +415,7 @@ if (urlParams.get('action') === 'add' && level >= 2) setTimeout(openAddModal, 30
 
 async function loadPlayers() {
   try {
-    const r = await PlayerAPI.getAll();
+    const r = await PlayerAPI.getAll({ season: Season.get() });
     allPlayers = r.players || r || [];
   } catch(e) { allPlayers = []; }
   filterPlayers();

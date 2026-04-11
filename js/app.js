@@ -349,3 +349,41 @@ document.addEventListener('DOMContentLoaded', () => {
 // Also init immediately in case DOM is ready
 Theme.init();
 AppBG.init();
+
+// ── SEASON / YEAR FILTER SYSTEM ──────────────────────────────────
+const Season = {
+  get() {
+    return parseInt(localStorage.getItem('btid_season')) || new Date().getFullYear();
+  },
+  set(year) {
+    localStorage.setItem('btid_season', year);
+    // Update all season selectors on page
+    document.querySelectorAll('.season-select').forEach(el => {
+      el.value = year;
+    });
+    // Dispatch event so pages can react
+    window.dispatchEvent(new CustomEvent('seasonChanged', { detail: { season: year } }));
+  },
+  label() {
+    return 'Season ' + this.get();
+  }
+};
+
+async function buildSeasonSelector(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  let seasons = [new Date().getFullYear()];
+  try {
+    const r = await apiFetch('/api/seasons');
+    seasons = r.seasons || seasons;
+  } catch(e) {}
+
+  const current = Season.get();
+  el.innerHTML = `
+    <select class="season-select filter-select"
+      style="height:32px;font-size:0.75rem;font-weight:800;color:var(--green);border-color:var(--green-mid);background:var(--green-pale);min-width:110px"
+      onchange="Season.set(parseInt(this.value));window.location.reload()">
+      ${seasons.map(y => `<option value="${y}" ${y == current ? 'selected' : ''}>${y} Season</option>`).join('')}
+      ${!seasons.includes(new Date().getFullYear()) ? `<option value="${new Date().getFullYear()}" ${new Date().getFullYear() == current ? 'selected' : ''}>${new Date().getFullYear()} Season</option>` : ''}
+    </select>`;
+}

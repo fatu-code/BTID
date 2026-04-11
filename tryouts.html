@@ -130,7 +130,8 @@
           <div class="topbar-sub" id="countLabel">Manage tryout events</div>
         </div>
       </div>
-      <div class="topbar-right">
+      <div class="topbar-right" style="display:flex;align-items:center;gap:8px">
+        <div id="seasonSelectorWrap"></div>
         <button class="btn btn-green" onclick="openAddModal()">
           <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
           <span class="mob-hide">New Batch</span>
@@ -255,6 +256,7 @@
 const user    = Auth.require();
 const isAdmin = getRoleLevel(user.role) >= 2;
 buildSidebar('tryouts');
+buildSeasonSelector('seasonSelectorWrap');
 
 let allBatches    = [];
 let selectedBatch = null;
