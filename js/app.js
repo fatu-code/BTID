@@ -182,6 +182,8 @@ const NAV_ITEMS = [
     icon: '<circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M13 7l1.5 1.5L17 6"/>' },
   { id: 'activity',   label: 'Login Activity',    href: 'activity.html',   minLevel: 2,
     icon: '<path d="M1 8l3 3 4-6 3 3 4-4"/>' },
+  { id: 'settings',   label: 'Settings',          href: 'settings.html',   minLevel: 2,
+    icon: '<circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M3.5 12.5l1.4-1.4M11.1 4.9l1.4-1.4"/>' },
 ];
 
 function buildSidebar(activeId) {
