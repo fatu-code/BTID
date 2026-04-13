@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- BTID Profile v4 - 20260413-2133 -->
+<!-- BTID Profile v5 -->
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -621,7 +622,24 @@ function renderProfile() {
       </div>
     </div>
 
-<!-- TAB 4: POST TRYOUT -->
+<!-- TAB: INITIAL TRYOUT -->
+    <div class="tab-content" id="tab-initialtryout" style="display:none">
+      <div class="card">
+        <div class="card-head"><span class="card-title">Initial Tryout — First Impression</span></div>
+        <p style="font-family:var(--font2);font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:12px;line-height:1.6">Videos and photos from when you first saw this player.</p>
+        <div id="initialMediaGrid"><div class="empty-state" style="padding:20px"><div class="empty-title">Click to load media</div></div></div>
+      </div>
+    </div>
+
+    <!-- TAB: DEVELOPMENT -->
+    <div class="tab-content" id="tab-development" style="display:none">
+      <div id="developmentContent"><div class="empty-state" style="padding:20px"><div class="empty-title">Click to load</div></div></div>
+    </div>
+
+    <!-- TAB: REPORTS -->
+    <div class="tab-content" id="tab-reports" style="display:none">
+      <div id="reportsTabContent"><div class="empty-state" style="padding:20px"><div class="empty-title">Click to load</div></div></div>
+    </div>
     `;
 
   renderComments();
