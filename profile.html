@@ -723,14 +723,173 @@ function outcomePillLarge(o) {
   return '';
 }
 
+let initialLoaded = false;
+let developmentLoaded = false;
+let reportsLoaded = false;
+
 function showTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const tc = document.getElementById('tab-' + id);
   if (tc) tc.classList.add('active');
   if (btn) btn.classList.add('active');
+  if (id === 'tryout')        renderTryoutDisplay();
+  if (id === 'initialtryout'  && !initialLoaded)    loadTabMedia('initial', 'initialMediaGrid');
+  if (id === 'development'    && !developmentLoaded) loadTabMedia('development', 'developmentMediaGrid');
+  if (id === 'reports'        && !reportsLoaded)     loadReportsTab();
+}
 
-  if (id === 'tryout') renderTryoutDisplay();
+async function loadTabMedia(tabName, gridId) {
+  if (tabName === 'initial')     initialLoaded = true;
+  if (tabName === 'development') developmentLoaded = true;
+  const el = document.getElementById(gridId);
+  if (!el) return;
+  try {
+    const endpoint = tabName === 'initial' ? 'initial-media' : 'development-media';
+    const r = await apiFetch('/api/players/' + playerId + '/' + endpoint);
+    const media = r.media || [];
+    const uploadBtn = isAdmin ? `<label style="cursor:pointer;display:inline-block;margin-bottom:12px"><input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadTabMedia('${tabName}',this)"><span class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>Upload Photos / Videos</span></label>` : '';
+    if (!media.length) {
+      el.innerHTML = uploadBtn + '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload photos or videos to get started.</div></div>';
+      return;
+    }
+    el.innerHTML = uploadBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">' +
+      media.map(m => `<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border)">
+        ${m.type === 'video'
+          ? `<video src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>`
+          : `<img src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">`}
+        <div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.filename||''}</div>
+      </div>`).join('') + '</div>';
+  } catch(e) {
+    const el2 = document.getElementById(gridId);
+    if (el2) el2.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load media</div></div>';
+  }
+}
+
+async function uploadTabMedia(tab, input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  showToast('Uploading...', 'info');
+  let ok = 0;
+  for (const f of files) {
+    const fd = new FormData();
+    fd.append('file', f);
+    try {
+      const res = await fetch(API_BASE + '/api/players/' + playerId + '/media/' + tab, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + Auth.token() },
+        body: fd,
+      });
+      if (res.ok) ok++;
+    } catch(e) {}
+  }
+  if (ok > 0) {
+    showToast(ok + ' file' + (ok > 1 ? 's' : '') + ' uploaded!', 'success');
+    if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
+    if (tab === 'development') { developmentLoaded = false;  loadTabMedia('development', 'developmentMediaGrid'); }
+  } else {
+    showToast('Upload failed', 'error');
+  }
+}
+
+async function loadReportsTab() {
+  reportsLoaded = true;
+  const el = document.getElementById('reportsTabContent');
+  if (!el) return;
+  el.innerHTML = (isAdmin ? `
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head"><span class="card-title">Write a Report</span></div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-input" id="rptTitle" type="text" placeholder="e.g. Q1 2026 Assessment...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content</label>
+        <textarea class="form-textarea" id="rptBody" rows="5" placeholder="Write observations, assessments, recommendations..."></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span class="btn btn-outline" style="height:32px;font-size:0.72rem;display:inline-flex;align-items:center;gap:5px;cursor:pointer" onclick="document.getElementById('rptFiles').click()">
+          <svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+          Attach Files
+        </span>
+        <input type="file" id="rptFiles" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.png,.mp4,.mov" style="display:none" onchange="document.getElementById('rptFilesLbl').textContent=this.files.length+' file'+(this.files.length!==1?'s':'')+' selected'">
+        <span id="rptFilesLbl" style="font-family:var(--font2);font-size:0.68rem;color:var(--muted)">No files selected</span>
+      </div>
+      <button class="btn btn-green" onclick="saveReport()">
+        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+        Save Report
+      </button>
+    </div>` : '') + '<div id="rptList"><div class="empty-state"><div class="empty-title">Loading...</div></div></div>';
+  loadReportsList();
+}
+
+async function loadReportsList() {
+  const el = document.getElementById('rptList');
+  if (!el) return;
+  try {
+    const r = await apiFetch('/api/players/' + playerId + '/reports');
+    const reports = r.reports || [];
+    if (!reports.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-title">No reports yet</div><div class="empty-sub">Write the first report for this player.</div></div>';
+      return;
+    }
+    el.innerHTML = reports.map(r => `
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+          <div>
+            <div style="font-family:var(--font2);font-size:0.88rem;font-weight:800;color:var(--text)">${r.title}</div>
+            <div style="font-family:var(--font2);font-size:0.65rem;color:var(--muted)">By ${r.author_name} · ${formatDate(r.created_at)}</div>
+          </div>
+          ${isAdmin ? `<button class="btn-ghost" onclick="deleteRpt('${r.id}')"><svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5"/><path d="M3 4l1 10h8l1-10"/></svg></button>` : ''}
+        </div>
+        ${r.body ? `<div style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.8;margin-bottom:8px;white-space:pre-line">${r.body}</div>` : ''}
+        ${r.attachments && r.attachments.length ? `
+        <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+          ${r.attachments.map(a => `<a href="${API_BASE}${a.url}" target="_blank" style="display:flex;align-items:center;gap:5px;padding:5px 9px;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;text-decoration:none">
+            <svg viewBox="0 0 16 16" style="width:11px;height:11px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+            <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--text)">${a.name}</span>
+          </a>`).join('')}
+        </div>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load reports</div></div>';
+  }
+}
+
+async function saveReport() {
+  const title = document.getElementById('rptTitle')?.value.trim();
+  const body  = document.getElementById('rptBody')?.value.trim();
+  const files = document.getElementById('rptFiles')?.files;
+  if (!title) { showToast('Please add a title.', 'error'); return; }
+  try {
+    const fd = new FormData();
+    fd.append('title', title);
+    if (body) fd.append('body', body);
+    if (files) Array.from(files).forEach(f => fd.append('files', f));
+    const res = await fetch(API_BASE + '/api/players/' + playerId + '/reports', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + Auth.token() },
+      body: fd,
+    });
+    if (!res.ok) throw new Error('Failed to save');
+    document.getElementById('rptTitle').value = '';
+    document.getElementById('rptBody').value = '';
+    document.getElementById('rptFiles').value = '';
+    document.getElementById('rptFilesLbl').textContent = 'No files selected';
+    showToast('Report saved!', 'success');
+    reportsLoaded = false;
+    loadReportsList();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteRpt(id) {
+  if (!confirm('Delete this report?')) return;
+  try {
+    await apiFetch('/api/players/' + playerId + '/reports/' + id, { method: 'DELETE' });
+    showToast('Deleted', 'success');
+    reportsLoaded = false;
+    loadReportsList();
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 // ── COMMENTS ─────────────────────────────────────────────────────
