@@ -442,6 +442,7 @@ async function loadPlayersReal() {
 
 function filterPlayers() {
   const q        = document.getElementById('searchInput').value.toLowerCase();
+  const season   = document.getElementById('filterSeason')?.value || '';
   const district = document.getElementById('filterDistrict').value;
   const tier     = document.getElementById('filterTier').value;
   const outcome  = document.getElementById('filterOutcome').value;
@@ -450,6 +451,7 @@ function filterPlayers() {
   let list = allPlayers.filter(p => {
     const name = (p.name||'').toLowerCase();
     if (q        && !name.includes(q))                    return false;
+    if (season   && String(p.season) !== String(season))  return false;
     if (district && p.district !== district)               return false;
     if (tier     && String(p.tier) !== String(tier))       return false;
     if (outcome === 'pending' && p.outcome)                return false;
