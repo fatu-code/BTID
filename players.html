@@ -109,6 +109,10 @@
           <input class="search-input" id="searchInput" type="text"
             placeholder="Search by name..." oninput="filterPlayers()">
         </div>
+        <select class="filter-select" id="filterSeason" onchange="filterPlayers()"
+          style="color:var(--green);border-color:var(--green-mid);background:var(--green-pale);font-weight:800">
+          <option value="">All seasons</option>
+        </select>
         <select class="filter-select" id="filterDistrict" onchange="filterPlayers()">
           <option value="">All districts</option>
         </select>
