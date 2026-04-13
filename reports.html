@@ -23,7 +23,6 @@
         </div>
       </div>
       <div class="topbar-right" style="display:flex;align-items:center;gap:8px">
-        <div id="seasonSelectorWrap"></div>
         <select class="filter-select" id="filterBatch" onchange="loadReport()">
           <option value="">All batches</option>
         </select>
@@ -44,7 +43,6 @@
 <script>
 Auth.require();
 buildSidebar('reports');
-buildSeasonSelector('seasonSelectorWrap');
 
 // Populate districts
 UGANDA_DISTRICTS.forEach(d => {

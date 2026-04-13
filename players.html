@@ -329,7 +329,6 @@
 const user  = Auth.require();
 const level = getRoleLevel(user.role);
 buildSidebar('players');
-buildSeasonSelector('seasonSelectorWrap');
 
 let allPlayers = [];
 let currentHeightUnit = 'ft';
@@ -414,8 +413,24 @@ if (urlParams.get('tier'))    document.getElementById('filterTier').value    = u
 if (urlParams.get('action') === 'add' && level >= 2) setTimeout(openAddModal, 300);
 
 async function loadPlayers() {
+  // Populate season filter
   try {
-    const r = await PlayerAPI.getAll({ season: Season.get() });
+    const sr = await apiFetch('/api/seasons');
+    const seasons = sr.seasons || [];
+    const sel = document.getElementById('filterSeason');
+    if (sel) {
+      seasons.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y + ' Season';
+        sel.appendChild(opt);
+      });
+    }
+  } catch(e) {}
+}
+
+async function loadPlayersReal() {
+  try {
+    const r = await PlayerAPI.getAll();
     allPlayers = r.players || r || [];
   } catch(e) { allPlayers = []; }
   filterPlayers();
@@ -576,6 +591,7 @@ async function savePlayer() {
 }
 
 loadPlayers();
+loadPlayersReal();
 </script>
 </body>
 </html>

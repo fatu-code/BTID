@@ -25,7 +25,6 @@
         </div>
       </div>
       <div class="topbar-right" style="display:flex;align-items:center;gap:8px">
-        <div id="seasonSelectorWrap"></div>
         <button class="btn btn-green mob-hide" id="addPlayerBtn" onclick="window.location.href='players.html?action=add'">
           <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
           Add Player
@@ -77,7 +76,6 @@ function safeNum(n) {
 const user  = Auth.require();
 const level = getRoleLevel(user.role);
 buildSidebar('dashboard');
-buildSeasonSelector('seasonSelectorWrap');
 
 // Greeting based on time of day
 const hour = new Date().getHours();
@@ -90,7 +88,7 @@ async function loadDash() {
   let stats = {}, recentPlayers = [], recentActivity = [], tryouts = [];
 
   try {
-    const raw = await apiFetch("/api/stats?season=" + Season.get());
+    const raw = await apiFetch("/api/stats");
     stats = raw || {};
   } catch(e){ stats = {}; }
   // Ensure all values are numbers
