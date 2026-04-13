@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- BTID Profile v4 - 20260413-2133 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -339,10 +340,6 @@ function renderProfile() {
         <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
         Final Tryout
       </button>
-      <button class="tab" onclick="showTab('posttryout',this)">
-        <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 8l4 4 8-8"/></svg>
-        Post Tryout
-      </button>
       <button class="tab" onclick="showTab('development',this)">
         <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M8 1v14M1 8h14"/></svg>
         Development
@@ -625,64 +622,7 @@ function renderProfile() {
     </div>
 
 <!-- TAB 4: POST TRYOUT -->
-    <div class="tab-content" id="tab-posttryout">
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-head">
-            <span class="card-title">Post Tryout Status</span>
-            ${isAdmin ? `<button class="card-action" onclick="savePostTryout()">Save</button>` : ''}
-          </div>
-          ${isAdmin ? `
-          <div class="form-group">
-            <label class="form-label">Outcome</label>
-            <select class="form-select" id="pt_outcome">
-              <option value="">Pending</option>
-              <option value="admitted"   ${player.outcome==='admitted'  ?'selected':''}>Admitted</option>
-              <option value="eliminated" ${player.outcome==='eliminated'?'selected':''}>Eliminated</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Academy Assignment</label>
-            <input class="form-input" id="pt_academy" type="text" value="${player.academy||''}" placeholder="e.g. Mpigi Academy">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Coach Assigned</label>
-            <input class="form-input" id="pt_coach" type="text" value="${player.coach_assigned||''}" placeholder="Coach name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Next Check-in Date</label>
-            <input class="form-input" id="pt_checkin" type="date" value="${player.next_checkin||''}">
-          </div>
-          <div class="form-group" style="display:flex;align-items:center;gap:8px">
-            <input type="checkbox" id="pt_consent" ${player.guardian_consent?'checked':''} style="width:16px;height:16px;accent-color:var(--green)">
-            <label class="form-label" style="margin:0;cursor:pointer" for="pt_consent">Guardian consent confirmed</label>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Development Notes</label>
-            <textarea class="form-textarea" id="pt_notes" rows="4" placeholder="What does this player need to work on? What are the next steps?">${player.dev_notes||''}</textarea>
-          </div>
-          <button class="btn btn-green" style="width:100%" onclick="savePostTryout()">Save Post Tryout Info</button>
-          ` : infoGrid([
-            ['Outcome',           player.outcome ? player.outcome.charAt(0).toUpperCase()+player.outcome.slice(1) : 'Pending'],
-            ['Academy',           player.academy||'—'],
-            ['Coach',             player.coach_assigned||'—'],
-            ['Next Check-in',     player.next_checkin ? formatDateShort(player.next_checkin) : '—'],
-            ['Guardian Consent',  player.guardian_consent ? 'Yes' : 'No'],
-          ])}
-        </div>
-        <div class="card">
-          <div class="card-head"><span class="card-title">Development Notes</span></div>
-          <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">
-            ${player.dev_notes || '<span style="color:var(--muted)">No development notes yet.</span>'}
-          </p>
-          ${player.elimination_reason ? `
-          <div style="margin-top:14px;padding:12px;background:var(--red-pale);border:1.5px solid var(--red-mid);border-radius:var(--radius-sm)">
-            <div style="font-family:var(--font2);font-size:0.7rem;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Elimination Reasons</div>
-            <div style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--text);line-height:1.7">${player.elimination_reason}</div>
-          </div>` : ''}
-        </div>
-      </div>
-    </div>`;
+    `;
 
   renderComments();
   renderMedia();
