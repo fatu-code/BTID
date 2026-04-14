@@ -29,6 +29,10 @@
         <select class="filter-select" id="filterDistrict" onchange="loadReport()">
           <option value="">All districts</option>
         </select>
+        <button class="btn btn-green" onclick="exportSeasonReport()">
+          <svg viewBox="0 0 16 16" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
+          <span class="mob-hide">Export Report</span>
+        </button>
       </div>
     </div>
 
@@ -262,6 +266,229 @@ async function loadReport() {
 
 loadBatches();
 loadReport();
+
+async function exportSeasonReport() {
+  showToast('Preparing season report...', 'info', 2000);
+
+  // Gather all data
+  const batch    = document.getElementById('filterBatch').value;
+  const district = document.getElementById('filterDistrict').value;
+  const batchName = document.getElementById('filterBatch').selectedOptions[0]?.text || 'All Batches';
+  const today = new Date().toLocaleDateString('en-UG', { day:'numeric', month:'long', year:'numeric' });
+
+  let stats = {}, players = [], batches = [], reflections = [];
+  try {
+    const [sr, pr, br, rr] = await Promise.allSettled([
+      StatsAPI.reports({ batch_id: batch, district }),
+      PlayerAPI.getAll({ batch_id: batch, district, limit: 500 }),
+      TryoutAPI.getAll(),
+      apiFetch('/api/reflections'),
+    ]);
+    stats       = sr.status === 'fulfilled' ? sr.value : {};
+    players     = pr.status === 'fulfilled' ? (pr.value.players || pr.value || []) : [];
+    batches     = br.status === 'fulfilled' ? (br.value.tryouts || br.value || []) : [];
+    reflections = rr.status === 'fulfilled' ? (rr.value.reflections || []) : [];
+  } catch(e) {}
+
+  const total      = players.length;
+  const admitted   = players.filter(p => p.outcome === 'admitted').length;
+  const eliminated = players.filter(p => p.outcome === 'eliminated').length;
+  const pending    = players.filter(p => !p.outcome || p.outcome === 'pending').length;
+  const t1   = players.filter(p => String(p.tier) === '1').length;
+  const t15  = players.filter(p => String(p.tier) === '1.5').length;
+  const t2   = players.filter(p => String(p.tier) === '2').length;
+  const t3   = players.filter(p => String(p.tier) === '3').length;
+  const admitRate = total ? Math.round(admitted / total * 100) : 0;
+
+  // Top players (T1 and T1.5 admitted)
+  const topPlayers = players
+    .filter(p => p.outcome === 'admitted' && (String(p.tier) === '1' || String(p.tier) === '1.5'))
+    .sort((a,b) => (parseFloat(a.tier)||9) - (parseFloat(b.tier)||9));
+
+  // District breakdown
+  const distMap = {};
+  players.forEach(p => {
+    const d = p.district || 'Unknown';
+    if (!distMap[d]) distMap[d] = { admitted:0, eliminated:0, pending:0 };
+    if (p.outcome === 'admitted')   distMap[d].admitted++;
+    else if (p.outcome === 'eliminated') distMap[d].eliminated++;
+    else distMap[d].pending++;
+  });
+  const distList = Object.entries(distMap).sort((a,b) => b[1].admitted - a[1].admitted);
+
+  // Elimination reasons
+  const reasonMap = {};
+  players.filter(p => p.elimination_reason).forEach(p => {
+    p.elimination_reason.split(';').forEach(r => {
+      const k = r.trim(); if (k) reasonMap[k] = (reasonMap[k]||0)+1;
+    });
+  });
+  const reasons = Object.entries(reasonMap).sort((a,b) => b[1]-a[1]);
+
+  const tColors = {'1':'#009c41','1.5':'#7dbf3a','2':'#f5a623','3':'#e53935'};
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'}) : '—';
+
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Nunito,sans-serif;color:#00254D;background:#fff;font-size:10.5pt}
+    .page-wrap{display:flex;flex-direction:column;min-height:100vh}
+    .content{flex:1}
+    .hdr{background:#003A6B;color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:18pt;font-weight:900;color:#fff}
+    .logo span{font-size:7.5pt;display:block;color:rgba(255,255,255,.45);letter-spacing:.06em;margin-top:1px}
+    .hdr-right{text-align:right;font-size:7.5pt;color:rgba(255,255,255,.45)}
+    .hdr-right strong{display:block;color:rgba(255,255,255,.78);font-size:8.5pt}
+    .hero{background:#00254D;padding:16px 24px}
+    .hero-title{font-size:20pt;font-weight:900;color:#fff;margin-bottom:4px}
+    .hero-sub{font-size:9pt;color:#b3d4f0;margin-bottom:12px}
+    .statsbar{display:grid;grid-template-columns:repeat(5,1fr);background:#001A3A;border-top:1px solid rgba(255,255,255,.07)}
+    .si{padding:10px;text-align:center;border-right:1px solid rgba(255,255,255,.07)}
+    .si:last-child{border-right:none}
+    .sv{font-size:16pt;font-weight:900;color:#fff}
+    .sl{font-size:6.5pt;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+    .sv.green{color:#4dd882} .sv.red{color:#ff7b7e} .sv.amber{color:#fbbf24}
+    .sec{padding:12px 24px;border-bottom:1px solid #e6f0fa}
+    .st{font-size:10.5pt;font-weight:900;color:#003A6B;margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid #005A9C;display:flex;align-items:center;gap:7px}
+    .st::before{content:'';display:inline-block;width:3px;height:14px;background:#EF3E42;border-radius:2px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .mbox{background:#f4f7fb;border:1px solid #d8e4f0;border-radius:8px;padding:12px;text-align:center}
+    .mv{font-size:18pt;font-weight:900;color:#00254D}
+    .mv.g{color:#009c41} .mv.r{color:#e53935} .mv.a{color:#f5a623}
+    .ml{font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#5B7A96;margin-top:2px}
+    .bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+    .bar-lbl{font-size:8pt;font-weight:700;color:#00254D;min-width:100px}
+    .bar-track{flex:1;height:8px;background:#e6f0fa;border-radius:100px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:100px;background:#005A9C}
+    .bar-val{font-size:8pt;font-weight:800;color:#00254D;min-width:30px;text-align:right}
+    .bar-pct{font-size:7pt;font-weight:700;color:#5B7A96;min-width:32px;text-align:right}
+    table{width:100%;border-collapse:collapse;font-size:8.5pt}
+    th{background:#f4f7fb;padding:7px 10px;text-align:left;font-weight:800;color:#5B7A96;font-size:7pt;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #d8e4f0}
+    td{padding:7px 10px;border-bottom:1px solid #eef3fa;color:#00254D}
+    tr:last-child td{border-bottom:none}
+    .pill-g{background:rgba(0,156,65,.15);color:#009c41;font-size:7.5pt;font-weight:800;padding:2px 8px;border-radius:100px}
+    .pill-r{background:rgba(229,57,53,.15);color:#e53935;font-size:7.5pt;font-weight:800;padding:2px 8px;border-radius:100px}
+    .rcard{background:#f4f7fb;border-left:3px solid #005A9C;border-radius:0 7px 7px 0;padding:10px 14px;margin-bottom:8px}
+    .rt{font-size:9pt;font-weight:800;color:#00254D;margin-bottom:2px}
+    .rm{font-size:7pt;color:#5B7A96;margin-bottom:5px}
+    .rb{font-size:8pt;color:#00254D;line-height:1.7}
+    .ftr{background:#f4f7fb;border-top:2px solid #005A9C;padding:9px 24px;display:flex;justify-content:space-between;align-items:center}
+    .fl{font-size:7pt;color:#5B7A96}
+    .fr{font-size:7pt;color:#5B7A96;text-align:right}
+    .pbtn{position:fixed;bottom:20px;right:20px;background:#005A9C;color:#fff;border:none;border-radius:9px;padding:10px 20px;font-family:Nunito,sans-serif;font-size:10pt;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,90,156,.4);z-index:999}
+    @media print{
+      .pbtn{display:none!important}
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .ftr{position:fixed;bottom:0;left:0;right:0}
+      @page{margin:0.5cm 0.5cm 2cm 0.5cm}
+    }
+  `;
+
+  const parts = [];
+  parts.push('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  parts.push('<title>BTID Season Report — '+today+'</title>');
+  parts.push('<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">');
+  parts.push('<style>'+css+'</style></head><body>');
+  parts.push('<div class="page-wrap"><div class="content">');
+  parts.push('<button class="pbtn" onclick="window.print()">🖨 Print / Save PDF</button>');
+
+  // HEADER
+  parts.push('<div class="hdr"><div class="logo">BTID <span>Baseball Talent ID &amp; Development · LA Dodgers Africa</span></div><div class="hdr-right"><strong>Season Scouting Report</strong>Generated '+today+'</div></div>');
+
+  // HERO
+  const filterLabel = (batch ? batchName : 'Full Season') + (district ? ' · '+district : '');
+  parts.push('<div class="hero"><div class="hero-title">Uganda Scouting Report</div><div class="hero-sub">'+filterLabel+' · Head Scout: Joshua Muwanguzi · LA Dodgers Africa Development Program</div></div>');
+
+  // STATS BAR
+  parts.push('<div class="statsbar">');
+  parts.push('<div class="si"><div class="sv">'+total+'</div><div class="sl">Total Scouted</div></div>');
+  parts.push('<div class="si"><div class="sv green">'+admitted+'</div><div class="sl">Admitted</div></div>');
+  parts.push('<div class="si"><div class="sv red">'+eliminated+'</div><div class="sl">Eliminated</div></div>');
+  parts.push('<div class="si"><div class="sv amber">'+pending+'</div><div class="sl">Pending</div></div>');
+  parts.push('<div class="si"><div class="sv">'+admitRate+'%</div><div class="sl">Admit Rate</div></div>');
+  parts.push('</div>');
+
+  // OVERVIEW METRICS
+  parts.push('<div class="sec"><div class="st">Season Overview</div><div class="grid3">');
+  parts.push('<div class="mbox"><div class="mv g">'+t1+'</div><div class="ml">Tier 1 Players</div></div>');
+  parts.push('<div class="mbox"><div class="mv" style="color:#7dbf3a">'+t15+'</div><div class="ml">Tier 1.5 Players</div></div>');
+  parts.push('<div class="mbox"><div class="mv">'+batches.filter(b=>b.status==='completed').length+'</div><div class="ml">Batches Completed</div></div>');
+  parts.push('</div></div>');
+
+  // TOP PLAYERS
+  if (topPlayers.length) {
+    parts.push('<div class="sec"><div class="st">Top Prospects — Tier 1 &amp; 1.5</div>');
+    parts.push('<table><thead><tr><th>#</th><th>Name</th><th>District</th><th>School</th><th>Age</th><th>Velocity</th><th>Height</th><th>Tier</th><th>Status</th></tr></thead><tbody>');
+    topPlayers.forEach((p,i) => {
+      const tc = tColors[String(p.tier)] || '#888';
+      parts.push('<tr><td style="font-weight:800;color:#5B7A96">'+(i+1)+'</td><td style="font-weight:800">'+p.name+'</td><td>'+( p.district||'—')+'</td><td style="color:#5B7A96">'+( p.school||'—')+'</td><td>'+(p.age||'—')+'</td><td style="font-weight:800;color:#005A9C">'+(p.velo?p.velo+' mph':'—')+'</td><td>'+(p.height_ft||'—')+'</td><td><span style="background:'+tc+';color:#fff;font-size:7pt;font-weight:800;padding:2px 7px;border-radius:5px">T'+p.tier+'</span></td><td><span class="pill-g">Admitted</span></td></tr>');
+    });
+    parts.push('</tbody></table></div>');
+  }
+
+  // DISTRICT BREAKDOWN
+  if (distList.length) {
+    parts.push('<div class="sec"><div class="st">Breakdown by District</div>');
+    parts.push('<table><thead><tr><th>District</th><th>Total</th><th>Admitted</th><th>Eliminated</th><th>Pending</th><th>Admit Rate</th></tr></thead><tbody>');
+    distList.forEach(([d, data]) => {
+      const tot = data.admitted + data.eliminated + data.pending;
+      const rate = tot ? Math.round(data.admitted/tot*100) : 0;
+      parts.push('<tr><td style="font-weight:800">'+d+'</td><td>'+tot+'</td><td style="font-weight:800;color:#009c41">'+data.admitted+'</td><td style="color:#e53935">'+data.eliminated+'</td><td style="color:#5B7A96">'+data.pending+'</td><td><strong>'+rate+'%</strong></td></tr>');
+    });
+    parts.push('</tbody></table></div>');
+  }
+
+  // TIER DISTRIBUTION
+  parts.push('<div class="sec"><div class="st">Tier Distribution</div>');
+  [['Tier 1 — Elite',t1,'#009c41'],['Tier 1.5 — Strong',t15,'#7dbf3a'],['Tier 2 — Development',t2,'#f5a623'],['Tier 3 — Early Stage',t3,'#e53935']]
+    .forEach(([l,c,color]) => {
+      const pct = total ? Math.round(c/total*100) : 0;
+      parts.push('<div class="bar-wrap"><span class="bar-lbl">'+l+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div><span class="bar-val">'+c+'</span><span class="bar-pct">'+pct+'%</span></div>');
+    });
+  parts.push('</div>');
+
+  // ELIMINATION REASONS
+  if (reasons.length) {
+    parts.push('<div class="sec"><div class="st">Elimination Reasons</div>');
+    reasons.forEach(([reason, count]) => {
+      const pct = eliminated ? Math.round(count/eliminated*100) : 0;
+      parts.push('<div class="bar-wrap"><span class="bar-lbl" style="min-width:200px;font-size:7.5pt">'+reason+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:#e53935"></div></div><span class="bar-val" style="color:#e53935">'+count+'</span><span class="bar-pct">'+pct+'%</span></div>');
+    });
+    parts.push('</div>');
+  }
+
+  // TRYOUT BATCHES SUMMARY
+  if (batches.length) {
+    parts.push('<div class="sec"><div class="st">Tryout Batches</div>');
+    parts.push('<table><thead><tr><th>Batch</th><th>District</th><th>Date</th><th>Invited</th><th>Admitted</th><th>Eliminated</th><th>Status</th></tr></thead><tbody>');
+    batches.forEach(b => {
+      const statusColor = b.status==='completed'?'#5B7A96':b.status==='active'?'#009c41':'#f5a623';
+      parts.push('<tr><td style="font-weight:800">'+b.name+'</td><td>'+(b.district||'—')+'</td><td>'+fmtDate(b.tryout_date)+'</td><td>'+(parseInt(b.player_count)||0)+'</td><td style="color:#009c41;font-weight:800">'+(parseInt(b.admitted_count)||0)+'</td><td style="color:#e53935">'+(parseInt(b.eliminated_count)||0)+'</td><td><span style="font-size:7.5pt;font-weight:800;color:'+statusColor+';text-transform:capitalize">'+b.status+'</span></td></tr>');
+    });
+    parts.push('</tbody></table></div>');
+  }
+
+  // REFLECTIONS
+  if (reflections.length) {
+    parts.push('<div class="sec"><div class="st">Scout Reflections &amp; Notes</div>');
+    reflections.slice(0,3).forEach(r => {
+      const body = (r.body||'').replace(/<[^>]*>/g,'').substring(0,400) + ((r.body||'').length > 400 ? '...' : '');
+      parts.push('<div class="rcard"><div class="rt">'+r.title+'</div><div class="rm">'+fmtDate(r.created_at)+'</div>'+(body?'<div class="rb">'+body+'</div>':'')+'</div>');
+    });
+    parts.push('</div>');
+  }
+
+  // FOOTER
+  parts.push('</div>');
+  parts.push('<div class="ftr"><div class="fl"><strong>BTID — Baseball Talent Identification &amp; Development</strong><br>LA Dodgers Africa Development Program · Joshua Muwanguzi, Head Scout Uganda</div><div class="fr"><strong>Confidential</strong><br>Generated '+today+'</div></div>');
+  parts.push('</div></body></html>');
+
+  const html = parts.join('\n');
+  const win  = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
 </script>
 </body>
 </html>
