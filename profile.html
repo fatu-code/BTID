@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v12 -->
+<!-- BTID Profile v13 -->
 
 <html lang="en">
 <head>
@@ -1587,13 +1587,18 @@ document.getElementById('editPlayerModal').addEventListener('click', e => {
       </p>
       <div class="form-group">
         <label class="form-label">Link expires after</label>
-        <select class="form-select" id="shareExpiry">
-          <option value="24">24 hours</option>
-          <option value="48" selected>48 hours</option>
-          <option value="72">3 days</option>
-          <option value="168">7 days</option>
-          <option value="720">30 days</option>
-        </select>
+        <div style="position:relative">
+          <select class="form-select" id="shareExpiry" style="width:100%;padding-right:36px;appearance:none;-webkit-appearance:none">
+            <option value="24">24 hours</option>
+            <option value="48" selected>48 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="720">30 days</option>
+          </select>
+          <svg viewBox="0 0 16 16" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
+        </div>
       </div>
       <div id="shareResult" style="display:none">
         <div style="background:var(--green-pale);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);padding:12px;margin-top:10px">
