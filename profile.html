@@ -1304,9 +1304,10 @@ async function savePostTryout() {
     document.getElementById('editPlayerModal')?.addEventListener('click', e => {
   if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
 });
-loadProfile();
   } catch(e) { showToast(e.message, 'error'); }
 }
+
+loadProfile();
 
 // ── PHOTO UPLOAD ──────────────────────────────────────────────────
 document.getElementById('photoUploadInput').addEventListener('change', async function() {
