@@ -155,6 +155,19 @@
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
       <!-- Basic info -->
+      <!-- Photo upload -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div id="addPlayerPhotoPreview" style="width:64px;height:64px;border-radius:12px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:1.2rem;color:var(--green-light);flex-shrink:0;overflow:hidden;cursor:pointer;border:2px dashed var(--border)" onclick="document.getElementById('addPlayerPhotoInput').click()">
+          📷
+        </div>
+        <div>
+          <div style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text);margin-bottom:2px">Player Photo</div>
+          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:600;color:var(--muted);margin-bottom:6px">Optional — can be added later</div>
+          <input type="file" id="addPlayerPhotoInput" accept="image/*" style="display:none" onchange="previewAddPlayerPhoto(this)">
+          <button class="btn btn-outline" style="height:28px;font-size:0.68rem" onclick="document.getElementById('addPlayerPhotoInput').click()">Upload Photo</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="form-label">Full Name *</label>
         <input class="form-input" id="pName" type="text" placeholder="Player's full name">
@@ -416,6 +429,17 @@ if (urlParams.get('outcome')) document.getElementById('filterOutcome').value = u
 if (urlParams.get('tier'))    document.getElementById('filterTier').value    = urlParams.get('tier');
 if (urlParams.get('action') === 'add' && level >= 2) setTimeout(openAddModal, 300);
 
+function previewAddPlayerPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('addPlayerPhotoPreview');
+    preview.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px">';
+  };
+  reader.readAsDataURL(file);
+}
+
 async function loadPlayers() {
   // Populate season filter
   try {
@@ -486,7 +510,7 @@ function renderPlayers(list) {
   grid.innerHTML = list.map(p => {
     const age = calcAge(p.dob) || p.age || '?';
     const photoHTML = p.photo_url
-      ? `<img src="${p.photo_url}" alt="${p.name}">`
+      ? `<img src="${p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:10px">`
       : initials(p.name);
     return `
       <div class="player-card" onclick="window.location.href='profile.html?id=${p.id}'">
