@@ -265,9 +265,8 @@ function renderProfile() {
         <!-- Photo -->
         <div class="profile-photo-wrap" id="photoWrap" ${isAdmin ? 'onclick="triggerPhotoUpload()"' : ''}>
           ${player.photo_url
-            ? `<img src="${(player.photo_url.startsWith('http') ? player.photo_url : API_BASE + player.photo_url) + '?v=' + Date.now()}" alt="${player.name}" id="profilePhoto" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block" onerror="this.style.display='none';this.nextSibling && (this.nextSibling.style.display='flex')">`
-            : ''}
-          <div class="profile-photo-initials" id="profileInitials" style="${player.photo_url ? 'display:none' : 'display:flex'}">${initials(player.name)}</div>
+            ? `<img src="${player.photo_url.startsWith('http') ? player.photo_url : API_BASE + player.photo_url}" alt="${player.name}" id="profilePhoto" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
+            : `<div class="profile-photo-initials" id="profilePhoto">${initials(player.name)}</div>`}
           ${isAdmin ? `<div class="photo-edit-hint" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font2);font-size:0.6rem;font-weight:700;text-align:center;padding:4px;cursor:pointer">
             ${player.photo_url ? '📷 Change' : '📷 Add Photo'}
           </div>` : ''}
