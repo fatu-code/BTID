@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v13 -->
+<!-- BTID Profile v14 -->
 
 <html lang="en">
 <head>
@@ -1423,9 +1423,271 @@ async function saveEditPlayer() {
 }
 
 // ── EXPORT PDF ────────────────────────────────────────────────────
-function exportPDF() {
-  showToast('Generating PDF...', 'info', 3000);
-  window.open(API_BASE + '/api/players/' + playerId + '/pdf?token=' + Auth.token(), '_blank');
+async function exportPDF() {
+  showToast('Preparing report...', 'info', 2000);
+
+  // Fetch all data needed
+  let tryoutResult = null, homeVisit = null, comments = [], reports = [];
+  try {
+    const [tr, hv, cm, rp] = await Promise.allSettled([
+      apiFetch('/api/players/' + playerId),
+      apiFetch('/api/players/' + playerId + '/home-visit/media' ).catch(() => ({ media: [] })),
+      apiFetch('/api/players/' + playerId + '/comments'),
+      apiFetch('/api/players/' + playerId + '/reports'),
+    ]);
+    tryoutResult = null; // will use player velo etc
+    homeVisit    = hv.status === 'fulfilled' ? hv.value : { media: [] };
+    comments     = cm.status === 'fulfilled' ? (cm.value.comments || []) : [];
+    reports      = rp.status === 'fulfilled' ? (rp.value.reports  || []) : [];
+  } catch(e) {}
+
+  const p   = player;
+  const age = calcAge(p.dob) || p.age || '?';
+  const photoSrc = p.photo_url ? (p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url) : null;
+  const today = new Date().toLocaleDateString('en-UG', { day:'numeric', month:'long', year:'numeric' });
+
+  const tierColors = { '1':'#009c41','1.5':'#7dbf3a','2':'#f5a623','3':'#e53935' };
+  const tierColor  = tierColors[String(p.tier)] || '#888';
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${p.name} — BTID Scouting Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Nunito',sans-serif; color:#00254D; background:#fff; font-size:11pt; }
+
+  /* Header */
+  .pdf-header { background:#003A6B; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+  .pdf-logo { font-family:'Varela Round',sans-serif; font-size:22pt; color:#fff; letter-spacing:-.02em; }
+  .pdf-logo span { font-size:9pt; font-weight:600; display:block; color:rgba(255,255,255,.5); margin-top:1px; letter-spacing:.05em; }
+  .pdf-date { font-size:8pt; color:rgba(255,255,255,.5); text-align:right; }
+  .pdf-date strong { display:block; color:rgba(255,255,255,.8); font-size:9pt; }
+
+  /* Hero */
+  .hero { background:#00254D; color:#fff; padding:20px 24px; display:flex; gap:16px; align-items:flex-start; }
+  .hero-photo { width:80px; height:80px; border-radius:10px; background:#003A6B; border:2px solid rgba(179,212,240,.25); display:flex; align-items:center; justify-content:center; font-family:'Varela Round',sans-serif; font-size:22pt; color:#b3d4f0; flex-shrink:0; overflow:hidden; }
+  .hero-photo img { width:100%; height:100%; object-fit:cover; }
+  .hero-name { font-family:'Varela Round',sans-serif; font-size:20pt; margin-bottom:4px; }
+  .hero-school { font-size:10pt; color:#b3d4f0; margin-bottom:8px; }
+  .hero-meta { display:flex; gap:12px; flex-wrap:wrap; }
+  .hero-meta-item { font-size:8.5pt; color:rgba(255,255,255,.5); }
+  .hero-meta-item strong { color:rgba(255,255,255,.85); }
+  .tier-badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:8pt; font-weight:800; color:#fff; margin-right:6px; }
+  .admitted-badge { background:rgba(0,156,65,.25); color:#4dd882; font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
+  .eliminated-badge { background:rgba(239,62,66,.25); color:#ff7b7e; font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
+  .pending-badge { background:rgba(255,255,255,.1); color:rgba(255,255,255,.6); font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
+
+  /* Stats bar */
+  .stats-bar { display:flex; background:#001A3A; border-top:1px solid rgba(255,255,255,.08); }
+  .stat-item { flex:1; padding:10px; text-align:center; border-right:1px solid rgba(255,255,255,.08); }
+  .stat-item:last-child { border-right:none; }
+  .stat-val { font-family:'Varela Round',sans-serif; font-size:14pt; color:#fff; }
+  .stat-lbl { font-size:7pt; font-weight:700; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
+
+  /* Sections */
+  .section { padding:16px 24px; border-bottom:1px solid #e6f0fa; }
+  .section-title { font-family:'Varela Round',sans-serif; font-size:11pt; color:#003A6B; margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #005A9C; display:flex; align-items:center; gap:8px; }
+  .section-title::before { content:''; display:inline-block; width:4px; height:16px; background:#EF3E42; border-radius:2px; }
+
+  /* Info grid */
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
+  .info-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #e6f0fa; }
+  .info-lbl { font-size:8.5pt; font-weight:700; color:#5B7A96; }
+  .info-val { font-size:8.5pt; font-weight:800; color:#00254D; text-align:right; }
+
+  /* Metrics grid */
+  .metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .metric-box { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:10px; text-align:center; }
+  .metric-val { font-family:'Varela Round',sans-serif; font-size:14pt; color:#00254D; }
+  .metric-lbl { font-size:7pt; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:#5B7A96; margin-top:2px; }
+  .metric-attempts { display:flex; gap:3px; justify-content:center; margin-top:4px; }
+  .metric-attempt { background:#fff; border:1px solid #d8e4f0; border-radius:4px; padding:1px 5px; font-size:7.5pt; color:#5B7A96; }
+
+  /* Comments */
+  .comment { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #e6f0fa; }
+  .comment-ava { width:28px; height:28px; border-radius:50%; background:#003A6B; display:flex; align-items:center; justify-content:center; font-family:'Varela Round',sans-serif; font-size:8pt; color:#b3d4f0; flex-shrink:0; }
+  .comment-author { font-size:8.5pt; font-weight:800; color:#00254D; }
+  .comment-time { font-size:7.5pt; color:#5B7A96; margin-left:6px; }
+  .comment-body { font-size:8.5pt; color:#00254D; line-height:1.6; margin-top:2px; }
+
+  /* Report */
+  .report-card { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:12px; margin-bottom:8px; }
+  .report-title { font-size:10pt; font-weight:800; color:#00254D; margin-bottom:2px; }
+  .report-meta { font-size:7.5pt; color:#5B7A96; margin-bottom:6px; }
+  .report-body { font-size:8.5pt; color:#00254D; line-height:1.7; white-space:pre-line; }
+
+  /* Footer */
+  .pdf-footer { background:#f4f7fb; border-top:2px solid #005A9C; padding:10px 24px; display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .footer-left { font-size:7.5pt; color:#5B7A96; }
+  .footer-right { font-size:7.5pt; color:#5B7A96; text-align:right; }
+
+  /* Print */
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .no-print { display:none !important; }
+    .page-break { page-break-before:always; }
+  }
+
+  /* Print button */
+  .print-btn { position:fixed; bottom:24px; right:24px; background:#005A9C; color:#fff; border:none; border-radius:10px; padding:12px 22px; font-family:'Nunito',sans-serif; font-size:11pt; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(0,90,156,.4); display:flex; align-items:center; gap:8px; z-index:999; }
+  .print-btn:hover { background:#003A6B; }
+</style>
+</head>
+<body>
+
+<!-- Print button -->
+<button class="print-btn no-print" onclick="window.print()">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6V1h8v5M4 11H2a1 1 0 01-1-1V7a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-1 1h-2"/>
+    <rect x="4" y="9" width="8" height="6" rx="1"/>
+  </svg>
+  Print / Save PDF
+</button>
+
+<!-- Header -->
+<div class="pdf-header">
+  <div>
+    <div class="pdf-logo">BTID <span>Baseball Talent ID & Development · LA Dodgers Africa</span></div>
+  </div>
+  <div class="pdf-date">
+    <strong>Scouting Report</strong>
+    Generated ${today}
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-photo">
+    ${photoSrc ? `<img src="${photoSrc}">` : p.name.split(' ').map(w=>w[0]).join('').slice(0,2)}
+  </div>
+  <div style="flex:1">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+      <span style="font-size:8pt;font-weight:800;color:#b3d4f0;text-transform:uppercase;letter-spacing:.1em">${p.class||'—'}</span>
+      ${p.tier ? `<span class="tier-badge" style="background:${tierColor}">${p.tier === '1.5' ? 'T1.5' : 'T'+p.tier}</span>` : ''}
+      ${p.outcome === 'admitted' ? '<span class="admitted-badge">✓ Admitted</span>' : p.outcome === 'eliminated' ? '<span class="eliminated-badge">✗ Eliminated</span>' : '<span class="pending-badge">Pending</span>'}
+    </div>
+    <div class="hero-name">${p.name}</div>
+    <div class="hero-school">${p.school || '—'}</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item">Age <strong>${age}</strong></div>
+      <div class="hero-meta-item">DOB <strong>${p.dob ? new Date(p.dob).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'}) : '—'}</strong></div>
+      <div class="hero-meta-item">District <strong>${p.district || '—'}</strong></div>
+      <div class="hero-meta-item">Division <strong>${p.division || '—'}</strong></div>
+      <div class="hero-meta-item">Scout <strong>${p.scout || 'Joshua M.'}</strong></div>
+      ${p.gphp ? `<div class="hero-meta-item">GPHP <strong>${p.gphp}cm</strong></div>` : ''}
+    </div>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-size:8pt;color:rgba(255,255,255,.4)">Nationality <strong style="color:rgba(255,255,255,.75)">${p.nationality||'Ugandan'}</strong></div>
+    <div style="font-size:8pt;color:rgba(255,255,255,.4);margin-top:3px">Household <strong style="color:rgba(255,255,255,.75)">${p.household_id||'—'}</strong></div>
+  </div>
+</div>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+  ${[
+    ['Velocity', (p.velo||'—') + ' mph'],
+    ['Height', p.height_ft || '—'],
+    ['Weight', (p.weight_lbs||'—') + ' lbs'],
+    ['GPHP', (p.gphp||'—') + ' cm'],
+    ['KR', p.kr || '—'],
+  ].map(([l,v]) => `<div class="stat-item"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
+</div>
+
+<!-- Player Information -->
+<div class="section">
+  <div class="section-title">Player Information</div>
+  <div class="info-grid">
+    <div>
+      ${[['Full Name',p.name],['Date of Birth',p.dob?new Date(p.dob).toLocaleDateString('en-UG',{day:'numeric',month:'long',year:'numeric'}):'—'],['Age',age+' years'],['Class',p.class||'—'],['Gender',p.gender||'—'],['Nationality',p.nationality||'Ugandan']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
+    </div>
+    <div>
+      ${[['School',p.school||'—'],['District',p.district||'—'],['Division',p.division||'—'],['School Contact',p.school_contact||'—'],['Parent 1',p.parent1||'—'],['Parent 2',p.parent2||'—']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
+    </div>
+  </div>
+</div>
+
+<!-- Genetics -->
+<div class="section">
+  <div class="section-title">Genetics</div>
+  <div class="info-grid">
+    <div>
+      ${[['Dad Height',p.dad_ht?(p.dad_ht+'cm'):'—'],['Mom Height',p.mom_ht?(p.mom_ht+'cm'):'—'],['GPHP (Projected)',p.gphp?(p.gphp+'cm'):'—']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
+    </div>
+    <div style="padding:8px;background:#f4f7fb;border-radius:8px;font-size:8.5pt;color:#5B7A96;line-height:1.7">
+      <strong style="color:#00254D;display:block;margin-bottom:4px">What is GPHP?</strong>
+      Genetic Projected Height Potential — calculated using the mid-parental height formula. Boys: (Dad + Mom + 13cm) ÷ 2. Girls: (Dad + Mom − 13cm) ÷ 2.
+    </div>
+  </div>
+</div>
+
+${p.velo || p.height_ft || p.weight_lbs ? `
+<!-- Tryout Metrics -->
+<div class="section page-break">
+  <div class="section-title">Tryout Metrics</div>
+  <div class="metrics-grid">
+    <div class="metric-box"><div class="metric-lbl">Velocity</div><div class="metric-val">${p.velo||'—'}</div><div class="metric-lbl">mph</div></div>
+    <div class="metric-box"><div class="metric-lbl">Height</div><div class="metric-val">${p.height_ft||'—'}</div><div class="metric-lbl">ft</div></div>
+    <div class="metric-box"><div class="metric-lbl">Weight</div><div class="metric-val">${p.weight_lbs||'—'}</div><div class="metric-lbl">lbs</div></div>
+    <div class="metric-box"><div class="metric-lbl">ER</div><div class="metric-val">${p.kr||'—'}</div><div class="metric-lbl">score</div></div>
+  </div>
+</div>` : ''}
+
+${p.notes ? `
+<!-- Scout Notes -->
+<div class="section">
+  <div class="section-title">Scout Notes</div>
+  <div style="font-size:9pt;line-height:1.8;color:#00254D;white-space:pre-line">${p.notes}</div>
+</div>` : ''}
+
+${comments.length ? `
+<!-- Scout Comments -->
+<div class="section">
+  <div class="section-title">Scout Comments</div>
+  ${comments.map(c => `
+    <div class="comment">
+      <div class="comment-ava">${(c.author_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div>
+        <div><span class="comment-author">${c.author_name||'Unknown'}</span><span class="comment-time">${new Date(c.created_at).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'})}</span></div>
+        <div class="comment-body">${c.text}</div>
+      </div>
+    </div>`).join('')}
+</div>` : ''}
+
+${reports.length ? `
+<!-- Reports -->
+<div class="section page-break">
+  <div class="section-title">Reports</div>
+  ${reports.map(r => `
+    <div class="report-card">
+      <div class="report-title">${r.title}</div>
+      <div class="report-meta">By ${r.author_name} · ${new Date(r.created_at).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'})}</div>
+      ${r.body ? `<div class="report-body">${r.body.replace(/<[^>]*>/g,'')}</div>` : ''}
+    </div>`).join('')}
+</div>` : ''}
+
+<!-- Footer -->
+<div class="pdf-footer">
+  <div class="footer-left">
+    <strong>BTID — Baseball Talent Identification & Development</strong><br>
+    LA Dodgers Africa Development Program · Joshua Muwanguzi, Head Scout Uganda
+  </div>
+  <div class="footer-right">
+    <strong>Confidential</strong><br>
+    Generated ${today}
+  </div>
+</div>
+
+<script>window.onload = () => setTimeout(() => window.print(), 800);</script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
