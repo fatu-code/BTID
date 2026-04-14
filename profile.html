@@ -696,11 +696,12 @@ async function loadTabMedia(tabName, gridId) {
       return;
     }
     el.innerHTML = uploadBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">' +
-      media.map(m => `<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border)">
+      media.map(m => `<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">
         ${m.type === 'video'
           ? `<video src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>`
           : `<img src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">`}
         <div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.filename||''}</div>
+        ${isAdmin ? `<button onclick="deleteTabMedia('${m.id}','${tabName}')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>` : ''}
       </div>`).join('') + '</div>';
   } catch(e) {
     if (el) el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load media</div></div>';
@@ -781,6 +782,16 @@ async function saveDevNotes() {
   try {
     await PlayerAPI.update(playerId, { dev_notes: document.getElementById('devNotes')?.value || '' });
     showToast('Notes saved!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function deleteTabMedia(mediaId, tab) {
+  if (!confirm('Delete this media?')) return;
+  try {
+    await apiFetch('/api/players/' + playerId + '/home-visit/media/' + mediaId, { method: 'DELETE' });
+    showToast('Deleted', 'success');
+    if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
+    if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
   } catch(e) { showToast(e.message, 'error'); }
 }
 
