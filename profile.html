@@ -793,8 +793,15 @@ async function saveDevNotes() {
 async function deleteTabMedia(mediaId, tab) {
   if (!confirm('Delete this media?')) return;
   try {
-    await apiFetch('/api/players/' + playerId + '/home-visit/media/' + mediaId, { method: 'DELETE' });
-    showToast('Deleted', 'success');
+    const res = await fetch(API_BASE + '/api/players/' + playerId + '/home-visit/media/' + mediaId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + Auth.token() }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Delete failed');
+    }
+    showToast('Deleted!', 'success');
     if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
     if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
   } catch(e) { showToast(e.message, 'error'); }
