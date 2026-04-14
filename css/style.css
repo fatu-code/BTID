@@ -859,6 +859,7 @@ tbody tr.clickable { cursor: pointer; }
 }
 
 .profile-photo-wrap:hover .photo-edit-hint { opacity: 1; }
+.profile-photo-wrap:hover .photo-del-btn { display:flex !important; }
 
 .profile-name {
   font-family: var(--font1);
