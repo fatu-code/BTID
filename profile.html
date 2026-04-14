@@ -1292,11 +1292,12 @@ async function savePostTryout() {
       dev_notes:        document.getElementById('pt_notes').value.trim(),
     });
     showToast('Post tryout info saved!', 'success');
-    document.getElementById('editPlayerModal')?.addEventListener('click', e => {
-  if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
-});
   } catch(e) { showToast(e.message, 'error'); }
 }
+
+document.getElementById('editPlayerModal')?.addEventListener('click', e => {
+  if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
+});
 
 loadProfile();
 
@@ -1674,6 +1675,12 @@ async function exportPDF() {
   win.document.close();
 }
 
+function openShareModal() {
+  document.getElementById('shareResult').style.display = 'none';
+  document.getElementById('shareLink').value = '';
+  document.getElementById('shareModal').classList.add('open');
+}
+
 async function generateShareLink() {
   const hours = document.getElementById('shareExpiry').value;
   const btn   = document.getElementById('generateShareBtn');
@@ -1706,6 +1713,48 @@ function copyShareLink() {
     .catch(() => { input.select(); document.execCommand('copy'); showToast('Link copied!', 'success'); });
 }
 </script>
+
+<!-- Share Modal -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal-card" style="max-width:420px">
+    <div class="modal-head">
+      <div class="modal-title">Share Player Profile</div>
+      <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--muted);line-height:1.6;margin-bottom:14px">
+        Generate a link anyone can use to view this player's full profile — no login required. The link expires automatically.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Link expires after</label>
+        <div style="position:relative">
+          <select class="form-select" id="shareExpiry" style="width:100%;padding-right:36px;appearance:none;-webkit-appearance:none">
+            <option value="24">24 hours</option>
+            <option value="48" selected>48 hours</option>
+            <option value="72">3 days</option>
+            <option value="168">7 days</option>
+            <option value="720">30 days</option>
+          </select>
+          <svg viewBox="0 0 16 16" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none"><path d="M4 6l4 4 4-4"/></svg>
+        </div>
+      </div>
+      <div id="shareResult" style="display:none">
+        <div style="font-family:var(--font2);font-size:0.72rem;font-weight:700;color:var(--muted);margin-bottom:6px">Share link:</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="shareLink" class="form-input" type="text" readonly style="font-size:0.68rem;flex:1">
+          <button class="btn btn-outline" style="flex-shrink:0;height:36px" onclick="copyShareLink()">Copy</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('shareModal').classList.remove('open')">Close</button>
+      <button class="btn btn-green" id="shareGenBtn" onclick="generateShareLink()">
+        <svg viewBox="0 0 16 16"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 7l4-2M6 9l4 2"/></svg>
+        Generate Link
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Confirm Delete Modal -->
 <div class="modal-bg" id="confirmDeleteModal">
