@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v14 -->
+<!-- BTID Profile v25 -->
 
 <html lang="en">
 <head>
@@ -1301,7 +1301,10 @@ async function savePostTryout() {
       dev_notes:        document.getElementById('pt_notes').value.trim(),
     });
     showToast('Post tryout info saved!', 'success');
-    loadProfile();
+    document.getElementById('editPlayerModal')?.addEventListener('click', e => {
+  if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
+});
+loadProfile();
   } catch(e) { showToast(e.message, 'error'); }
 }
 
@@ -1426,470 +1429,156 @@ async function saveEditPlayer() {
 async function exportPDF() {
   showToast('Preparing report...', 'info', 2000);
 
-  // Fetch all data needed
-  let tryoutResult = null, homeVisit = null, comments = [], reports = [];
+  let comments = [], reports = [];
   try {
-    const [tr, hv, cm, rp] = await Promise.allSettled([
-      apiFetch('/api/players/' + playerId),
-      apiFetch('/api/players/' + playerId + '/home-visit/media' ).catch(() => ({ media: [] })),
+    const [cm, rp] = await Promise.allSettled([
       apiFetch('/api/players/' + playerId + '/comments'),
       apiFetch('/api/players/' + playerId + '/reports'),
     ]);
-    tryoutResult = null; // will use player velo etc
-    homeVisit    = hv.status === 'fulfilled' ? hv.value : { media: [] };
-    comments     = cm.status === 'fulfilled' ? (cm.value.comments || []) : [];
-    reports      = rp.status === 'fulfilled' ? (rp.value.reports  || []) : [];
+    comments = cm.status === 'fulfilled' ? (cm.value.comments || []) : [];
+    reports  = rp.status === 'fulfilled' ? (rp.value.reports  || []) : [];
   } catch(e) {}
 
   const p   = player;
   const age = calcAge(p.dob) || p.age || '?';
   const photoSrc = p.photo_url ? (p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url) : null;
   const today = new Date().toLocaleDateString('en-UG', { day:'numeric', month:'long', year:'numeric' });
-
   const tierColors = { '1':'#009c41','1.5':'#7dbf3a','2':'#f5a623','3':'#e53935' };
   const tierColor  = tierColors[String(p.tier)] || '#888';
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  const ini = (name) => (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const infoRow = (l,v) => '<div class="info-row"><span class="info-lbl">'+l+'</span><span class="info-val">'+(v||'—')+'</span></div>';
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>${p.name} — BTID Scouting Report</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
-<style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Nunito',sans-serif; color:#00254D; background:#fff; font-size:11pt; }
+  const css = `
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:Nunito,sans-serif; color:#00254D; background:#fff; font-size:11pt; }
+    .hdr { background:#003A6B; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+    .logo { font-size:20pt; font-weight:900; color:#fff; }
+    .logo span { font-size:8pt; display:block; color:rgba(255,255,255,.5); letter-spacing:.05em; margin-top:1px; }
+    .hero { background:#00254D; padding:20px 24px; display:flex; gap:16px; }
+    .photo { width:80px; height:80px; border-radius:10px; background:#003A6B; border:2px solid rgba(179,212,240,.2); display:flex; align-items:center; justify-content:center; font-size:22pt; font-weight:900; color:#b3d4f0; flex-shrink:0; overflow:hidden; }
+    .photo img { width:100%; height:100%; object-fit:cover; }
+    .pname { font-size:20pt; font-weight:900; color:#fff; margin-bottom:3px; }
+    .pschool { font-size:10pt; color:#b3d4f0; margin-bottom:8px; }
+    .pmeta { display:flex; gap:12px; flex-wrap:wrap; }
+    .pmeta-i { font-size:8.5pt; color:rgba(255,255,255,.5); }
+    .pmeta-i strong { color:rgba(255,255,255,.85); }
+    .tbadge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:8pt; font-weight:800; color:#fff; margin-right:6px; }
+    .statsbar { display:flex; background:#001A3A; border-top:1px solid rgba(255,255,255,.08); }
+    .stat { flex:1; padding:10px; text-align:center; border-right:1px solid rgba(255,255,255,.08); }
+    .stat:last-child { border-right:none; }
+    .sval { font-size:14pt; font-weight:900; color:#fff; }
+    .slbl { font-size:7pt; font-weight:700; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
+    .sec { padding:16px 24px; border-bottom:1px solid #e6f0fa; }
+    .sec-title { font-size:11pt; font-weight:900; color:#003A6B; margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #005A9C; display:flex; align-items:center; gap:8px; }
+    .sec-title::before { content:''; display:inline-block; width:4px; height:16px; background:#EF3E42; border-radius:2px; }
+    .igrid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
+    .info-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #e6f0fa; }
+    .info-lbl { font-size:8.5pt; font-weight:700; color:#5B7A96; }
+    .info-val { font-size:8.5pt; font-weight:800; color:#00254D; text-align:right; }
+    .mgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+    .mbox { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:10px; text-align:center; }
+    .mval { font-size:14pt; font-weight:900; color:#00254D; }
+    .mlbl { font-size:7pt; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#5B7A96; }
+    .cmt { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #e6f0fa; }
+    .cava { width:28px; height:28px; border-radius:50%; background:#003A6B; display:flex; align-items:center; justify-content:center; font-size:8pt; font-weight:800; color:#b3d4f0; flex-shrink:0; }
+    .cauth { font-size:8.5pt; font-weight:800; color:#00254D; }
+    .ctime { font-size:7.5pt; color:#5B7A96; margin-left:6px; }
+    .cbody { font-size:8.5pt; color:#00254D; line-height:1.6; margin-top:2px; }
+    .rcard { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:12px; margin-bottom:8px; }
+    .rtitle { font-size:10pt; font-weight:800; color:#00254D; margin-bottom:2px; }
+    .rmeta { font-size:7.5pt; color:#5B7A96; margin-bottom:6px; }
+    .rbody { font-size:8.5pt; color:#00254D; line-height:1.7; white-space:pre-line; }
+    .ftr { background:#f4f7fb; border-top:2px solid #005A9C; padding:10px 24px; display:flex; justify-content:space-between; margin-top:8px; }
+    .ftr-l, .ftr-r { font-size:7.5pt; color:#5B7A96; }
+    .ftr-r { text-align:right; }
+    .pbtn { position:fixed; bottom:24px; right:24px; background:#005A9C; color:#fff; border:none; border-radius:10px; padding:12px 22px; font-family:Nunito,sans-serif; font-size:11pt; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(0,90,156,.4); }
+    @media print { .pbtn { display:none !important; } body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } .pgbrk { page-break-before:always; } }
+  `;
 
-  /* Header */
-  .pdf-header { background:#003A6B; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
-  .pdf-logo { font-family:'Varela Round',sans-serif; font-size:22pt; color:#fff; letter-spacing:-.02em; }
-  .pdf-logo span { font-size:9pt; font-weight:600; display:block; color:rgba(255,255,255,.5); margin-top:1px; letter-spacing:.05em; }
-  .pdf-date { font-size:8pt; color:rgba(255,255,255,.5); text-align:right; }
-  .pdf-date strong { display:block; color:rgba(255,255,255,.8); font-size:9pt; }
+  const parts = [];
+  parts.push('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  parts.push('<title>' + p.name + ' — BTID Scouting Report</title>');
+  parts.push('<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">');
+  parts.push('<style>' + css + '</style></head>');
+  parts.push('<body>');
 
-  /* Hero */
-  .hero { background:#00254D; color:#fff; padding:20px 24px; display:flex; gap:16px; align-items:flex-start; }
-  .hero-photo { width:80px; height:80px; border-radius:10px; background:#003A6B; border:2px solid rgba(179,212,240,.25); display:flex; align-items:center; justify-content:center; font-family:'Varela Round',sans-serif; font-size:22pt; color:#b3d4f0; flex-shrink:0; overflow:hidden; }
-  .hero-photo img { width:100%; height:100%; object-fit:cover; }
-  .hero-name { font-family:'Varela Round',sans-serif; font-size:20pt; margin-bottom:4px; }
-  .hero-school { font-size:10pt; color:#b3d4f0; margin-bottom:8px; }
-  .hero-meta { display:flex; gap:12px; flex-wrap:wrap; }
-  .hero-meta-item { font-size:8.5pt; color:rgba(255,255,255,.5); }
-  .hero-meta-item strong { color:rgba(255,255,255,.85); }
-  .tier-badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:8pt; font-weight:800; color:#fff; margin-right:6px; }
-  .admitted-badge { background:rgba(0,156,65,.25); color:#4dd882; font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
-  .eliminated-badge { background:rgba(239,62,66,.25); color:#ff7b7e; font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
-  .pending-badge { background:rgba(255,255,255,.1); color:rgba(255,255,255,.6); font-size:8pt; font-weight:800; padding:3px 10px; border-radius:6px; }
+  // Print button
+  parts.push('<button class="pbtn" onclick="window.print()">🖨 Print / Save PDF</button>');
 
-  /* Stats bar */
-  .stats-bar { display:flex; background:#001A3A; border-top:1px solid rgba(255,255,255,.08); }
-  .stat-item { flex:1; padding:10px; text-align:center; border-right:1px solid rgba(255,255,255,.08); }
-  .stat-item:last-child { border-right:none; }
-  .stat-val { font-family:'Varela Round',sans-serif; font-size:14pt; color:#fff; }
-  .stat-lbl { font-size:7pt; font-weight:700; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
+  // Header
+  parts.push('<div class="hdr"><div class="logo">BTID <span>Baseball Talent ID &amp; Development · LA Dodgers Africa</span></div><div style="font-size:8pt;color:rgba(255,255,255,.5);text-align:right"><strong style="display:block;color:rgba(255,255,255,.8)">Scouting Report</strong>Generated ' + today + '</div></div>');
 
-  /* Sections */
-  .section { padding:16px 24px; border-bottom:1px solid #e6f0fa; }
-  .section-title { font-family:'Varela Round',sans-serif; font-size:11pt; color:#003A6B; margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #005A9C; display:flex; align-items:center; gap:8px; }
-  .section-title::before { content:''; display:inline-block; width:4px; height:16px; background:#EF3E42; border-radius:2px; }
+  // Hero
+  const photoHtml = photoSrc
+    ? '<div class="photo"><img src="' + photoSrc + '"></div>'
+    : '<div class="photo">' + ini(p.name) + '</div>';
+  const tierHtml = p.tier ? '<span class="tbadge" style="background:' + tierColor + '">' + (p.tier==='1.5'?'T1.5':'T'+p.tier) + '</span>' : '';
+  const outcomeHtml = p.outcome === 'admitted' ? '<span style="background:rgba(0,156,65,.25);color:#4dd882;font-size:8pt;font-weight:800;padding:3px 10px;border-radius:6px">✓ Admitted</span>'
+    : p.outcome === 'eliminated' ? '<span style="background:rgba(239,62,66,.25);color:#ff7b7e;font-size:8pt;font-weight:800;padding:3px 10px;border-radius:6px">✗ Eliminated</span>'
+    : '<span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:8pt;font-weight:800;padding:3px 10px;border-radius:6px">Pending</span>';
 
-  /* Info grid */
-  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
-  .info-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #e6f0fa; }
-  .info-lbl { font-size:8.5pt; font-weight:700; color:#5B7A96; }
-  .info-val { font-size:8.5pt; font-weight:800; color:#00254D; text-align:right; }
+  parts.push('<div class="hero">' + photoHtml + '<div style="flex:1"><div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap"><span style="font-size:8pt;font-weight:800;color:#b3d4f0;text-transform:uppercase">' + (p.class||'—') + '</span>' + tierHtml + outcomeHtml + '</div><div class="pname">' + p.name + '</div><div class="pschool">' + (p.school||'—') + '</div><div class="pmeta"><div class="pmeta-i">Age <strong>' + age + '</strong></div><div class="pmeta-i">DOB <strong>' + fmtDate(p.dob) + '</strong></div><div class="pmeta-i">District <strong>' + (p.district||'—') + '</strong></div><div class="pmeta-i">Scout <strong>' + (p.scout||'Joshua M.') + '</strong></div>' + (p.gphp ? '<div class="pmeta-i">GPHP <strong>' + p.gphp + 'cm</strong></div>' : '') + '</div></div><div style="text-align:right;font-size:8pt;color:rgba(255,255,255,.4)">Nationality <strong style="color:rgba(255,255,255,.75)">' + (p.nationality||'Ugandan') + '</strong><br>Household <strong style="color:rgba(255,255,255,.75)">' + (p.household_id||'—') + '</strong></div></div>');
 
-  /* Metrics grid */
-  .metrics-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-  .metric-box { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:10px; text-align:center; }
-  .metric-val { font-family:'Varela Round',sans-serif; font-size:14pt; color:#00254D; }
-  .metric-lbl { font-size:7pt; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:#5B7A96; margin-top:2px; }
-  .metric-attempts { display:flex; gap:3px; justify-content:center; margin-top:4px; }
-  .metric-attempt { background:#fff; border:1px solid #d8e4f0; border-radius:4px; padding:1px 5px; font-size:7.5pt; color:#5B7A96; }
+  // Stats bar
+  parts.push('<div class="statsbar">');
+  [['Velocity',(p.velo||'—')+' mph'],['Height',p.height_ft||'—'],['Weight',(p.weight_lbs||'—')+' lbs'],['GPHP',(p.gphp||'—')+' cm'],['KR',p.kr||'—']]
+    .forEach(([l,v]) => parts.push('<div class="stat"><div class="sval">'+v+'</div><div class="slbl">'+l+'</div></div>'));
+  parts.push('</div>');
 
-  /* Comments */
-  .comment { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #e6f0fa; }
-  .comment-ava { width:28px; height:28px; border-radius:50%; background:#003A6B; display:flex; align-items:center; justify-content:center; font-family:'Varela Round',sans-serif; font-size:8pt; color:#b3d4f0; flex-shrink:0; }
-  .comment-author { font-size:8.5pt; font-weight:800; color:#00254D; }
-  .comment-time { font-size:7.5pt; color:#5B7A96; margin-left:6px; }
-  .comment-body { font-size:8.5pt; color:#00254D; line-height:1.6; margin-top:2px; }
+  // Player info
+  parts.push('<div class="sec"><div class="sec-title">Player Information</div><div class="igrid"><div>');
+  [[' Full Name',p.name],['Date of Birth',fmtDate(p.dob)],['Age',age+' years'],['Class',p.class||'—'],['Gender',p.gender||'—'],['Nationality',p.nationality||'Ugandan']]
+    .forEach(([l,v]) => parts.push(infoRow(l,v)));
+  parts.push('</div><div>');
+  [['School',p.school||'—'],['District',p.district||'—'],['Division',p.division||'—'],['School Contact',p.school_contact||'—'],['Parent 1',p.parent1||'—'],['Parent 2',p.parent2||'—']]
+    .forEach(([l,v]) => parts.push(infoRow(l,v)));
+  parts.push('</div></div></div>');
 
-  /* Report */
-  .report-card { background:#f4f7fb; border:1px solid #d8e4f0; border-radius:8px; padding:12px; margin-bottom:8px; }
-  .report-title { font-size:10pt; font-weight:800; color:#00254D; margin-bottom:2px; }
-  .report-meta { font-size:7.5pt; color:#5B7A96; margin-bottom:6px; }
-  .report-body { font-size:8.5pt; color:#00254D; line-height:1.7; white-space:pre-line; }
+  // Genetics
+  parts.push('<div class="sec"><div class="sec-title">Genetics</div><div class="igrid"><div>');
+  [['Dad Height',p.dad_ht?(p.dad_ht+'cm'):'—'],['Mom Height',p.mom_ht?(p.mom_ht+'cm'):'—'],['GPHP (Projected)',p.gphp?(p.gphp+'cm'):'—']]
+    .forEach(([l,v]) => parts.push(infoRow(l,v)));
+  parts.push('</div><div style="padding:8px;background:#f4f7fb;border-radius:8px;font-size:8.5pt;color:#5B7A96;line-height:1.7"><strong style="color:#00254D;display:block;margin-bottom:4px">What is GPHP?</strong>Genetic Projected Height Potential. Boys: (Dad + Mom + 13cm) ÷ 2. Girls: (Dad + Mom − 13cm) ÷ 2.</div></div></div>');
 
-  /* Footer */
-  .pdf-footer { background:#f4f7fb; border-top:2px solid #005A9C; padding:10px 24px; display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
-  .footer-left { font-size:7.5pt; color:#5B7A96; }
-  .footer-right { font-size:7.5pt; color:#5B7A96; text-align:right; }
-
-  /* Print */
-  @media print {
-    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .no-print { display:none !important; }
-    .page-break { page-break-before:always; }
+  // Tryout metrics
+  if (p.velo || p.height_ft || p.weight_lbs) {
+    parts.push('<div class="sec pgbrk"><div class="sec-title">Tryout Metrics</div><div class="mgrid">');
+    [['Velocity',(p.velo||'—'),'mph'],['Height',p.height_ft||'—','ft'],['Weight',(p.weight_lbs||'—'),'lbs'],['KR',p.kr||'—','']]
+      .forEach(([l,v,u]) => parts.push('<div class="mbox"><div class="mlbl">'+l+'</div><div class="mval">'+v+'</div><div class="mlbl">'+u+'</div></div>'));
+    parts.push('</div></div>');
   }
 
-  /* Print button */
-  .print-btn { position:fixed; bottom:24px; right:24px; background:#005A9C; color:#fff; border:none; border-radius:10px; padding:12px 22px; font-family:'Nunito',sans-serif; font-size:11pt; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(0,90,156,.4); display:flex; align-items:center; gap:8px; z-index:999; }
-  .print-btn:hover { background:#003A6B; }
-</style>
-</head>
-<body>
+  // Scout notes
+  if (p.notes) parts.push('<div class="sec"><div class="sec-title">Scout Notes</div><div style="font-size:9pt;line-height:1.8;color:#00254D;white-space:pre-line">'+p.notes+'</div></div>');
 
-<!-- Print button -->
-<button class="print-btn no-print" onclick="window.print()">
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 6V1h8v5M4 11H2a1 1 0 01-1-1V7a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-1 1h-2"/>
-    <rect x="4" y="9" width="8" height="6" rx="1"/>
-  </svg>
-  Print / Save PDF
-</button>
+  // Comments
+  if (comments.length) {
+    parts.push('<div class="sec"><div class="sec-title">Scout Comments</div>');
+    comments.forEach(c => parts.push('<div class="cmt"><div class="cava">'+ini(c.author_name)+'</div><div><div><span class="cauth">'+(c.author_name||'Unknown')+'</span><span class="ctime">'+fmtDate(c.created_at)+'</span></div><div class="cbody">'+c.text+'</div></div></div>'));
+    parts.push('</div>');
+  }
 
-<!-- Header -->
-<div class="pdf-header">
-  <div>
-    <div class="pdf-logo">BTID <span>Baseball Talent ID & Development · LA Dodgers Africa</span></div>
-  </div>
-  <div class="pdf-date">
-    <strong>Scouting Report</strong>
-    Generated ${today}
-  </div>
-</div>
+  // Reports
+  if (reports.length) {
+    parts.push('<div class="sec pgbrk"><div class="sec-title">Reports</div>');
+    reports.forEach(r => parts.push('<div class="rcard"><div class="rtitle">'+r.title+'</div><div class="rmeta">By '+(r.author_name||'—')+' · '+fmtDate(r.created_at)+'</div>'+(r.body?'<div class="rbody">'+r.body.replace(/<[^>]*>/g,'')+'</div>':'')+'</div>'));
+    parts.push('</div>');
+  }
 
-<!-- Hero -->
-<div class="hero">
-  <div class="hero-photo">
-    ${photoSrc ? `<img src="${photoSrc}">` : p.name.split(' ').map(w=>w[0]).join('').slice(0,2)}
-  </div>
-  <div style="flex:1">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-      <span style="font-size:8pt;font-weight:800;color:#b3d4f0;text-transform:uppercase;letter-spacing:.1em">${p.class||'—'}</span>
-      ${p.tier ? `<span class="tier-badge" style="background:${tierColor}">${p.tier === '1.5' ? 'T1.5' : 'T'+p.tier}</span>` : ''}
-      ${p.outcome === 'admitted' ? '<span class="admitted-badge">✓ Admitted</span>' : p.outcome === 'eliminated' ? '<span class="eliminated-badge">✗ Eliminated</span>' : '<span class="pending-badge">Pending</span>'}
-    </div>
-    <div class="hero-name">${p.name}</div>
-    <div class="hero-school">${p.school || '—'}</div>
-    <div class="hero-meta">
-      <div class="hero-meta-item">Age <strong>${age}</strong></div>
-      <div class="hero-meta-item">DOB <strong>${p.dob ? new Date(p.dob).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'}) : '—'}</strong></div>
-      <div class="hero-meta-item">District <strong>${p.district || '—'}</strong></div>
-      <div class="hero-meta-item">Division <strong>${p.division || '—'}</strong></div>
-      <div class="hero-meta-item">Scout <strong>${p.scout || 'Joshua M.'}</strong></div>
-      ${p.gphp ? `<div class="hero-meta-item">GPHP <strong>${p.gphp}cm</strong></div>` : ''}
-    </div>
-  </div>
-  <div style="text-align:right;flex-shrink:0">
-    <div style="font-size:8pt;color:rgba(255,255,255,.4)">Nationality <strong style="color:rgba(255,255,255,.75)">${p.nationality||'Ugandan'}</strong></div>
-    <div style="font-size:8pt;color:rgba(255,255,255,.4);margin-top:3px">Household <strong style="color:rgba(255,255,255,.75)">${p.household_id||'—'}</strong></div>
-  </div>
-</div>
+  // Footer
+  parts.push('<div class="ftr"><div class="ftr-l"><strong>BTID — Baseball Talent Identification &amp; Development</strong><br>LA Dodgers Africa Development Program · Joshua Muwanguzi, Head Scout Uganda</div><div class="ftr-r"><strong>Confidential</strong><br>Generated ' + today + '</div></div>');
+  parts.push('</body></html>');
 
-<!-- Stats bar -->
-<div class="stats-bar">
-  ${[
-    ['Velocity', (p.velo||'—') + ' mph'],
-    ['Height', p.height_ft || '—'],
-    ['Weight', (p.weight_lbs||'—') + ' lbs'],
-    ['GPHP', (p.gphp||'—') + ' cm'],
-    ['KR', p.kr || '—'],
-  ].map(([l,v]) => `<div class="stat-item"><div class="stat-val">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
-</div>
-
-<!-- Player Information -->
-<div class="section">
-  <div class="section-title">Player Information</div>
-  <div class="info-grid">
-    <div>
-      ${[['Full Name',p.name],['Date of Birth',p.dob?new Date(p.dob).toLocaleDateString('en-UG',{day:'numeric',month:'long',year:'numeric'}):'—'],['Age',age+' years'],['Class',p.class||'—'],['Gender',p.gender||'—'],['Nationality',p.nationality||'Ugandan']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
-    </div>
-    <div>
-      ${[['School',p.school||'—'],['District',p.district||'—'],['Division',p.division||'—'],['School Contact',p.school_contact||'—'],['Parent 1',p.parent1||'—'],['Parent 2',p.parent2||'—']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
-    </div>
-  </div>
-</div>
-
-<!-- Genetics -->
-<div class="section">
-  <div class="section-title">Genetics</div>
-  <div class="info-grid">
-    <div>
-      ${[['Dad Height',p.dad_ht?(p.dad_ht+'cm'):'—'],['Mom Height',p.mom_ht?(p.mom_ht+'cm'):'—'],['GPHP (Projected)',p.gphp?(p.gphp+'cm'):'—']].map(([l,v])=>`<div class="info-row"><span class="info-lbl">${l}</span><span class="info-val">${v}</span></div>`).join('')}
-    </div>
-    <div style="padding:8px;background:#f4f7fb;border-radius:8px;font-size:8.5pt;color:#5B7A96;line-height:1.7">
-      <strong style="color:#00254D;display:block;margin-bottom:4px">What is GPHP?</strong>
-      Genetic Projected Height Potential — calculated using the mid-parental height formula. Boys: (Dad + Mom + 13cm) ÷ 2. Girls: (Dad + Mom − 13cm) ÷ 2.
-    </div>
-  </div>
-</div>
-
-${p.velo || p.height_ft || p.weight_lbs ? `
-<!-- Tryout Metrics -->
-<div class="section page-break">
-  <div class="section-title">Tryout Metrics</div>
-  <div class="metrics-grid">
-    <div class="metric-box"><div class="metric-lbl">Velocity</div><div class="metric-val">${p.velo||'—'}</div><div class="metric-lbl">mph</div></div>
-    <div class="metric-box"><div class="metric-lbl">Height</div><div class="metric-val">${p.height_ft||'—'}</div><div class="metric-lbl">ft</div></div>
-    <div class="metric-box"><div class="metric-lbl">Weight</div><div class="metric-val">${p.weight_lbs||'—'}</div><div class="metric-lbl">lbs</div></div>
-    <div class="metric-box"><div class="metric-lbl">ER</div><div class="metric-val">${p.kr||'—'}</div><div class="metric-lbl">score</div></div>
-  </div>
-</div>` : ''}
-
-${p.notes ? `
-<!-- Scout Notes -->
-<div class="section">
-  <div class="section-title">Scout Notes</div>
-  <div style="font-size:9pt;line-height:1.8;color:#00254D;white-space:pre-line">${p.notes}</div>
-</div>` : ''}
-
-${comments.length ? `
-<!-- Scout Comments -->
-<div class="section">
-  <div class="section-title">Scout Comments</div>
-  ${comments.map(c => `
-    <div class="comment">
-      <div class="comment-ava">${(c.author_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-      <div>
-        <div><span class="comment-author">${c.author_name||'Unknown'}</span><span class="comment-time">${new Date(c.created_at).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'})}</span></div>
-        <div class="comment-body">${c.text}</div>
-      </div>
-    </div>`).join('')}
-</div>` : ''}
-
-${reports.length ? `
-<!-- Reports -->
-<div class="section page-break">
-  <div class="section-title">Reports</div>
-  ${reports.map(r => `
-    <div class="report-card">
-      <div class="report-title">${r.title}</div>
-      <div class="report-meta">By ${r.author_name} · ${new Date(r.created_at).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'})}</div>
-      ${r.body ? `<div class="report-body">${r.body.replace(/<[^>]*>/g,'')}</div>` : ''}
-    </div>`).join('')}
-</div>` : ''}
-
-<!-- Footer -->
-<div class="pdf-footer">
-  <div class="footer-left">
-    <strong>BTID — Baseball Talent Identification & Development</strong><br>
-    LA Dodgers Africa Development Program · Joshua Muwanguzi, Head Scout Uganda
-  </div>
-  <div class="footer-right">
-    <strong>Confidential</strong><br>
-    Generated ${today}
-  </div>
-</div>
-
-<script>window.onload = () => setTimeout(() => window.print(), 800);</script>
-</body>
-</html>`;
-
+  const html = parts.join('\n');
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
+  win.addEventListener('load', () => setTimeout(() => win.print(), 600));
+  setTimeout(() => { try { win.print(); } catch(e) {} }, 1500);
 }
 
-// ── INIT ──────────────────────────────────────────────────────────
-loadProfile();
-</script>
-
-
-<!-- Edit Player Modal -->
-<div class="modal-bg" id="editPlayerModal">
-  <div class="modal-card" style="max-width:680px;max-height:90vh;overflow-y:auto">
-    <div class="modal-head">
-      <div class="modal-title">Edit Player</div>
-      <button class="modal-close" onclick="document.getElementById('editPlayerModal').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <!-- Left column -->
-        <div>
-          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Personal</div>
-          <div class="form-group">
-            <label class="form-label">Full Name *</label>
-            <input class="form-input" id="epName" type="text" placeholder="Full name">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Date of Birth</label>
-            <input class="form-input" id="epDob" type="date">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Class</label>
-              <input class="form-input" id="epClass" type="text" placeholder="e.g. P5">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Gender</label>
-              <select class="form-select" id="epGender" onchange="updateEditGPHP()">
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Nationality</label>
-            <input class="form-input" id="epNationality" type="text" placeholder="Ugandan">
-          </div>
-
-          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 8px">Contacts</div>
-          <div class="form-group">
-            <label class="form-label">Parent / Guardian 1</label>
-            <input class="form-input" id="epParent1" type="text" placeholder="+256...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Parent / Guardian 2</label>
-            <input class="form-input" id="epParent2" type="text" placeholder="+256...">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Household ID</label>
-              <input class="form-input" id="epHousehold" type="text">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Refugee ID</label>
-              <input class="form-input" id="epRefugee" type="text">
-            </div>
-          </div>
-        </div>
-
-        <!-- Right column -->
-        <div>
-          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">School & Location</div>
-          <div class="form-group">
-            <label class="form-label">School</label>
-            <input class="form-input" id="epSchool" type="text">
-          </div>
-          <div class="form-group">
-            <label class="form-label">School Contact</label>
-            <input class="form-input" id="epSchoolContact" type="text" placeholder="+256...">
-          </div>
-          <div class="form-group">
-            <label class="form-label">District</label>
-            <select class="form-select" id="epDistrict">
-              <option value="">Select district</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Division</label>
-            <input class="form-input" id="epDivision" type="text" placeholder="e.g. Central">
-          </div>
-
-          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 8px">Genetics & Scouting</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Dad Height (cm)</label>
-              <input class="form-input" id="epDadHt" type="number" placeholder="e.g. 182" oninput="updateEditGPHP()">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Mom Height (cm)</label>
-              <input class="form-input" id="epMomHt" type="number" placeholder="e.g. 165" oninput="updateEditGPHP()">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">GPHP (auto-calculated)</label>
-            <div class="form-input" id="epGPHP" style="background:var(--bg);color:var(--muted);display:flex;align-items:center">Set parent heights</div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Tier</label>
-              <select class="form-select" id="epTier">
-                <option value="">No tier</option>
-                <option value="1">Tier 1</option>
-                <option value="1.5">Tier 1.5</option>
-                <option value="2">Tier 2</option>
-                <option value="3">Tier 3</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">KR</label>
-              <input class="form-input" id="epKR" type="text" placeholder="KR value">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Scout</label>
-            <input class="form-input" id="epScout" type="text">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Notes</label>
-            <textarea class="form-textarea" id="epNotes" rows="3" placeholder="Scout notes..."></textarea>
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-outline" onclick="document.getElementById('editPlayerModal').classList.remove('open')">Cancel</button>
-      <button class="btn btn-green" id="epSaveBtn" onclick="saveEditPlayer()">
-        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
-        Save Changes
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-document.getElementById('editPlayerModal').addEventListener('click', e => {
-  if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
-});
-</script>
-<!-- Share Modal -->
-<div class="modal-bg" id="shareModal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title">Share Player Profile</div>
-      <button class="modal-close" onclick="document.getElementById('shareModal').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-family:var(--font2);font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:14px;line-height:1.6">
-        Generate a link anyone can use to view this player's full profile — no login required.
-        The link expires automatically.
-      </p>
-      <div class="form-group">
-        <label class="form-label">Link expires after</label>
-        <div style="position:relative">
-          <select class="form-select" id="shareExpiry" style="width:100%;padding-right:36px;appearance:none;-webkit-appearance:none">
-            <option value="24">24 hours</option>
-            <option value="48" selected>48 hours</option>
-            <option value="72">3 days</option>
-            <option value="168">7 days</option>
-            <option value="720">30 days</option>
-          </select>
-          <svg viewBox="0 0 16 16" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none">
-            <path d="M4 6l4 4 4-4"/>
-          </svg>
-        </div>
-      </div>
-      <div id="shareResult" style="display:none">
-        <div style="background:var(--green-pale);border:1.5px solid var(--green-mid);border-radius:var(--radius-sm);padding:12px;margin-top:10px">
-          <div style="font-family:var(--font2);font-size:0.65rem;font-weight:800;color:var(--green-dark);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Share Link</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="shareUrl" class="form-input" type="text" readonly
-              style="flex:1;font-size:0.72rem;background:var(--white)">
-            <button class="btn btn-green" onclick="copyShareLink()" style="flex-shrink:0">Copy</button>
-          </div>
-          <div id="shareExpLabel" style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted);margin-top:6px"></div>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-outline" onclick="document.getElementById('shareModal').classList.remove('open')">Close</button>
-      <button class="btn btn-green" id="generateShareBtn" onclick="generateShareLink()">
-        <svg viewBox="0 0 16 16"><circle cx="12" cy="4" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 7l4-2M6 9l4 2"/></svg>
-        Generate Link
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-// ── SHARE LINK ────────────────────────────────────────────────────
-function openShareModal() {
-  document.getElementById('shareModal').classList.add('open');
-  document.getElementById('shareResult').style.display = 'none';
-}
+// ── EXPORT PDF ────────────────────────────────────────────────────
 
 async function generateShareLink() {
   const hours = document.getElementById('shareExpiry').value;
