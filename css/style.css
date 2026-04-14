@@ -1211,22 +1211,79 @@ tbody tr.clickable { cursor: pointer; }
 }
 
 @media (max-width: 768px) {
+  /* Prevent ALL horizontal overflow */
+  html, body { overflow-x: hidden; max-width: 100vw; }
+  * { max-width: 100%; }
+
+  /* Sidebar */
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
   .sidebar-overlay.show { display: block; }
   .main-area { margin-left: 0; }
   .mob-sidebar-btn { display: flex; }
   .mob-hide { display: none !important; }
-  .content { padding: 14px 16px; }
-  .grid-3 { grid-template-columns: 1fr; }
-  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+
+  /* Layout */
+  .content { padding: 12px 14px; }
   .topbar { padding: 0 14px; }
+  .grid-2, .grid-2-1, .grid-3, .col-stack { grid-template-columns: 1fr; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+
+  /* Cards */
+  .card { padding: 12px; }
+  .modal-card { width: calc(100vw - 24px) !important; max-width: 100% !important; margin: 12px; max-height: 92vh; overflow-y: auto; }
+
+  /* Player profile hero */
+  .profile-hero-top { flex-wrap: wrap; gap: 10px; }
+  .profile-hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .hero-stat { border-right: none; border-bottom: 1px solid rgba(255,255,255,.08); padding: 10px 8px; }
+
+  /* Tables — scroll inside container, don't push page */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  table { min-width: 500px; }
+
+  /* Filter bar */
+  .filter-bar { flex-wrap: wrap; gap: 8px; }
+  .filter-bar .search-wrap { width: 100%; max-width: 100%; }
+  .filter-select { flex: 1; min-width: 120px; }
+
+  /* Tabs — horizontal scroll within tab bar */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .tab { white-space: nowrap; flex-shrink: 0; }
+
+  /* Player cards grid */
+  .players-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Topbar actions — stack or shrink */
+  .topbar-actions { gap: 6px; }
+  .topbar-actions .btn { padding: 0 10px; font-size: 0.7rem; }
+
+  /* Metrics grid */
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Stats on dashboard */
+  .stats-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 480px) {
-  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .content { padding: 10px; }
+
+  /* Profile hero stats — 2 per row on very small screens */
+  .profile-hero-stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* Player cards — single column on tiny screens */
+  .players-grid { grid-template-columns: 1fr; }
+
+  /* Filter bar — fully vertical */
   .filter-bar { flex-direction: column; align-items: stretch; }
-  .search-wrap { max-width: 100%; }
+  .filter-select { width: 100%; }
+
+  /* Tryout batch detail table */
+  table { min-width: 420px; }
+
+  /* Modal full screen on tiny phones */
+  .modal-card { width: 100vw !important; max-width: 100vw !important; margin: 0; border-radius: 16px 16px 0 0; position: fixed; bottom: 0; left: 0; max-height: 92vh; }
+  .modal-bg { align-items: flex-end; }
 }
 
 /* ── DARK MODE ──────────────────────────────────────────────────── */

@@ -1545,8 +1545,11 @@ async function exportPDF() {
     .pbtn{position:fixed;bottom:20px;right:20px;background:#005A9C;color:#fff;border:none;border-radius:9px;padding:10px 20px;font-family:Nunito,sans-serif;font-size:10pt;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,90,156,.4);z-index:999}
     @media print{
       .pbtn{display:none!important}
-      body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .page-wrap{min-height:100vh}
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0}
+      .page-wrap{display:block}
+      .content{display:block}
+      .ftr{position:fixed;bottom:0;left:0;right:0;margin:0}
+      @page{margin:0.5cm 0.5cm 2cm 0.5cm}
     }
   `;
 
