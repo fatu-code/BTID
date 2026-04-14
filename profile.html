@@ -1467,7 +1467,21 @@ async function exportPDF() {
 
   const p      = player;
   const age    = calcAge(p.dob) || p.age || '?';
-  const photo  = p.photo_url ? (p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url) : null;
+  // Convert photo to base64 to avoid cross-origin issues in print
+  let photo = null;
+  if (p.photo_url) {
+    const photoUrl = p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url;
+    try {
+      const resp = await fetch(photoUrl);
+      const blob = await resp.blob();
+      photo = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(blob);
+      });
+    } catch(e) { photo = null; }
+  }
   const today  = new Date().toLocaleDateString('en-UG', { day:'numeric', month:'long', year:'numeric' });
   const fmtDate = d => d ? new Date(d).toLocaleDateString('en-UG',{day:'numeric',month:'short',year:'numeric'}) : '—';
   const ini     = n => (n||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1500,7 +1514,7 @@ async function exportPDF() {
     .si:last-child{border-right:none}
     .sv{font-size:13pt;font-weight:900;color:#fff}
     .sl{font-size:6.5pt;font-weight:700;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
-    .sec{padding:10px 24px;border-bottom:1px solid #e6f0fa}
+    .sec{padding:10px 24px}
     .st{font-size:10pt;font-weight:900;color:#003A6B;margin-bottom:10px;padding-bottom:5px;border-bottom:2px solid #005A9C;display:flex;align-items:center;gap:7px}
     .st::before{content:'';display:inline-block;width:3px;height:14px;background:#EF3E42;border-radius:2px}
     .ig{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
@@ -1548,7 +1562,9 @@ async function exportPDF() {
   parts.push('<div class="hdr"><div class="logo">BTID <span>Baseball Talent ID &amp; Development · LA Dodgers Africa</span></div><div style="font-size:7.5pt;color:rgba(255,255,255,.45);text-align:right"><strong style="display:block;color:rgba(255,255,255,.78);font-size:8.5pt">Scouting Report</strong>Generated '+today+'</div></div>');
 
   // HERO
-  const photoHtml = photo ? '<div class="photo"><img src="'+photo+'"></div>' : '<div class="photo">'+ini(p.name)+'</div>';
+  const photoHtml = photo
+    ? '<div class="photo"><img src="'+photo+'"></div>'
+    : '<div class="photo" style="font-family:Arial,sans-serif;font-size:22pt;font-weight:900;letter-spacing:-.02em">'+ini(p.name)+'</div>';
   const tierHtml  = p.tier ? '<span class="tb" style="background:'+tColor+'">'+(p.tier==='1.5'?'T1.5':'T'+p.tier)+'</span>' : '';
   const outHtml   = p.outcome==='admitted' ? '<span class="ob-a">✓ Admitted</span>'
     : p.outcome==='eliminated' ? '<span class="ob-e">✗ Eliminated</span>'
