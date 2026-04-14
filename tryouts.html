@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Tryouts v2 -->
+<!-- BTID Tryouts v3 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -571,47 +571,116 @@ async function removeFromBatch(batchId, playerId) {
 }
 
 // ── ADD PLAYER TO BATCH ───────────────────────────────────────────
-function openAddPlayerModal() {
+async function openAddPlayerModal() {
   document.getElementById('addPlayerModal').classList.add('open');
-  document.getElementById('playerSearchInput').value = '';
-  document.getElementById('playerSearchResults').innerHTML =
-    '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">Type a name to search players.</div>';
+  document.getElementById('apSearch').value = '';
+  document.getElementById('apTier').value = '';
+  document.getElementById('apDistrict').value = '';
+  document.getElementById('apSelectAll').checked = false;
+  document.getElementById('apSelectedCount').textContent = '0 selected';
+  document.getElementById('apAddBtn').disabled = true;
+  document.getElementById('apPlayerList').innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:20px;text-align:center">Loading players...</div>';
+
+  try {
+    const r = await PlayerAPI.getAll();
+    allPlayers = r.players || r || [];
+  } catch(e) { allPlayers = []; }
+
+  // Populate district filter
+  const distSel = document.getElementById('apDistrict');
+  distSel.innerHTML = '<option value="">All districts</option>';
+  const districts = [...new Set(allPlayers.map(p => p.district).filter(Boolean))].sort();
+  districts.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    distSel.appendChild(o);
+  });
+
+  renderEligiblePlayers();
 }
 
-function searchPlayersToAdd() {
-  const q = document.getElementById('playerSearchInput').value.toLowerCase().trim();
-  const el = document.getElementById('playerSearchResults');
+function closeAddPlayerModal() {
+  document.getElementById('addPlayerModal').classList.remove('open');
+}
 
-  if (!q) {
-    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">Type a name to search players.</div>';
-    return;
-  }
-
+function getEligiblePlayers() {
   const batchIds = new Set(batchPlayers.map(p => p.id));
-  const results  = allPlayers.filter(p =>
-    p.name.toLowerCase().includes(q) && !batchIds.has(p.id)
-  ).slice(0, 10);
+  return allPlayers.filter(p => p.outcome !== 'admitted' && !batchIds.has(p.id));
+}
 
-  if (!results.length) {
-    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:12px 0">No players found.</div>';
+function renderEligiblePlayers() {
+  const q        = (document.getElementById('apSearch')?.value || '').toLowerCase();
+  const district = document.getElementById('apDistrict')?.value || '';
+  const tier     = document.getElementById('apTier')?.value || '';
+
+  let list = getEligiblePlayers().filter(p => {
+    if (q        && !(p.name||'').toLowerCase().includes(q)) return false;
+    if (district && p.district !== district)                  return false;
+    if (tier     && String(p.tier) !== tier)                  return false;
+    return true;
+  });
+
+  const el = document.getElementById('apPlayerList');
+  if (!list.length) {
+    el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted);padding:20px;text-align:center">No eligible players found.</div>';
     return;
   }
 
-  el.innerHTML = results.map(p => `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s"
-      onmouseover="this.style.background='var(--green-pale)'"
-      onmouseout="this.style.background=''"
-      onclick="addPlayerToBatch('${p.id}','${p.name.replace(/'/g,"\\'")}')">
-      <div style="width:32px;height:32px;border-radius:8px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:0.68rem;color:var(--green-light);flex-shrink:0">
-        ${initials(p.name)}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-family:var(--font2);font-size:0.8rem;font-weight:800;color:var(--text)">${p.name}</div>
-        <div style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">${p.class||''} · ${p.district||'—'} · ${p.school||'—'}</div>
-      </div>
-      ${tierBadge(p.tier)}
-      <span style="font-family:var(--font2);font-size:0.68rem;font-weight:700;color:var(--green)">+ Add</span>
-    </div>`).join('');
+  el.innerHTML = list.map(p => {
+    const outcomeLabel = p.outcome === 'eliminated'
+      ? '<span style="font-family:var(--font2);font-size:0.58rem;font-weight:800;padding:2px 7px;border-radius:100px;background:var(--red-pale);color:var(--red)">Eliminated</span>'
+      : '<span style="font-family:var(--font2);font-size:0.58rem;font-weight:800;padding:2px 7px;border-radius:100px;background:var(--bg);color:var(--muted);border:1px solid var(--border)">Pending</span>';
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border);cursor:pointer">'
+      + '<input type="checkbox" class="ap-checkbox" data-id="' + p.id + '" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0" onchange="updateApCount()">'
+      + '<div style="width:32px;height:32px;border-radius:8px;background:var(--green-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font1);font-size:0.65rem;color:var(--green-light);flex-shrink:0">' + initials(p.name) + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-family:var(--font2);font-size:0.78rem;font-weight:800;color:var(--text)">' + p.name + '</div>'
+      + '<div style="font-family:var(--font2);font-size:0.62rem;font-weight:600;color:var(--muted)">' + (p.class||'—') + ' · ' + (p.district||'—') + '</div>'
+      + '</div>'
+      + tierBadge(p.tier)
+      + outcomeLabel
+      + '</label>';
+  }).join('');
+
+  updateApCount();
+}
+
+function updateApCount() {
+  const checked = document.querySelectorAll('.ap-checkbox:checked').length;
+  const total   = document.querySelectorAll('.ap-checkbox').length;
+  document.getElementById('apSelectedCount').textContent = checked + ' selected';
+  document.getElementById('apAddBtn').disabled = checked === 0;
+  const sa = document.getElementById('apSelectAll');
+  sa.checked = checked === total && total > 0;
+  sa.indeterminate = checked > 0 && checked < total;
+}
+
+function toggleSelectAll() {
+  const checked = document.getElementById('apSelectAll').checked;
+  document.querySelectorAll('.ap-checkbox').forEach(cb => cb.checked = checked);
+  updateApCount();
+}
+
+async function addSelectedPlayers() {
+  const selected = [...document.querySelectorAll('.ap-checkbox:checked')].map(cb => cb.getAttribute('data-id'));
+  if (!selected.length) return;
+  const btn = document.getElementById('apAddBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  let added = 0;
+  for (const pid of selected) {
+    try {
+      await TryoutAPI.addPlayer(selectedBatch.id, pid);
+      const player = allPlayers.find(p => p.id === pid);
+      if (player) batchPlayers.push({ ...player, attended: false });
+      added++;
+    } catch(e) {}
+  }
+  const b = allBatches.find(b => b.id === selectedBatch.id);
+  if (b) b.player_count = (parseInt(b.player_count)||0) + added;
+  filterBatches();
+  renderBatchDetail();
+  closeAddPlayerModal();
+  showToast(added + ' player' + (added !== 1 ? 's' : '') + ' added!', 'success');
 }
 
 async function addPlayerToBatch(playerId, playerName) {
@@ -619,10 +688,8 @@ async function addPlayerToBatch(playerId, playerName) {
     await TryoutAPI.addPlayer(selectedBatch.id, playerId);
     const player = allPlayers.find(p => p.id === playerId);
     if (player) batchPlayers.push({ ...player, attended: false });
-    searchPlayersToAdd();
     renderBatchDetail();
-    showToast(playerName + ' added to batch', 'success');
-    // Update count in batch list
+    showToast(playerName + ' added', 'success');
     const b = allBatches.find(b => b.id === selectedBatch.id);
     if (b) b.player_count = (parseInt(b.player_count)||0) + 1;
     filterBatches();
