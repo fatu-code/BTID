@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v11 -->
+<!-- BTID Profile v12 -->
 
 <html lang="en">
 <head>
@@ -1338,8 +1338,88 @@ function triggerPhotoUpload() {
 
 // ── EDIT PLAYER ───────────────────────────────────────────────────
 function editPlayer() {
-  // Redirect to players page with edit param
-  window.location.href = `players.html?edit=${playerId}`;
+  // Pre-fill all fields
+  const p = player;
+  document.getElementById('epName').value          = p.name || '';
+  document.getElementById('epDob').value           = p.dob ? p.dob.split('T')[0] : '';
+  document.getElementById('epClass').value         = p.class || '';
+  document.getElementById('epGender').value        = p.gender || 'M';
+  document.getElementById('epNationality').value   = p.nationality || 'Ugandan';
+  document.getElementById('epDistrict').value      = p.district || '';
+  document.getElementById('epDivision').value      = p.division || '';
+  document.getElementById('epSchool').value        = p.school || '';
+  document.getElementById('epSchoolContact').value = p.school_contact || '';
+  document.getElementById('epParent1').value       = p.parent1 || '';
+  document.getElementById('epParent2').value       = p.parent2 || '';
+  document.getElementById('epHousehold').value     = p.household_id || '';
+  document.getElementById('epRefugee').value       = p.refugee_id || '';
+  document.getElementById('epDadHt').value         = p.dad_ht || '';
+  document.getElementById('epMomHt').value         = p.mom_ht || '';
+  document.getElementById('epTier').value          = p.tier || '';
+  document.getElementById('epScout').value         = p.scout || '';
+  document.getElementById('epKR').value            = p.kr || '';
+  document.getElementById('epNotes').value         = p.notes || '';
+  // Populate district select
+  const ds = document.getElementById('epDistrict');
+  ds.innerHTML = '<option value="">Select district</option>';
+  UGANDA_DISTRICTS.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    if (d === p.district) o.selected = true;
+    ds.appendChild(o);
+  });
+  updateEditGPHP();
+  document.getElementById('editPlayerModal').classList.add('open');
+}
+
+function updateEditGPHP() {
+  const dad = parseFloat(document.getElementById('epDadHt').value);
+  const mom = parseFloat(document.getElementById('epMomHt').value);
+  const gender = document.getElementById('epGender').value;
+  const el = document.getElementById('epGPHP');
+  if (!dad || !mom) { el.textContent = 'Set parent heights'; el.style.color = 'var(--muted)'; return; }
+  const gphp = gender === 'F' ? ((dad + mom - 13) / 2).toFixed(1) : ((dad + mom + 13) / 2).toFixed(1);
+  el.textContent = gphp + ' cm projected';
+  el.style.color = 'var(--green-dark)';
+}
+
+async function saveEditPlayer() {
+  const btn = document.getElementById('epSaveBtn');
+  btn.disabled = true;
+  try {
+    const updated = {
+      name:           document.getElementById('epName').value.trim(),
+      dob:            document.getElementById('epDob').value || null,
+      class:          document.getElementById('epClass').value.trim(),
+      gender:         document.getElementById('epGender').value,
+      nationality:    document.getElementById('epNationality').value.trim(),
+      district:       document.getElementById('epDistrict').value.trim(),
+      division:       document.getElementById('epDivision').value.trim(),
+      school:         document.getElementById('epSchool').value.trim(),
+      school_contact: document.getElementById('epSchoolContact').value.trim(),
+      parent1:        document.getElementById('epParent1').value.trim(),
+      parent2:        document.getElementById('epParent2').value.trim(),
+      household_id:   document.getElementById('epHousehold').value.trim(),
+      refugee_id:     document.getElementById('epRefugee').value.trim(),
+      dad_ht:         document.getElementById('epDadHt').value || null,
+      mom_ht:         document.getElementById('epMomHt').value || null,
+      tier:           document.getElementById('epTier').value || null,
+      scout:          document.getElementById('epScout').value.trim(),
+      kr:             document.getElementById('epKR').value.trim(),
+      notes:          document.getElementById('epNotes').value.trim(),
+    };
+    // Recalculate GPHP
+    if (updated.dad_ht && updated.mom_ht) {
+      const adj = updated.gender === 'F' ? -13 : 13;
+      updated.gphp = ((parseFloat(updated.dad_ht) + parseFloat(updated.mom_ht) + adj) / 2).toFixed(1);
+    }
+    const r = await PlayerAPI.update(playerId, updated);
+    Object.assign(player, r.player || updated);
+    document.getElementById('editPlayerModal').classList.remove('open');
+    renderProfile();
+    showToast('Player updated!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+  finally { btn.disabled = false; }
 }
 
 // ── EXPORT PDF ────────────────────────────────────────────────────
@@ -1352,6 +1432,147 @@ function exportPDF() {
 loadProfile();
 </script>
 
+
+<!-- Edit Player Modal -->
+<div class="modal-bg" id="editPlayerModal">
+  <div class="modal-card" style="max-width:680px;max-height:90vh;overflow-y:auto">
+    <div class="modal-head">
+      <div class="modal-title">Edit Player</div>
+      <button class="modal-close" onclick="document.getElementById('editPlayerModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <!-- Left column -->
+        <div>
+          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Personal</div>
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" id="epName" type="text" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth</label>
+            <input class="form-input" id="epDob" type="date">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Class</label>
+              <input class="form-input" id="epClass" type="text" placeholder="e.g. P5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              <select class="form-select" id="epGender" onchange="updateEditGPHP()">
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nationality</label>
+            <input class="form-input" id="epNationality" type="text" placeholder="Ugandan">
+          </div>
+
+          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 8px">Contacts</div>
+          <div class="form-group">
+            <label class="form-label">Parent / Guardian 1</label>
+            <input class="form-input" id="epParent1" type="text" placeholder="+256...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parent / Guardian 2</label>
+            <input class="form-input" id="epParent2" type="text" placeholder="+256...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Household ID</label>
+              <input class="form-input" id="epHousehold" type="text">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Refugee ID</label>
+              <input class="form-input" id="epRefugee" type="text">
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">School & Location</div>
+          <div class="form-group">
+            <label class="form-label">School</label>
+            <input class="form-input" id="epSchool" type="text">
+          </div>
+          <div class="form-group">
+            <label class="form-label">School Contact</label>
+            <input class="form-input" id="epSchoolContact" type="text" placeholder="+256...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">District</label>
+            <select class="form-select" id="epDistrict">
+              <option value="">Select district</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Division</label>
+            <input class="form-input" id="epDivision" type="text" placeholder="e.g. Central">
+          </div>
+
+          <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 8px">Genetics & Scouting</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Dad Height (cm)</label>
+              <input class="form-input" id="epDadHt" type="number" placeholder="e.g. 182" oninput="updateEditGPHP()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mom Height (cm)</label>
+              <input class="form-input" id="epMomHt" type="number" placeholder="e.g. 165" oninput="updateEditGPHP()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPHP (auto-calculated)</label>
+            <div class="form-input" id="epGPHP" style="background:var(--bg);color:var(--muted);display:flex;align-items:center">Set parent heights</div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tier</label>
+              <select class="form-select" id="epTier">
+                <option value="">No tier</option>
+                <option value="1">Tier 1</option>
+                <option value="1.5">Tier 1.5</option>
+                <option value="2">Tier 2</option>
+                <option value="3">Tier 3</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">KR</label>
+              <input class="form-input" id="epKR" type="text" placeholder="KR value">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Scout</label>
+            <input class="form-input" id="epScout" type="text">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-textarea" id="epNotes" rows="3" placeholder="Scout notes..."></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="document.getElementById('editPlayerModal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-green" id="epSaveBtn" onclick="saveEditPlayer()">
+        <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('editPlayerModal').addEventListener('click', e => {
+  if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
+});
+</script>
 <!-- Share Modal -->
 <div class="modal-bg" id="shareModal">
   <div class="modal-card">
