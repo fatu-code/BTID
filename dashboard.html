@@ -260,7 +260,7 @@ async function loadDash() {
               </div>
               <div style="flex:1;min-width:0">
                 <div class="activity-title">${t.name}</div>
-                <div class="activity-sub">${t.district||'Uganda'} · ${fmt(t.player_count||0)} players invited</div>
+                <div class="activity-sub">${t.district||'Uganda'} · ${parseInt(t.player_count)||0} players invited</div>
               </div>
               <div class="activity-time">${formatDateShort(t.tryout_date)}</div>
             </div>`).join('')}
