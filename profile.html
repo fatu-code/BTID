@@ -1490,11 +1490,19 @@ async function exportPDF() {
     .rtitle { font-size:10pt; font-weight:800; color:#00254D; margin-bottom:2px; }
     .rmeta { font-size:7.5pt; color:#5B7A96; margin-bottom:6px; }
     .rbody { font-size:8.5pt; color:#00254D; line-height:1.7; white-space:pre-line; }
-    .ftr { background:#f4f7fb; border-top:2px solid #005A9C; padding:10px 24px; display:flex; justify-content:space-between; margin-top:8px; }
+    .ftr { background:#f4f7fb; border-top:2px solid #005A9C; padding:10px 24px; display:flex; justify-content:space-between; }
     .ftr-l, .ftr-r { font-size:7.5pt; color:#5B7A96; }
     .ftr-r { text-align:right; }
     .pbtn { position:fixed; bottom:24px; right:24px; background:#005A9C; color:#fff; border:none; border-radius:10px; padding:12px 22px; font-family:Nunito,sans-serif; font-size:11pt; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(0,90,156,.4); }
-    @media print { .pbtn { display:none !important; } body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } .pgbrk { page-break-before:always; } }
+    .content-wrap { min-height:calc(100vh - 120px); }
+    @media print {
+      .pbtn { display:none !important; }
+      body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      .pgbrk { page-break-before:always; }
+      html, body { height:100%; }
+      .page-wrap { min-height:100vh; display:flex; flex-direction:column; }
+      .content-wrap { flex:1; }
+    }
   `;
 
   const parts = [];
@@ -1502,10 +1510,11 @@ async function exportPDF() {
   parts.push('<title>' + p.name + ' — BTID Scouting Report</title>');
   parts.push('<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">');
   parts.push('<style>' + css + '</style></head>');
-  parts.push('<body>');
+  parts.push('<body><div class="page-wrap">');
 
   // Print button
   parts.push('<button class="pbtn" onclick="window.print()">🖨 Print / Save PDF</button>');
+  parts.push('<div class="content-wrap">');
 
   // Header
   parts.push('<div class="hdr"><div class="logo">BTID <span>Baseball Talent ID &amp; Development · LA Dodgers Africa</span></div><div style="font-size:8pt;color:rgba(255,255,255,.5);text-align:right"><strong style="display:block;color:rgba(255,255,255,.8)">Scouting Report</strong>Generated ' + today + '</div></div>');
@@ -1542,10 +1551,10 @@ async function exportPDF() {
     .forEach(([l,v]) => parts.push(infoRow(l,v)));
   parts.push('</div><div style="padding:8px;background:#f4f7fb;border-radius:8px;font-size:8.5pt;color:#5B7A96;line-height:1.7"><strong style="color:#00254D;display:block;margin-bottom:4px">What is GPHP?</strong>Genetic Projected Height Potential. Boys: (Dad + Mom + 13cm) ÷ 2. Girls: (Dad + Mom − 13cm) ÷ 2.</div></div></div>');
 
-  // Tryout metrics
-  if (p.velo || p.height_ft || p.weight_lbs) {
+  // Tryout metrics - only show if we have attempt/detailed data beyond what's in stats bar
+  if (p.broad || p.dash || p.velo_st_avg) {
     parts.push('<div class="sec"><div class="sec-title">Tryout Metrics</div><div class="mgrid">');
-    [['Velocity',(p.velo||'—'),'mph'],['Height',p.height_ft||'—','ft'],['Weight',(p.weight_lbs||'—'),'lbs'],['KR',p.kr||'—','']]
+    [['Velocity',(p.velo||'—'),'mph'],['Broad Jump',(p.broad||'—'),'inches'],['Dash',(p.dash||'—'),'secs'],['KR',p.kr||'—','']]
       .forEach(([l,v,u]) => parts.push('<div class="mbox"><div class="mlbl">'+l+'</div><div class="mval">'+v+'</div><div class="mlbl">'+u+'</div></div>'));
     parts.push('</div></div>');
   }
@@ -1568,8 +1577,9 @@ async function exportPDF() {
   }
 
   // Footer
+  parts.push('</div>'); // close content-wrap
   parts.push('<div class="ftr"><div class="ftr-l"><strong>BTID — Baseball Talent Identification &amp; Development</strong><br>LA Dodgers Africa Development Program · Joshua Muwanguzi, Head Scout Uganda</div><div class="ftr-r"><strong>Confidential</strong><br>Generated ' + today + '</div></div>');
-  parts.push('</body></html>');
+  parts.push('</div></body></html>'); // close page-wrap
 
   const html = parts.join('\n');
   const win = window.open('', '_blank');
