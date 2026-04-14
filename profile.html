@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v9 -->
+<!-- BTID Profile v10 -->
 
 <html lang="en">
 <head>
@@ -265,9 +265,12 @@ function renderProfile() {
         <!-- Photo -->
         <div class="profile-photo-wrap" id="photoWrap" ${isAdmin ? 'onclick="triggerPhotoUpload()"' : ''}>
           ${player.photo_url
-            ? `<img src="${player.photo_url}" alt="${player.name}" id="profilePhoto">`
+            ? `<img src="${player.photo_url.startsWith('http') ? player.photo_url : API_BASE + player.photo_url}" alt="${player.name}" id="profilePhoto" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
             : `<div class="profile-photo-initials" id="profilePhoto">${initials(player.name)}</div>`}
-          ${isAdmin ? '<div class="photo-edit-hint">📷 Change photo</div>' : ''}
+          ${isAdmin ? `<div class="photo-edit-hint" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font2);font-size:0.6rem;font-weight:700;text-align:center;padding:4px;cursor:pointer">
+            ${player.photo_url ? '📷 Change' : '📷 Add Photo'}
+          </div>` : ''}
+          ${isAdmin && player.photo_url ? `<button onclick="event.stopPropagation();deletePlayerPhoto()" style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:rgba(239,62,66,.85);border:none;color:#fff;font-size:11px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">✕</button>` : ''}
         </div>
 
         <!-- Main info -->
@@ -1317,6 +1320,17 @@ document.getElementById('photoUploadInput').addEventListener('change', async fun
     showToast('Photo updated!', 'success');
   } catch(e) { showToast(e.message, 'error'); }
 });
+
+async function deletePlayerPhoto() {
+  showConfirmDelete('Delete Photo', 'Are you sure you want to remove this player photo?', async () => {
+    try {
+      await PlayerAPI.update(playerId, { photo_url: '' });
+      player.photo_url = null;
+      renderProfile();
+      showToast('Photo removed', 'success');
+    } catch(e) { showToast(e.message, 'error'); }
+  });
+}
 
 function triggerPhotoUpload() {
   if (isAdmin) document.getElementById('photoUploadInput').click();
