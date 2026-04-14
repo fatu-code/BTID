@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v6 -->
+<!-- BTID Profile v7 -->
 
 <html lang="en">
 <head>
@@ -718,7 +718,6 @@ async function loadTabMedia(tabName, gridId) {
         const btn = e.target.closest('.media-del-btn');
         if (!btn) return;
         e.stopPropagation();
-        if (!confirm('Delete this media?')) return;
         const mId = btn.getAttribute('data-id');
         const mTab = btn.getAttribute('data-tab');
         deleteTabMedia(mId, mTab);
@@ -993,7 +992,7 @@ async function addComment() {
 }
 
 async function deleteComment(id) {
-  if (!confirm('Delete this comment?')) return;
+  showConfirmDelete('Delete Comment', 'Are you sure you want to delete this comment?', async () => {
   try {
     await CommentAPI.delete(playerId, id);
     comments = comments.filter(c => String(c.id) !== String(id));
@@ -1036,7 +1035,7 @@ async function uploadMedia(files) {
 }
 
 async function deleteMedia(id) {
-  if (!confirm('Delete this file?')) return;
+  // confirmed via deleteTabMedia modal
   try {
     await HomeVisitAPI.deleteMedia(playerId, id);
     homeVisit.media = (homeVisit.media || []).filter(m => String(m.id) !== String(id));
@@ -1218,7 +1217,7 @@ async function saveTryoutMetrics() {
 
 // ── OUTCOME ACTIONS ───────────────────────────────────────────────
 async function admitPlayer() {
-  if (!confirm('Mark this player as Admitted?')) return;
+  // proceed
   try {
     await PlayerAPI.update(playerId, { outcome: 'admitted' });
     player.outcome = 'admitted';
