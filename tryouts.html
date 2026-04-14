@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Tryouts v3 -->
+<!-- BTID Tryouts v4 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -314,6 +314,26 @@ async function loadAllPlayers() {
   } catch(e) {}
 }
 
+async function updateBatchOutcome(batchId, playerId, outcome) {
+  try {
+    await apiFetch('/api/tryouts/' + batchId + '/players/' + playerId + '/outcome', {
+      method: 'PUT',
+      body: { outcome: outcome || null }
+    });
+    // Update local data
+    const p = batchPlayers.find(p => p.id === playerId);
+    if (p) p.batch_outcome = outcome || null;
+    // Update counts
+    const b = allBatches.find(b => b.id === batchId);
+    if (b) {
+      b.admitted_count   = batchPlayers.filter(p => p.batch_outcome === 'admitted').length;
+      b.eliminated_count = batchPlayers.filter(p => p.batch_outcome === 'eliminated').length;
+    }
+    filterBatches();
+    showToast('Outcome updated', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
 async function loadBatches() {
   try {
     const r = await TryoutAPI.getAll();
@@ -415,8 +435,8 @@ function renderBatchDetail() {
   const b   = selectedBatch;
   const cfg = statusConfig(b.status);
   const invited    = parseInt(b.player_count)      || 0;
-  const admitted   = batchPlayers.filter(p => p.outcome === 'admitted').length;
-  const eliminated = batchPlayers.filter(p => p.outcome === 'eliminated').length;
+  const admitted   = batchPlayers.filter(p => p.batch_outcome === 'admitted').length;
+  const eliminated = batchPlayers.filter(p => p.batch_outcome === 'eliminated').length;
   const attended   = batchPlayers.filter(p => p.attended).length;
 
   document.getElementById('batchDetail').innerHTML = `
@@ -500,10 +520,17 @@ function renderBatchDetail() {
                     ${p.attended ? '✓ Yes' : 'No'}
                   </button>` : `<span class="pill ${p.attended ? 'pill-green' : 'pill-muted'}">${p.attended ? '✓ Yes' : 'No'}</span>`}
                 </td>
-                <td>
-                  ${p.outcome === 'admitted'   ? '<span class="pill pill-green">Admitted</span>'   :
-                    p.outcome === 'eliminated' ? '<span class="pill pill-red">Eliminated</span>'   :
-                    '<span class="pill pill-muted">Pending</span>'}
+                <td onclick="event.stopPropagation()">
+                  ${isAdmin ? `
+                  <select onchange="updateBatchOutcome('${b.id}','${p.id}',this.value)"
+                    style="font-family:var(--font2);font-size:0.7rem;font-weight:800;border:1.5px solid var(--border);border-radius:7px;padding:3px 6px;background:var(--white);cursor:pointer;outline:none;color:${p.batch_outcome==='admitted'?'var(--green)':p.batch_outcome==='eliminated'?'var(--red)':'var(--muted)'}">
+                    <option value="" ${!p.batch_outcome?'selected':''}>Pending</option>
+                    <option value="admitted" ${p.batch_outcome==='admitted'?'selected':''}>Admitted</option>
+                    <option value="eliminated" ${p.batch_outcome==='eliminated'?'selected':''}>Eliminated</option>
+                  </select>` : `
+                  ${p.batch_outcome === 'admitted'   ? '<span class="pill pill-green">Admitted</span>'   :
+                    p.batch_outcome === 'eliminated' ? '<span class="pill pill-red">Eliminated</span>'   :
+                    '<span class="pill pill-muted">Pending</span>'}`}
                 </td>
                 ${isAdmin ? `
                 <td onclick="event.stopPropagation()">
