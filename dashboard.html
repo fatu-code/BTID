@@ -101,7 +101,7 @@ async function loadDash() {
   stats.tier2      = parseInt(stats.tier2)      || 0;
   stats.tier3      = parseInt(stats.tier3)      || 0;
   try {
-    const r = await PlayerAPI.getAll({ limit: 12, sort: 'newest' });
+    const r = await PlayerAPI.getAll({ limit: 15, sort: 'newest' });
     recentPlayers = r.players || r || [];
   } catch(e){}
   try {
