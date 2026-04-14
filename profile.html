@@ -807,20 +807,25 @@ async function saveDevNotes() {
 }
 
 async function deleteTabMedia(mediaId, tab) {
-  if (!confirm('Delete this media?')) return;
-  try {
-    const res = await fetch(API_BASE + '/api/players/' + playerId + '/home-visit/media/' + mediaId, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + Auth.token() }
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Delete failed');
+  showConfirmDelete(
+    'Delete Media',
+    'Are you sure you want to delete this photo or video? This cannot be undone.',
+    async () => {
+      try {
+        const res = await fetch(API_BASE + '/api/players/' + playerId + '/home-visit/media/' + mediaId, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + Auth.token() }
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Delete failed');
+        }
+        showToast('Media deleted!', 'success');
+        if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
+        if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
+      } catch(e) { showToast(e.message, 'error'); }
     }
-    showToast('Deleted!', 'success');
-    if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
-    if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
-  } catch(e) { showToast(e.message, 'error'); }
+  );
 }
 
 async function uploadTabMedia(tab, input) {
@@ -940,13 +945,14 @@ async function saveReport() {
 }
 
 async function deleteRpt(id) {
-  if (!confirm('Delete this report?')) return;
+  showConfirmDelete('Delete Report', 'Are you sure you want to delete this report? This cannot be undone.', async () => {
   try {
     await apiFetch('/api/players/' + playerId + '/reports/' + id, { method: 'DELETE' });
     showToast('Deleted', 'success');
     reportsLoaded = false;
     loadReportsList();
   } catch(e) { showToast(e.message, 'error'); }
+  });
 }
 
 // ── COMMENTS ─────────────────────────────────────────────────────
@@ -1374,6 +1380,42 @@ function copyShareLink() {
     .then(() => showToast('Link copied!', 'success'))
     .catch(() => { input.select(); document.execCommand('copy'); showToast('Link copied!', 'success'); });
 }
+</script>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-bg" id="confirmDeleteModal">
+  <div class="modal-card" style="max-width:380px">
+    <div class="modal-head">
+      <div class="modal-title" id="confirmDeleteTitle">Delete Media</div>
+      <button class="modal-close" onclick="closeConfirmDelete()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-family:var(--font2);font-size:0.82rem;font-weight:600;color:var(--muted);line-height:1.6" id="confirmDeleteMsg">
+        Are you sure you want to delete this? This cannot be undone.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeConfirmDelete()">Cancel</button>
+      <button class="btn btn-red" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIRM DELETE MODAL ──────────────────────────────────────────
+function showConfirmDelete(title, msg, onConfirm) {
+  document.getElementById('confirmDeleteTitle').textContent = title;
+  document.getElementById('confirmDeleteMsg').textContent   = msg;
+  document.getElementById('confirmDeleteModal').classList.add('open');
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.onclick = () => { closeConfirmDelete(); onConfirm(); };
+}
+function closeConfirmDelete() {
+  document.getElementById('confirmDeleteModal').classList.remove('open');
+}
+document.getElementById('confirmDeleteModal').addEventListener('click', e => {
+  if (e.target.id === 'confirmDeleteModal') closeConfirmDelete();
+});
 </script>
 </body>
 </html>
