@@ -695,14 +695,19 @@ async function loadTabMedia(tabName, gridId) {
       el.innerHTML = uploadBtn + '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload photos or videos from when you first saw this player.</div></div>';
       return;
     }
+    const delBtn = (id) => isAdmin
+      ? '<button onclick="deleteTabMedia(' + JSON.stringify(id) + ',' + JSON.stringify(tabName) + ')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:12px;cursor:pointer;line-height:1;font-weight:700;display:flex;align-items:center;justify-content:center">✕</button>'
+      : '';
+
     el.innerHTML = uploadBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">' +
-      media.map(m => `<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">
-        ${m.type === 'video'
-          ? `<video src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>`
-          : `<img src="${API_BASE}${m.url}" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">`}
-        <div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.filename||''}</div>
-        ${isAdmin ? `<button onclick="deleteTabMedia('${m.id}','${tabName}')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>` : ''}
-      </div>`).join('') + '</div>';
+      media.map(m => '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
+        + (m.type === 'video'
+          ? '<video src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
+          : '<img src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+        + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
+        + delBtn(m.id)
+        + '</div>'
+      ).join('') + '</div>';
   } catch(e) {
     if (el) el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load media</div></div>';
   }
