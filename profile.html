@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- BTID Profile v7 -->
+<!-- BTID Profile v8 -->
 
 <html lang="en">
 <head>
@@ -993,11 +993,12 @@ async function addComment() {
 
 async function deleteComment(id) {
   showConfirmDelete('Delete Comment', 'Are you sure you want to delete this comment?', async () => {
-  try {
-    await CommentAPI.delete(playerId, id);
-    comments = comments.filter(c => String(c.id) !== String(id));
-    renderComments();
-  } catch(e) { showToast(e.message, 'error'); }
+    try {
+      await CommentAPI.delete(playerId, id);
+      comments = comments.filter(c => String(c.id) !== String(id));
+      renderComments();
+    } catch(e) { showToast(e.message, 'error'); }
+  });
 }
 
 // ── MEDIA ─────────────────────────────────────────────────────────
