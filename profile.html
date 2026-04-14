@@ -713,19 +713,7 @@ async function loadTabMedia(tabName, gridId) {
           + '</div>';
       }).join('') + '</div>';
 
-    // Attach delete handlers via event delegation
-    setTimeout(() => {
-      const grid = document.getElementById('mediaGrid_' + tabName);
-      if (!grid) return;
-      grid.addEventListener('click', function(e) {
-        const btn = e.target.closest('.media-del-btn');
-        if (!btn) return;
-        e.stopPropagation();
-        const mId = btn.getAttribute('data-id');
-        const mTab = btn.getAttribute('data-tab');
-        deleteTabMedia(mId, mTab);
-      });
-    }, 100);
+    // Delete handled by global delegated listener (set up once at page load)
   } catch(e) {
     if (el) el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load media</div></div>';
   }
@@ -802,28 +790,7 @@ async function loadDevelopmentTab() {
                 + db + '</div>';
             }).join('') + '</div>'}
       </div>`;
-    // Event delegation for development media delete
-    setTimeout(() => {
-      const dg = document.getElementById('devMediaGrid');
-      if (!dg) return;
-      dg.addEventListener('click', function(e) {
-        const btn = e.target.closest('.dev-del-btn');
-        if (!btn) return;
-        e.stopPropagation();
-        const mId = btn.getAttribute('data-id');
-        showConfirmDelete('Delete Media', 'Are you sure you want to delete this photo or video? This cannot be undone.', async () => {
-          try {
-            const res = await fetch(API_BASE + '/api/players/' + playerId + '/home-visit/media/' + mId, {
-              method: 'DELETE', headers: { 'Authorization': 'Bearer ' + Auth.token() }
-            });
-            if (!res.ok) throw new Error('Delete failed');
-            showToast('Media deleted!', 'success');
-            developmentLoaded = false;
-            loadDevelopmentTab();
-          } catch(e) { showToast(e.message, 'error'); }
-        });
-      });
-    }, 200);
+    // Delete handled by global delegated listener (set up once at page load)
   } catch(e) {
     el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load development data</div></div>';
   }
@@ -1092,25 +1059,7 @@ function renderMedia() {
       }).join('')
     + '</div>';
 
-  // Event delegation for home visit media delete
-  setTimeout(() => {
-    const grid = document.getElementById('homeVisitMediaGrid');
-    if (!grid) return;
-    grid.addEventListener('click', function(e) {
-      const btn = e.target.closest('.hv-del-btn');
-      if (!btn) return;
-      e.stopPropagation();
-      const mId = btn.getAttribute('data-id');
-      showConfirmDelete('Delete Media', 'Are you sure you want to delete this photo or video? This cannot be undone.', async () => {
-        try {
-          await HomeVisitAPI.deleteMedia(playerId, mId);
-          homeVisit.media = (homeVisit.media || []).filter(m => String(m.id) !== String(mId));
-          renderMedia();
-          showToast('Media deleted!', 'success');
-        } catch(e) { showToast(e.message, 'error'); }
-      });
-    });
-  }, 100);
+  // Delete handled by global delegated listener (set up once at page load)
 }
 
 async function uploadMedia(files) {
@@ -1350,6 +1299,36 @@ async function savePostTryout() {
 }
 
 loadProfile();
+
+// ── GLOBAL MEDIA DELETE DELEGATION ───────────────────────────────
+// One listener on document, handles ALL media delete buttons regardless of re-renders
+document.addEventListener('click', function(e) {
+  const tabBtn = e.target.closest('.media-del-btn');
+  const hvBtn  = e.target.closest('.hv-del-btn');
+  const devBtn = e.target.closest('.dev-del-btn');
+  const btn    = tabBtn || hvBtn || devBtn;
+  if (!btn) return;
+  e.stopPropagation();
+  const mId  = btn.getAttribute('data-id');
+  const mTab = btn.getAttribute('data-tab') || '';
+  showConfirmDelete('Delete Media', 'Are you sure you want to delete this photo or video? This cannot be undone.', async () => {
+    try {
+      const res = await fetch(API_BASE + '/api/players/' + playerId + '/home-visit/media/' + mId, {
+        method: 'DELETE', headers: { 'Authorization': 'Bearer ' + Auth.token() }
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      showToast('Media deleted!', 'success');
+      if (hvBtn) {
+        homeVisit.media = (homeVisit.media || []).filter(m => String(m.id) !== String(mId));
+        renderMedia();
+      } else if (mTab === 'initial') {
+        initialLoaded = false; loadTabMedia('initial', 'initialMediaGrid');
+      } else {
+        developmentLoaded = false; loadDevelopmentTab();
+      }
+    } catch(err) { showToast(err.message, 'error'); }
+  });
+});
 
 // ── PHOTO UPLOAD ──────────────────────────────────────────────────
 document.getElementById('photoUploadInput').addEventListener('change', async function() {
