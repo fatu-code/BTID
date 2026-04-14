@@ -1456,7 +1456,7 @@ async function exportPDF() {
     .hdr { background:#003A6B; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
     .logo { font-size:20pt; font-weight:900; color:#fff; }
     .logo span { font-size:8pt; display:block; color:rgba(255,255,255,.5); letter-spacing:.05em; margin-top:1px; }
-    .hero { background:#00254D; padding:20px 24px; display:flex; gap:16px; }
+    .hero { background:#00254D; padding:14px 24px; display:flex; gap:16px; }
     .photo { width:80px; height:80px; border-radius:10px; background:#003A6B; border:2px solid rgba(179,212,240,.2); display:flex; align-items:center; justify-content:center; font-size:22pt; font-weight:900; color:#b3d4f0; flex-shrink:0; overflow:hidden; }
     .photo img { width:100%; height:100%; object-fit:cover; }
     .pname { font-size:20pt; font-weight:900; color:#fff; margin-bottom:3px; }
@@ -1466,11 +1466,11 @@ async function exportPDF() {
     .pmeta-i strong { color:rgba(255,255,255,.85); }
     .tbadge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:8pt; font-weight:800; color:#fff; margin-right:6px; }
     .statsbar { display:flex; background:#001A3A; border-top:1px solid rgba(255,255,255,.08); }
-    .stat { flex:1; padding:10px; text-align:center; border-right:1px solid rgba(255,255,255,.08); }
+    .stat { flex:1; padding:7px; text-align:center; border-right:1px solid rgba(255,255,255,.08); }
     .stat:last-child { border-right:none; }
     .sval { font-size:14pt; font-weight:900; color:#fff; }
     .slbl { font-size:7pt; font-weight:700; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.07em; margin-top:2px; }
-    .sec { padding:16px 24px; border-bottom:1px solid #e6f0fa; }
+    .sec { padding:10px 24px; border-bottom:1px solid #e6f0fa; }
     .sec-title { font-size:11pt; font-weight:900; color:#003A6B; margin-bottom:12px; padding-bottom:6px; border-bottom:2px solid #005A9C; display:flex; align-items:center; gap:8px; }
     .sec-title::before { content:''; display:inline-block; width:4px; height:16px; background:#EF3E42; border-radius:2px; }
     .igrid { display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
@@ -1544,7 +1544,7 @@ async function exportPDF() {
 
   // Tryout metrics
   if (p.velo || p.height_ft || p.weight_lbs) {
-    parts.push('<div class="sec pgbrk"><div class="sec-title">Tryout Metrics</div><div class="mgrid">');
+    parts.push('<div class="sec"><div class="sec-title">Tryout Metrics</div><div class="mgrid">');
     [['Velocity',(p.velo||'—'),'mph'],['Height',p.height_ft||'—','ft'],['Weight',(p.weight_lbs||'—'),'lbs'],['KR',p.kr||'—','']]
       .forEach(([l,v,u]) => parts.push('<div class="mbox"><div class="mlbl">'+l+'</div><div class="mval">'+v+'</div><div class="mlbl">'+u+'</div></div>'));
     parts.push('</div></div>');
@@ -1562,7 +1562,7 @@ async function exportPDF() {
 
   // Reports
   if (reports.length) {
-    parts.push('<div class="sec pgbrk"><div class="sec-title">Reports</div>');
+    parts.push('<div class="sec"><div class="sec-title">Reports</div>');
     reports.forEach(r => parts.push('<div class="rcard"><div class="rtitle">'+r.title+'</div><div class="rmeta">By '+(r.author_name||'—')+' · '+fmtDate(r.created_at)+'</div>'+(r.body?'<div class="rbody">'+r.body.replace(/<[^>]*>/g,'')+'</div>':'')+'</div>'));
     parts.push('</div>');
   }
