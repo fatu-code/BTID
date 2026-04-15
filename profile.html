@@ -1303,6 +1303,22 @@ document.getElementById('editPlayerModal')?.addEventListener('click', e => {
   if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
 });
 
+function confirmDeletePlayer() {
+  showConfirmDelete(
+    'Delete ' + player.name + '?',
+    'This will permanently remove the player and all their records, tryout history, media and reports. This cannot be undone.',
+    async () => {
+      try {
+        await PlayerAPI.delete(playerId);
+        showToast(player.name + ' deleted.', 'success');
+        setTimeout(() => { window.location.href = 'players.html'; }, 1200);
+      } catch(e) {
+        showToast(e.message, 'error');
+      }
+    }
+  );
+}
+
 loadProfile();
 
 // ── GLOBAL MEDIA DELETE DELEGATION ───────────────────────────────
