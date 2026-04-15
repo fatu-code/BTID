@@ -354,6 +354,17 @@ async function verify2FA() {
       method: 'POST',
       body: { temp_token: window._tempToken, code },
     });
+    // Check if scout account has expired
+    if (data.user && data.user.role === 'scout' && data.user.active_until) {
+      const expiry = new Date(data.user.active_until);
+      if (expiry < new Date()) {
+        showExpired();
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M6 8h7M10 5l3 3-3 3"/><path d="M4 4H2a1 1 0 00-1 1v6a1 1 0 001 1h2"/></svg>Sign In';
+        return;
+      }
+    }
+
     Auth.set(data.user, data.token);
     window.location.href = 'dashboard.html';
   } catch(err) {
@@ -383,8 +394,17 @@ async function doLogin() {
       body: { username, password },
     });
 
+    // Check if 2FA is required FIRST (no data.user in this response)
+    if (data.requires_2fa) {
+      window._tempToken = data.temp_token;
+      showTwoFA();
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M6 8h7M10 5l3 3-3 3"/><path d="M4 4H2a1 1 0 00-1 1v6a1 1 0 001 1h2"/></svg>Sign In';
+      return;
+    }
+
     // Check if scout account has expired
-    if (data.user.role === 'scout' && data.user.active_until) {
+    if (data.user && data.user.role === 'scout' && data.user.active_until) {
       const expiry = new Date(data.user.active_until);
       if (expiry < new Date()) {
         showExpired();
@@ -392,15 +412,6 @@ async function doLogin() {
         submitBtn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M6 8h7M10 5l3 3-3 3"/><path d="M4 4H2a1 1 0 00-1 1v6a1 1 0 001 1h2"/></svg>Sign In';
         return;
       }
-    }
-
-    // Check if 2FA is required
-    if (data.requires_2fa) {
-      window._tempToken = data.temp_token;
-      showTwoFA();
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M6 8h7M10 5l3 3-3 3"/><path d="M4 4H2a1 1 0 00-1 1v6a1 1 0 001 1h2"/></svg>Sign In';
-      return;
     }
 
     Auth.set(data.user, data.token);
