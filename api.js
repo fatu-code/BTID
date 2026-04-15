@@ -34,6 +34,7 @@ async function apiFetch(path, opts = {}) {
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   const data = await res.json();
+  if (res.status === 401) { Auth.logout(); return; }
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }

@@ -228,8 +228,12 @@ async function loadProfile() {
 
     renderProfile();
   } catch(e) {
-    document.getElementById('profileContent').innerHTML =
-      `<div class="empty-state"><div class="empty-title">Error loading profile.</div></div>`;
+    if (e.message && e.message.includes('expired')) {
+      Auth.logout();
+    } else {
+      document.getElementById('profileContent').innerHTML =
+        `<div class="empty-state"><div class="empty-title">Error loading profile.</div><div class="empty-sub">${e.message || 'Please try again.'}</div></div>`;
+    }
   }
 }
 
