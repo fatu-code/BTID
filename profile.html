@@ -1913,8 +1913,11 @@ async function exportPDF() {
   parts.push('<button class="pbtn" onclick="window.print()">🖨 Print / Save PDF</button>');
   parts.push('<div class="content">');
 
-  // HEADER
-  // (removed — Scouting Report / Generated date already appears in the hero section below)
+  // HEADER — minimal letterhead strip
+  parts.push('<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:2px solid #003A6B;margin-bottom:14px;font-family:Nunito,sans-serif">'
+    + '<div style="font-size:9pt;font-weight:800;color:#003A6B;letter-spacing:.05em">BTID &nbsp;·&nbsp; Athlete Management System</div>'
+    + '<div style="font-size:8pt;font-weight:700;color:#5B7A96;text-transform:uppercase;letter-spacing:.15em">Scouting Report</div>'
+    + '</div>');
 
   // HERO
   const photoHtml = photo
