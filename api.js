@@ -58,6 +58,9 @@ const PlayerAPI = {
       body: fd,
     }).then(r => r.json());
   },
+  deletePhoto(id) {
+    return apiFetch('/api/players/' + id + '/photo', { method: 'DELETE' });
+  },
 };
 
 // ── TRYOUT API ────────────────────────────────────────────────────
