@@ -8,6 +8,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+  /* Mobile right-edge cutoff fix */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  .main-area, .content, .card, .grid-2-1, .col-stack { max-width: 100%; box-sizing: border-box; }
+  .grid-2-1 > * { min-width: 0; }
+  @media (max-width: 768px) {
+    .content { padding-right: 12px !important; padding-left: 12px !important; }
+    .activity-item, .activity-title, .activity-sub, .activity-time {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+</style>
 </head>
 <body>
 <div class="app-shell">
@@ -32,7 +46,7 @@
       </div>
     </div>
 
-    <div class="content" style="overflow-x:hidden">
+    <div class="content">
       <!-- Dashboard tabs -->
       <div class="tabs" style="margin-bottom:14px">
         <button class="tab active" id="tab-overview-btn" onclick="showDashTab('overview')">
