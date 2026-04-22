@@ -1456,8 +1456,6 @@ async function saveHomeVisit() {
     showToast('Home visit info saved', 'success');
   } catch(e) { showToast(e.message, 'error'); }
 }
-  } catch(e) { showToast(e.message, 'error'); }
-}
 
 function toggleHomeVisitEdit(show) {
   const form = document.getElementById('homeVisitEditForm');
