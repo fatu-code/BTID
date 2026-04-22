@@ -14,15 +14,15 @@
   <div class="sidebar" id="sidebar"></div>
   <div class="main-area">
 
-    <div class="topbar">
-      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+    <div class="topbar" style="flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto">
         <button class="mob-sidebar-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
-        <div>
+        <div style="min-width:0;flex:1">
           <div class="topbar-title">Reports</div>
-          <div class="topbar-sub">Tryout outcomes across all batches</div>
+          <div class="topbar-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tryout outcomes across all batches</div>
         </div>
       </div>
-      <div class="topbar-right" style="display:flex;align-items:center;gap:8px">
+      <div class="topbar-right" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <select class="filter-select" id="filterBatch" onchange="loadReport()">
           <option value="">All batches</option>
         </select>
