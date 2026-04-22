@@ -1635,20 +1635,49 @@ document.getElementById('editPlayerModal')?.addEventListener('click', e => {
 });
 
 function confirmDeletePlayer() {
-  showConfirmDelete(
-    'Delete ' + player.name + '?',
-    'This will permanently remove the player and all their records, tryout history, media and reports. This cannot be undone.',
-    async () => {
-      try {
-        await PlayerAPI.delete(playerId);
-        showToast(player.name + ' deleted.', 'success');
-        setTimeout(() => { window.location.href = 'players.html'; }, 1200);
-      } catch(e) {
-        showToast(e.message, 'error');
-      }
+  const nameExact = (player.name || '').trim();
+  document.getElementById('delPlayerNameBold').textContent = nameExact;
+  document.getElementById('delPlayerNameHint').textContent = nameExact;
+  const input = document.getElementById('delPlayerNameInput');
+  const btn   = document.getElementById('delPlayerConfirmBtn');
+  input.value = '';
+  btn.disabled = true;
+  btn.style.opacity = '.45';
+  btn.style.cursor = 'not-allowed';
+
+  // Enable button only when typed name matches exactly (case-sensitive, trimmed)
+  input.oninput = () => {
+    const match = input.value.trim() === nameExact;
+    btn.disabled = !match;
+    btn.style.opacity = match ? '1' : '.45';
+    btn.style.cursor = match ? 'pointer' : 'not-allowed';
+  };
+
+  btn.onclick = async () => {
+    if (input.value.trim() !== nameExact) return;
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+    try {
+      await PlayerAPI.delete(playerId);
+      closeDeletePlayerModal();
+      showToast(nameExact + ' deleted.', 'success');
+      setTimeout(() => { window.location.href = 'players.html'; }, 1200);
+    } catch(e) {
+      showToast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Delete permanently';
     }
-  );
+  };
+
+  document.getElementById('confirmDeletePlayerModal').classList.add('open');
+  setTimeout(() => input.focus(), 100);
 }
+function closeDeletePlayerModal() {
+  document.getElementById('confirmDeletePlayerModal').classList.remove('open');
+}
+document.getElementById('confirmDeletePlayerModal').addEventListener('click', e => {
+  if (e.target.id === 'confirmDeletePlayerModal') closeDeletePlayerModal();
+});
 
 loadProfile();
 
@@ -2169,6 +2198,29 @@ function copyShareLink() {
 </div>
 
 <!-- Confirm Delete Modal -->
+<div class="modal-bg" id="confirmDeletePlayerModal">
+  <div class="modal-card" style="max-width:420px">
+    <div class="modal-head">
+      <div class="modal-title">Delete player permanently</div>
+      <button class="modal-close" onclick="closeDeletePlayerModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-family:var(--font2);font-size:0.82rem;font-weight:600;color:var(--muted);line-height:1.6;margin-bottom:14px">
+        This permanently removes <strong id="delPlayerNameBold" style="color:var(--text)"></strong> and <strong style="color:var(--text)">all their records</strong> — tryout history, home visits, media, reports. This cannot be undone.
+      </p>
+      <p style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:8px">
+        To confirm, type the player's full name below:
+      </p>
+      <div style="font-family:var(--font2);font-size:0.72rem;font-weight:800;color:var(--muted);background:var(--bg);padding:8px 12px;border-radius:8px;margin-bottom:8px;letter-spacing:.02em" id="delPlayerNameHint"></div>
+      <input type="text" id="delPlayerNameInput" class="form-input" placeholder="Type the name exactly..." autocomplete="off" style="width:100%">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeDeletePlayerModal()">Cancel</button>
+      <button class="btn btn-red" id="delPlayerConfirmBtn" disabled style="opacity:.45;cursor:not-allowed">Delete permanently</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="confirmDeleteModal">
   <div class="modal-card" style="max-width:380px">
     <div class="modal-head">
