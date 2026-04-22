@@ -262,9 +262,13 @@ function renderProfile() {
       </button>`;
   }
 
-  const velo = player.velo || tryoutResult?.velo_st_avg || '—';
-  const broad = tryoutResult?.broad_avg || player.broad || '—';
-  const dash  = tryoutResult?.dash_avg  || '—';
+  // Development tab fields take priority — they reflect current performance
+  const velo  = player.dev_velo       || player.velo || tryoutResult?.velo_st_avg || '—';
+  const broad = player.dev_broad      || tryoutResult?.broad_avg || player.broad  || '—';
+  const dash  = player.dev_dash       || tryoutResult?.dash_avg  || '—';
+  const heightFt  = player.dev_height_ft  || player.height_ft  || '—';
+  const weightLbs = player.dev_weight_lbs || player.weight_lbs || '—';
+  const kr        = player.dev_kr         || player.kr         || '—';
 
   document.getElementById('profileContent').innerHTML = `
     <!-- HERO (Mookie Betts style) -->
@@ -323,9 +327,9 @@ function renderProfile() {
           ['Velo',  velo,    'mph'],
           ['Broad', broad,   'inches'],
           ['Dash',  dash,    'secs'],
-          ['Height', player.height_ft||'—', 'ft'],
-          ['Weight', player.weight_lbs||'—','lbs'],
-          ['KR',    player.kr||'—',  ''],
+          ['Height', heightFt, 'ft'],
+          ['Weight', weightLbs,'lbs'],
+          ['KR',    kr,  ''],
         ].map(([l,v,u]) => `
           <div class="hero-stat">
             <div class="hero-stat-val">${v}</div>
@@ -615,9 +619,30 @@ function renderProfile() {
     
     <!-- TAB: INITIAL TRYOUT -->
     <div class="tab-content" id="tab-initialtryout">
-      <div class="card">
+      <div class="card" style="margin-bottom:12px">
         <div class="card-head"><span class="card-title">Initial Tryout — First Impression</span></div>
-        <div id="initialMediaGrid"><div class="empty-state"><div class="empty-title">Loading...</div></div></div>
+        <p style="font-family:var(--font2);font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:12px;line-height:1.6">Videos and photos from when you first saw this player.</p>
+        <div id="initialMediaGrid"><div class="empty-state" style="padding:20px"><div class="empty-title">Click to load media</div></div></div>
+      </div>
+      <div class="card" id="initMetricsCard">
+        <div class="card-head">
+          <span class="card-title">First Look Metrics</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">Day one numbers — for reference only</span>
+            ${isAdmin ? `<button class="card-action" onclick="saveInitMetrics()">Save</button>` : ''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          ${[
+            ['Velocity (mph)', 'initMetVelo', player.init_velo||''],
+            ['Height (ft)',    'initMetHeight', player.init_height_ft||''],
+            ['Notes',          'initMetNotes', player.init_notes||''],
+          ].map(([label, id, val]) => \`
+            <div>
+              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">\${label}</div>
+              <input id="\${id}" class="form-input" style="height:32px;font-size:0.78rem" type="text" value="\${val}" placeholder="—" \${!isAdmin?'disabled':''}>
+            </div>\`).join('')}
+        </div>
       </div>
     </div>
 
@@ -742,6 +767,29 @@ async function loadDevelopmentTab() {
     const uploadBtn = isAdmin ? `<label style="cursor:pointer;display:inline-block;margin-bottom:12px"><input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadTabMedia('development',this)"><span class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>Upload Videos / Photos</span></label>` : '';
 
     el.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head">
+          <span class="card-title">Current Performance Metrics</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">These drive the profile stats bar</span>
+            ${isAdmin ? `<button class="card-action" onclick="saveDevMetrics()">Save</button>` : ''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          ${[
+            ['Velocity (mph)', 'devMetVelo', p.dev_velo||''],
+            ['Height (ft)',    'devMetHeight', p.dev_height_ft||''],
+            ['Weight (lbs)',   'devMetWeight', p.dev_weight_lbs||''],
+            ['Broad (inches)', 'devMetBroad', p.dev_broad||''],
+            ['Dash (secs)',    'devMetDash', p.dev_dash||''],
+            ['KR',             'devMetKR', p.dev_kr||''],
+          ].map(([label, id, val]) => `
+            <div>
+              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">${label}</div>
+              <input id="${id}" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700" type="text" value="${val}" placeholder="—" ${!isAdmin?'disabled':''}>
+            </div>`).join('')}
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card">
           <div class="card-head">
@@ -802,6 +850,44 @@ async function loadDevelopmentTab() {
   } catch(e) {
     el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load development data</div></div>';
   }
+}
+
+async function saveInitMetrics() {
+  try {
+    await PlayerAPI.update(playerId, {
+      init_velo:      document.getElementById('initMetVelo')?.value    || null,
+      init_height_ft: document.getElementById('initMetHeight')?.value  || null,
+      init_notes:     document.getElementById('initMetNotes')?.value   || null,
+    });
+    showToast('First look metrics saved!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function saveDevMetrics() {
+  try {
+    const updates = {
+      dev_velo:       document.getElementById('devMetVelo')?.value   || null,
+      dev_height_ft:  document.getElementById('devMetHeight')?.value || null,
+      dev_weight_lbs: document.getElementById('devMetWeight')?.value || null,
+      dev_broad:      document.getElementById('devMetBroad')?.value  || null,
+      dev_dash:       document.getElementById('devMetDash')?.value   || null,
+      dev_kr:         document.getElementById('devMetKR')?.value     || null,
+    };
+    await PlayerAPI.update(playerId, updates);
+    // Refresh hero bar
+    Object.assign(player, updates);
+    const vBar  = document.querySelectorAll('.hero-stat-val');
+    const lBar  = document.querySelectorAll('.hero-stat-lbl');
+    if (vBar.length >= 6) {
+      vBar[0].textContent = updates.dev_velo       || player.velo || '—';
+      vBar[1].textContent = updates.dev_broad      || '—';
+      vBar[2].textContent = updates.dev_dash       || '—';
+      vBar[3].textContent = updates.dev_height_ft  || player.height_ft || '—';
+      vBar[4].textContent = updates.dev_weight_lbs || player.weight_lbs || '—';
+      vBar[5].textContent = updates.dev_kr         || player.kr || '—';
+    }
+    showToast('Metrics updated — profile stats bar refreshed!', 'success');
+  } catch(e) { showToast(e.message, 'error'); }
 }
 
 async function saveDevDetails() {
