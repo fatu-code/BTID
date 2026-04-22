@@ -1675,9 +1675,6 @@ function confirmDeletePlayer() {
 function closeDeletePlayerModal() {
   document.getElementById('confirmDeletePlayerModal').classList.remove('open');
 }
-document.getElementById('confirmDeletePlayerModal').addEventListener('click', e => {
-  if (e.target.id === 'confirmDeletePlayerModal') closeDeletePlayerModal();
-});
 
 loadProfile();
 
@@ -2253,6 +2250,9 @@ function closeConfirmDelete() {
 }
 document.getElementById('confirmDeleteModal').addEventListener('click', e => {
   if (e.target.id === 'confirmDeleteModal') closeConfirmDelete();
+});
+document.getElementById('confirmDeletePlayerModal').addEventListener('click', e => {
+  if (e.target.id === 'confirmDeletePlayerModal') closeDeletePlayerModal();
 });
 </script>
 </body>
