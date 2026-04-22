@@ -619,31 +619,7 @@ function renderProfile() {
     
     <!-- TAB: INITIAL TRYOUT -->
     <div class="tab-content" id="tab-initialtryout">
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-head"><span class="card-title">Initial Tryout — First Impression</span></div>
-        <p style="font-family:var(--font2);font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:12px;line-height:1.6">Videos and photos from when you first saw this player.</p>
-        <div id="initialMediaGrid"><div class="empty-state" style="padding:20px"><div class="empty-title">Click to load media</div></div></div>
-      </div>
-      <div class="card" id="initMetricsCard">
-        <div class="card-head">
-          <span class="card-title">First Look Metrics</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">Day one numbers — for reference only</span>
-            ${isAdmin ? `<button class="card-action" onclick="saveInitMetrics()">Save</button>` : ''}
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          ${[
-            ['Velocity (mph)', 'initMetVelo', player.init_velo||''],
-            ['Height (ft)',    'initMetHeight', player.init_height_ft||''],
-            ['Notes',          'initMetNotes', player.init_notes||''],
-          ].map(([label, id, val]) => \`
-            <div>
-              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">\${label}</div>
-              <input id="\${id}" class="form-input" style="height:32px;font-size:0.78rem" type="text" value="\${val}" placeholder="—" \${!isAdmin?'disabled':''}>
-            </div>\`).join('')}
-        </div>
-      </div>
+      <div id="initialTryoutContent"><div class="empty-state" style="padding:20px"><div class="empty-title">Loading...</div></div></div>
     </div>
 
     <!-- TAB: DEVELOPMENT -->
@@ -713,13 +689,13 @@ function showTab(id, btn) {
   if (tc) tc.classList.add('active');
   if (btn) btn.classList.add('active');
   if (id === 'tryout')        renderTryoutDisplay();
-  if (id === 'initialtryout'  && !initialLoaded)    loadTabMedia('initial', 'initialMediaGrid');
+  if (id === 'initialtryout'  && !initialLoaded)    loadInitialTryoutTab();
   if (id === 'development'    && !developmentLoaded) loadTabMedia('development', 'developmentMediaGrid');
   if (id === 'reports'        && !reportsLoaded)     loadReportsTab();
 }
 
 async function loadTabMedia(tabName, gridId) {
-  if (tabName === 'initial')     initialLoaded = true;
+  if (tabName === 'initial')     initialLoaded = true; // legacy
   if (tabName === 'development') { developmentLoaded = true; loadDevelopmentTab(); return; }
   const el = document.getElementById(gridId);
   if (!el) return;
@@ -849,6 +825,56 @@ async function loadDevelopmentTab() {
     // Delete handled by global delegated listener (set up once at page load)
   } catch(e) {
     el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load development data</div></div>';
+  }
+}
+
+async function loadInitialTryoutTab() {
+  initialLoaded = true;
+  const el = document.getElementById('initialTryoutContent');
+  if (!el) return;
+  try {
+    const mediaR = await apiFetch('/api/players/' + playerId + '/tab-media/initial');
+    const media  = mediaR.media || [];
+    const uploadBtn = isAdmin ? `<label style="cursor:pointer;display:inline-block;margin-bottom:12px"><input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadTabMedia('initial',this)"><span class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>Upload Videos / Photos</span></label>` : '';
+
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-head"><span class="card-title">Initial Tryout — First Impression</span></div>
+        <p style="font-family:var(--font2);font-size:0.72rem;font-weight:600;color:var(--muted);margin-bottom:12px;line-height:1.6">Videos and photos from when you first saw this player.</p>
+        ${uploadBtn}
+        ${!media.length
+          ? '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload photos and videos from the first sighting.</div></div>'
+          : '<div id="initialMediaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">'
+            + media.map(m => {
+                const db = isAdmin ? '<button class="dev-del-btn" data-tab="initial" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
+                return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
+                  + (m.type === 'video' ? '<video src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>' : '<img src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+                  + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted)">' + (m.filename||'') + '</div>'
+                  + db + '</div>';
+              }).join('') + '</div>'}
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">First Look Metrics</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--font2);font-size:0.65rem;font-weight:600;color:var(--muted)">Day one numbers — reference only, does not affect profile</span>
+            ${isAdmin ? `<button class="card-action" onclick="saveInitMetrics()">Save</button>` : ''}
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          ${[
+            ['Velocity (mph)', 'initMetVelo',   player.init_velo||''],
+            ['Height (ft)',    'initMetHeight',  player.init_height_ft||''],
+            ['Notes',          'initMetNotes',   player.init_notes||''],
+          ].map(([label, fid, val]) => `
+            <div>
+              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">${label}</div>
+              <input id="${fid}" class="form-input" style="height:32px;font-size:0.78rem" type="text" value="${val}" placeholder="—" ${!isAdmin?'disabled':''}>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  } catch(e) {
+    document.getElementById('initialTryoutContent').innerHTML = '<div class="empty-state"><div class="empty-title">Could not load</div></div>';
   }
 }
 
