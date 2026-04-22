@@ -255,10 +255,6 @@ function renderProfile() {
       <button class="btn btn-green" onclick="exportPDF()">
         <svg viewBox="0 0 16 16"><rect x="3" y="1" width="10" height="14" rx="1.5"/><path d="M6 5h4M6 8h4M6 11h2"/></svg>
         <span class="mob-hide">Export PDF</span>
-      </button>
-      <button class="btn btn-outline" onclick="confirmDeletePlayer()" style="color:var(--red);border-color:var(--red)">
-        <svg viewBox="0 0 16 16" style="stroke:var(--red);fill:none;stroke-width:1.8;stroke-linecap:round"><polyline points="3 4 13 4"/><path d="M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
-        Delete
       </button>`;
   }
 
@@ -633,6 +629,22 @@ function renderProfile() {
         <div class="empty-state"><div class="empty-title">Loading...</div></div>
       </div>
     </div>
+
+    <!-- DANGER ZONE -->
+    ${isAdmin ? `
+    <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px">
+      <div style="font-family:var(--font2);font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Danger Zone</div>
+      <div style="border:1px solid rgba(239,62,66,.25);border-radius:10px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(239,62,66,.03)">
+        <div>
+          <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:3px">Delete this player</div>
+          <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Permanently removes the player and all their records, tryout history, media and reports. This cannot be undone.</div>
+        </div>
+        <button class="btn btn-outline" onclick="confirmDeletePlayer()" style="flex-shrink:0;color:var(--red);border-color:rgba(239,62,66,.4);white-space:nowrap">
+          <svg viewBox="0 0 16 16" style="stroke:var(--red);fill:none;stroke-width:1.8;stroke-linecap:round"><polyline points="3 4 13 4"/><path d="M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+          Delete Player
+        </button>
+      </div>
+    </div>` : ''}
 
 <!-- TAB: INITIAL TRYOUT -->
     <div class="tab-content" id="tab-initialtryout">
