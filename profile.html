@@ -1372,17 +1372,18 @@ function renderMedia() {
     el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">No media uploaded yet.</div>';
     return;
   }
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px" id="homeVisitMediaGrid">'
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="homeVisitMediaGrid">'
     + media.map(m => {
+        const url = m.url.startsWith('http') ? m.url : API_BASE + m.url;
         const delbtn = isAdmin
-          ? '<button class="hv-del-btn" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>'
+          ? '<button class="hv-del-btn" data-id="' + m.id + '" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.75);border:none;color:#fff;font-size:15px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>'
           : '';
         const media_el = m.type === 'video'
-          ? '<video src="' + (API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
-          : '<img src="' + (API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
+          ? '<video src="' + url + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block" controls preload="metadata"></video>'
+          : '<img src="' + url + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:zoom-in" loading="lazy">';
         return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
           + media_el
-          + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
+          + '<div style="padding:6px 10px;font-family:var(--font2);font-size:0.62rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
           + delbtn
           + '</div>';
       }).join('')
