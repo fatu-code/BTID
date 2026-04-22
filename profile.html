@@ -757,18 +757,87 @@ async function loadDevelopmentTab() {
           </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:${history.length ? '16px' : '0'}">
-          ${[
-            ['Velocity (mph)', 'devMetVelo', p.dev_velo||''],
-            ['Height (ft)',    'devMetHeight', p.dev_height_ft||''],
-            ['Weight (lbs)',   'devMetWeight', p.dev_weight_lbs||''],
-            ['Broad (inches)', 'devMetBroad', p.dev_broad||''],
-            ['Dash (secs)',    'devMetDash', p.dev_dash||''],
-            ['KR',             'devMetKR', p.dev_kr||''],
-          ].map(([label, id, val]) => `
-            <div>
-              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">${label}</div>
-              <input id="${id}" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700" type="text" value="${val}" placeholder="—" ${!isAdmin?'disabled':''}>
-            </div>`).join('')}
+
+          <!-- VELOCITY with live indicator -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Velocity (mph)</div>
+            <div style="position:relative">
+              <input id="devMetVelo" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700;padding-right:60px"
+                type="number" min="40" max="95" step="0.1"
+                value="${p.dev_velo||''}" placeholder="e.g. 72"
+                oninput="updateVeloLabel(this.value,'devVeloLabel')"
+                ${!isAdmin?'disabled':''}>
+              <span id="devVeloLabel" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--font2);font-size:0.6rem;font-weight:800;pointer-events:none">${(() => {
+                const v = parseFloat(p.dev_velo);
+                if (!v) return '';
+                if (v >= 85) return '<span style="color:#009c41">Elite</span>';
+                if (v >= 75) return '<span style="color:#7dbf3a">Good</span>';
+                if (v >= 62) return '<span style="color:#f5a623">Average</span>';
+                return '<span style="color:var(--muted)">Developing</span>';
+              })()}</span>
+            </div>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Range: 40 – 95 mph</div>
+          </div>
+
+          <!-- HEIGHT split feet + inches -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Height</div>
+            <div style="display:flex;gap:4px">
+              <select id="devMetHeightFt" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700;flex:1" ${!isAdmin?'disabled':''}>
+                <option value="">ft</option>
+                ${[4,5,6,7].map(f => `<option value="${f}" ${parseInt(p.dev_height_ft)===f?'selected':''}>${f}′</option>`).join('')}
+              </select>
+              <select id="devMetHeightIn" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700;flex:1" ${!isAdmin?'disabled':''}>
+                <option value="">in</option>
+                ${[...Array(12)].map((_,i) => `<option value="${i}" ${p.dev_height_ft && parseInt(p.dev_height_ft.toString().split("'")[1])===i?'selected':''}>${i}″</option>`).join('')}
+              </select>
+            </div>
+            <input type="hidden" id="devMetHeight" value="${p.dev_height_ft||''}">
+          </div>
+
+          <!-- WEIGHT -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Weight (lbs)</div>
+            <input id="devMetWeight" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700"
+              type="number" min="60" max="250" step="0.5"
+              value="${p.dev_weight_lbs||''}" placeholder="e.g. 145"
+              oninput="validateRange(this,60,250)"
+              ${!isAdmin?'disabled':''}>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Range: 60 – 250 lbs</div>
+          </div>
+
+          <!-- BROAD JUMP -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Broad Jump (inches)</div>
+            <input id="devMetBroad" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700"
+              type="number" min="60" max="130" step="0.5"
+              value="${p.dev_broad||''}" placeholder="e.g. 90"
+              oninput="validateRange(this,60,130)"
+              ${!isAdmin?'disabled':''}>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Range: 60 – 130 in</div>
+          </div>
+
+          <!-- DASH -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">60-yd Dash (secs)</div>
+            <input id="devMetDash" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700"
+              type="number" min="6.5" max="12" step="0.01"
+              value="${p.dev_dash||''}" placeholder="e.g. 7.8"
+              oninput="validateRange(this,6.5,12)"
+              ${!isAdmin?'disabled':''}>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Range: 6.5 – 12.0 secs</div>
+          </div>
+
+          <!-- KR — 20-80 scouting scale -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">KR (Scout Grade)</div>
+            <select id="devMetKR" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700" ${!isAdmin?'disabled':''}>
+              <option value="">Select</option>
+              ${[['20','20 — Well below average'],['30','30 — Below average'],['40','40 — Below average'],['45','45 — Average'],['50','50 — Average'],['55','55 — Above average'],['60','60 — Above average'],['70','70 — Well above average'],['80','80 — Elite']].map(([v,l])=>`<option value="${v}" ${p.dev_kr===v?'selected':''}>${l}</option>`).join('')}
+            </select>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">MLB 20-80 scouting scale</div>
+          </div>
+
         </div>
         ${history.length ? `
         <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
@@ -887,15 +956,49 @@ async function loadInitialTryoutTab() {
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-          ${[
-            ['Velocity (mph)', 'initMetVelo',   player.init_velo||''],
-            ['Height (ft)',    'initMetHeight',  player.init_height_ft||''],
-            ['Notes',          'initMetNotes',   player.init_notes||''],
-          ].map(([label, fid, val]) => `
-            <div>
-              <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">${label}</div>
-              <input id="${fid}" class="form-input" style="height:32px;font-size:0.78rem" type="text" value="${val}" placeholder="—" ${!isAdmin?'disabled':''}>
-            </div>`).join('')}
+          <!-- VELOCITY -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Velocity (mph)</div>
+            <div style="position:relative">
+              <input id="initMetVelo" class="form-input" style="height:32px;font-size:0.78rem;font-weight:700;padding-right:60px"
+                type="number" min="40" max="95" step="0.1"
+                value="${player.init_velo||''}" placeholder="e.g. 68"
+                oninput="updateVeloLabel(this.value,'initVeloLabel')"
+                ${!isAdmin?'disabled':''}>
+              <span id="initVeloLabel" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--font2);font-size:0.6rem;font-weight:800;pointer-events:none">${(() => {
+                const v = parseFloat(player.init_velo);
+                if (!v) return '';
+                if (v >= 85) return '<span style=\"color:#009c41\">Elite</span>';
+                if (v >= 75) return '<span style=\"color:#7dbf3a\">Good</span>';
+                if (v >= 62) return '<span style=\"color:#f5a623\">Average</span>';
+                return '<span style=\"color:var(--muted)\">Developing</span>';
+              })()}</span>
+            </div>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Day one reading — reference only</div>
+          </div>
+
+          <!-- HEIGHT -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Height</div>
+            <div style="display:flex;gap:4px">
+              <select id="initMetHeightFt" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700;flex:1" ${!isAdmin?'disabled':''}>
+                <option value="">ft</option>
+                ${[4,5,6,7].map(f => `<option value="${f}" ${parseInt(player.init_height_ft)===f?'selected':''}>${f}′</option>`).join('')}
+              </select>
+              <select id="initMetHeightIn" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700;flex:1" ${!isAdmin?'disabled':''}>
+                <option value="">in</option>
+                ${[...Array(12)].map((_,i) => `<option value="${i}">${i}″</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <!-- NOTES -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Notes</div>
+            <input id="initMetNotes" class="form-input" style="height:32px;font-size:0.78rem"
+              type="text" value="${player.init_notes||''}" placeholder="First impression..."
+              ${!isAdmin?'disabled':''}>
+          </div>
         </div>
       </div>`;
   } catch(e) {
@@ -905,13 +1008,59 @@ async function loadInitialTryoutTab() {
 
 async function saveInitMetrics() {
   try {
+    const initFt = document.getElementById('initMetHeightFt')?.value;
+    const initIn = document.getElementById('initMetHeightIn')?.value;
+    const initHeight = (initFt && initIn !== '') ? initFt + "'" + initIn + '"' : (initFt ? initFt + "'" : null);
     await PlayerAPI.update(playerId, {
       init_velo:      document.getElementById('initMetVelo')?.value    || null,
-      init_height_ft: document.getElementById('initMetHeight')?.value  || null,
+      init_height_ft: initHeight,
       init_notes:     document.getElementById('initMetNotes')?.value   || null,
     });
     showToast('First look metrics saved!', 'success');
   } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ── METRIC INPUT HELPERS ─────────────────────────────────────────
+function updateVeloLabel(val, labelId) {
+  const el = document.getElementById(labelId);
+  if (!el) return;
+  const v = parseFloat(val);
+  if (!val || isNaN(v)) { el.innerHTML = ''; return; }
+  if (v > 95) { el.innerHTML = '<span style="color:#e53935">Too high</span>'; return; }
+  if (v < 40) { el.innerHTML = '<span style="color:#e53935">Too low</span>'; return; }
+  if (v >= 85) el.innerHTML = '<span style="color:#009c41">Elite</span>';
+  else if (v >= 75) el.innerHTML = '<span style="color:#7dbf3a">Good</span>';
+  else if (v >= 62) el.innerHTML = '<span style="color:#f5a623">Average</span>';
+  else el.innerHTML = '<span style="color:var(--muted)">Developing</span>';
+}
+
+function validateRange(input, min, max) {
+  const v = parseFloat(input.value);
+  const wrap = input.parentElement;
+  let warn = wrap.querySelector('.range-warn');
+  if (!warn) {
+    warn = document.createElement('div');
+    warn.className = 'range-warn';
+    warn.style = 'font-family:var(--font2);font-size:0.58rem;color:#e53935;margin-top:2px';
+    wrap.appendChild(warn);
+  }
+  if (!input.value || isNaN(v)) { warn.textContent = ''; input.style.borderColor = ''; return; }
+  if (v < min || v > max) {
+    warn.textContent = 'Value seems unrealistic — please verify';
+    input.style.borderColor = '#f5a623';
+  } else {
+    warn.textContent = '';
+    input.style.borderColor = '';
+  }
+}
+
+function buildHeightString() {
+  const ft = document.getElementById('devMetHeightFt')?.value;
+  const inches = document.getElementById('devMetHeightIn')?.value;
+  if (!ft && inches === '') return null;
+  if (ft && inches !== '') return ft + "'" + inches + '"';
+  if (ft) return ft + "'";
+  return null;
 }
 
 async function saveDevMetrics() {
@@ -919,12 +1068,12 @@ async function saveDevMetrics() {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
   try {
     const updates = {
-      dev_velo:       document.getElementById('devMetVelo')?.value   || null,
-      dev_height_ft:  document.getElementById('devMetHeight')?.value || null,
-      dev_weight_lbs: document.getElementById('devMetWeight')?.value || null,
-      dev_broad:      document.getElementById('devMetBroad')?.value  || null,
-      dev_dash:       document.getElementById('devMetDash')?.value   || null,
-      dev_kr:         document.getElementById('devMetKR')?.value     || null,
+      dev_velo:       document.getElementById('devMetVelo')?.value        || null,
+      dev_height_ft:  buildHeightString()                                  || null,
+      dev_weight_lbs: document.getElementById('devMetWeight')?.value      || null,
+      dev_broad:      document.getElementById('devMetBroad')?.value       || null,
+      dev_dash:       document.getElementById('devMetDash')?.value        || null,
+      dev_kr:         document.getElementById('devMetKR')?.value          || null,
     };
     // Save metrics and log to history in parallel
     await Promise.all([
