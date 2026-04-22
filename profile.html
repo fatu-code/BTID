@@ -919,11 +919,11 @@ async function loadDevelopmentTab() {
       <div class="card">
         <div class="card-head"><span class="card-title">Practice Videos & Photos</span></div>
         ${uploadBtn}
-        ${!media.length ? '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload practice videos and photos after admission.</div></div>' : '<div id="devMediaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">'
+        ${!media.length ? '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload practice videos and photos after admission.</div></div>' : '<div id="devMediaGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
           + media.map(m => {
               const db = isAdmin ? '<button class="dev-del-btn" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
               return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
-                + (m.type === 'video' ? '<video src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>' : '<img src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+                + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:zoom-in" loading="lazy">')
                 + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted)">' + (m.filename||'') + '</div>'
                 + db + '</div>';
             }).join('') + '</div>'}
@@ -954,7 +954,7 @@ async function loadInitialTryoutTab() {
             + media.map(m => {
                 const db = isAdmin ? '<button class="dev-del-btn" data-tab="initial" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
                 return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
-                  + (m.type === 'video' ? '<video src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>' : '<img src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+                  + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:zoom-in" loading="lazy">')
                   + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted)">' + (m.filename||'') + '</div>'
                   + db + '</div>';
               }).join('') + '</div>'}
