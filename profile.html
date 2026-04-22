@@ -732,16 +732,16 @@ async function loadDevelopmentTab() {
   const el = document.getElementById('developmentContent');
   if (!el) return;
   try {
-    const [mediaR, playerR, notesR, histR] = await Promise.all([
+    const [mediaR, playerR, notesR, histR] = await Promise.allSettled([
       apiFetch('/api/players/' + playerId + '/development-media'),
       apiFetch('/api/players/' + playerId),
       apiFetch('/api/players/' + playerId + '/dev-notes'),
       apiFetch('/api/players/' + playerId + '/metrics-history'),
     ]);
-    const media    = mediaR.media || [];
-    const p        = playerR.player || player;
-    const devNotes = notesR.notes || [];
-    const history  = histR.history || [];
+    const media    = (mediaR.status === 'fulfilled' ? mediaR.value?.media  : null) || [];
+    const p        = (playerR.status === 'fulfilled' ? playerR.value?.player : null) || player;
+    const devNotes = (notesR.status === 'fulfilled' ? notesR.value?.notes  : null) || [];
+    const history  = (histR.status === 'fulfilled'  ? histR.value?.history : null) || [];
     const uploadBtn = isAdmin ? `<label style="cursor:pointer;display:inline-block;margin-bottom:12px"><input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadTabMedia('development',this)"><span class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>Upload Videos / Photos</span></label>` : '';
 
     el.innerHTML = `
