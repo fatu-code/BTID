@@ -124,25 +124,6 @@
   max-width: 100%;
   height: auto;
 }
-
-/* Standalone "full" photo view (as seen on Mugisha's profile with the corn-field image) —
-   if the image is rendered on its own in the content flow, cap it professionally. */
-.content > img,
-.card > img {
-  display: block;
-  max-height: 420px;
-  width: 100%;
-  object-fit: cover;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.08);
-  cursor: zoom-in;
-}
-@media (max-width: 768px) {
-  .content > img,
-  .card > img {
-    max-height: 300px;
-  }
-}
 </style>
 </head>
 <body>
@@ -976,12 +957,12 @@ async function loadDevelopmentTab() {
       <div class="card">
         <div class="card-head"><span class="card-title">Practice Videos & Photos</span></div>
         ${uploadBtn}
-        ${!media.length ? '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload practice videos and photos after admission.</div></div>' : '<div id="devMediaGrid" style="display:flex;flex-direction:column;gap:12px">'
+        ${!media.length ? '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload practice videos and photos after admission.</div></div>' : '<div id="devMediaGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">'
           + media.map(m => {
               const db = isAdmin ? '<button class="dev-del-btn" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
               return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
-                + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;max-height:280px;object-fit:contain;display:block;background:#000" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover" loading="lazy">')
-                + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted)">' + (m.filename||'') + '</div>'
+                + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#000" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+                + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
                 + db + '</div>';
             }).join('') + '</div>'}
       </div>`;
