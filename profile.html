@@ -642,19 +642,24 @@ function renderProfile() {
       </div>
     </div>
 
-    <!-- DANGER ZONE -->
+    <!-- MORE ACTIONS (contains Danger Zone) -->
     ${isAdmin ? `
-    <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px">
-      <div style="font-family:var(--font2);font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Danger Zone</div>
-      <div style="border:1px solid rgba(239,62,66,.25);border-radius:10px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(239,62,66,.03)">
-        <div>
-          <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:3px">Delete this player</div>
-          <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Permanently removes the player and all their records, tryout history, media and reports. This cannot be undone.</div>
+    <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:20px">
+      <button onclick="toggleMoreActions()" id="moreActionsBtn" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--muted);transition:all .15s">
+        <span>More actions</span>
+        <svg id="moreActionsChevron" viewBox="0 0 16 16" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div id="moreActionsPanel" style="display:none;margin-top:12px">
+        <div style="border:1px solid rgba(239,62,66,.25);border-radius:10px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(239,62,66,.03);flex-wrap:wrap">
+          <div style="min-width:0;flex:1">
+            <div style="font-family:var(--font2);font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:3px">Delete this player</div>
+            <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Permanently removes the player and all their records, tryout history, media and reports. This cannot be undone.</div>
+          </div>
+          <button class="btn btn-outline" onclick="confirmDeletePlayer()" style="flex-shrink:0;color:var(--red);border-color:rgba(239,62,66,.4);white-space:nowrap">
+            <svg viewBox="0 0 16 16" style="stroke:var(--red);fill:none;stroke-width:1.8;stroke-linecap:round"><polyline points="3 4 13 4"/><path d="M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
+            Delete Player
+          </button>
         </div>
-        <button class="btn btn-outline" onclick="confirmDeletePlayer()" style="flex-shrink:0;color:var(--red);border-color:rgba(239,62,66,.4);white-space:nowrap">
-          <svg viewBox="0 0 16 16" style="stroke:var(--red);fill:none;stroke-width:1.8;stroke-linecap:round"><polyline points="3 4 13 4"/><path d="M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>
-          Delete Player
-        </button>
       </div>
     </div>` : ''}
 
@@ -1667,6 +1672,15 @@ async function savePostTryout() {
 document.getElementById('editPlayerModal')?.addEventListener('click', e => {
   if (e.target.id === 'editPlayerModal') e.target.classList.remove('open');
 });
+
+function toggleMoreActions() {
+  const panel = document.getElementById('moreActionsPanel');
+  const chev  = document.getElementById('moreActionsChevron');
+  if (!panel) return;
+  const open  = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
 
 function confirmDeletePlayer() {
   const nameExact = (player.name || '').trim();
