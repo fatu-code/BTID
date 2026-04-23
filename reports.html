@@ -421,7 +421,7 @@ async function exportSeasonReport() {
     parts.push('<table><thead><tr><th>#</th><th>Name</th><th>District</th><th>School</th><th>Age</th><th>Velocity</th><th>Height</th><th>Tier</th><th>Status</th></tr></thead><tbody>');
     topPlayers.forEach((p,i) => {
       const tc = tColors[String(p.tier)] || '#888';
-      parts.push('<tr><td style="font-weight:800;color:#5B7A96">'+(i+1)+'</td><td style="font-weight:800">'+p.name+'</td><td>'+( p.district||'—')+'</td><td style="color:#5B7A96">'+( p.school||'—')+'</td><td>'+(p.age||'—')+'</td><td style="font-weight:800;color:#005A9C">'+(p.velo?p.velo+' mph':'—')+'</td><td>'+(p.height_ft||'—')+'</td><td><span style="background:'+tc+';color:#fff;font-size:7pt;font-weight:800;padding:2px 7px;border-radius:5px">T'+p.tier+'</span></td><td><span class="pill-g">Admitted</span></td></tr>');
+      parts.push('<tr><td style="font-weight:800;color:#5B7A96">'+(i+1)+'</td><td style="font-weight:800">'+p.name+'</td><td>'+( p.district||'—')+'</td><td style="color:#5B7A96">'+( p.school||'—')+'</td><td>'+(p.age||'—')+'</td><td style="font-weight:800;color:#005A9C">'+((p.dev_velo||p.velo)?(p.dev_velo||p.velo)+' mph':'—')+'</td><td>'+(p.height_ft||'—')+'</td><td><span style="background:'+tc+';color:#fff;font-size:7pt;font-weight:800;padding:2px 7px;border-radius:5px">T'+p.tier+'</span></td><td><span class="pill-g">Admitted</span></td></tr>');
     });
     parts.push('</tbody></table></div>');
   }
