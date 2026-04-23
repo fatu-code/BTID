@@ -633,6 +633,14 @@ function renderProfile() {
           <textarea class="form-textarea" id="m_notes" rows="3" placeholder="Observations from the tryout...">${tryoutResult?.scout_notes||''}</textarea>
         </div>
       </div>` : renderTryoutDisplay()}
+
+      <!-- Photos & Videos -->
+      <div class="card" style="margin-top:12px">
+        <div class="card-head"><span class="card-title">Photos &amp; Videos</span></div>
+        <div id="finalMediaGrid">
+          <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Loading media...</div>
+        </div>
+      </div>
     </div>
 
     
@@ -727,6 +735,7 @@ function outcomePillLarge(o) {
 let initialLoaded = false;
 let developmentLoaded = false;
 let reportsLoaded = false;
+let finalLoaded = false;
 
 function showTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -734,7 +743,7 @@ function showTab(id, btn) {
   const tc = document.getElementById('tab-' + id);
   if (tc) tc.classList.add('active');
   if (btn) btn.classList.add('active');
-  if (id === 'tryout')        renderTryoutDisplay();
+  if (id === 'tryout')        { renderTryoutDisplay(); if (!finalLoaded) loadFinalMedia(); }
   if (id === 'initialtryout'  && !initialLoaded)    loadInitialTryoutTab();
   if (id === 'development'    && !developmentLoaded) loadTabMedia('development', 'developmentMediaGrid');
   if (id === 'reports'        && !reportsLoaded)     loadReportsTab();
@@ -1234,6 +1243,7 @@ async function deleteTabMedia(mediaId, tab) {
         showToast('Media deleted!', 'success');
         if (tab === 'initial')     { initialLoaded = false;     loadInitialTryoutTab(); }
         if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
+        if (tab === 'final')       { finalLoaded = false;        loadFinalMedia(); }
       } catch(e) { showToast(e.message, 'error'); }
     }
   );
@@ -1260,8 +1270,41 @@ async function uploadTabMedia(tab, input) {
     showToast(ok + ' file' + (ok > 1 ? 's' : '') + ' uploaded!', 'success');
     if (tab === 'initial')     { initialLoaded = false;     loadInitialTryoutTab(); }
     if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
+    if (tab === 'final')       { finalLoaded = false;        loadFinalMedia(); }
   } else {
     showToast('Upload failed', 'error');
+  }
+}
+
+async function loadFinalMedia() {
+  finalLoaded = true;
+  const el = document.getElementById('finalMediaGrid');
+  if (!el) return;
+  try {
+    const r = await apiFetch('/api/players/' + playerId + '/final-media');
+    const media = r.media || [];
+    const uploadBtn = isAdmin ? '<label style="cursor:pointer;display:inline-block;margin-bottom:12px"><input type="file" accept="image/*,video/*" multiple style="display:none" onchange="uploadTabMedia(\'final\',this)"><span class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px"><svg viewBox="0 0 16 16" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M8 2v8M5 5l3-3 3 3"/><path d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>Upload Photos / Videos</span></label>' : '';
+    if (!media.length) {
+      el.innerHTML = uploadBtn + '<div class="empty-state" style="padding:24px"><div class="empty-title">No media yet</div><div class="empty-sub">Upload photos or videos from the final tryout.</div></div>';
+      return;
+    }
+    el.innerHTML = uploadBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">' +
+      media.map(m => {
+        const url = m.url.startsWith('http') ? m.url : API_BASE + m.url;
+        const delbtn = isAdmin
+          ? '<button class="media-del-btn" data-id="' + m.id + '" data-tab="final" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>'
+          : '';
+        const media_el = m.type === 'video'
+          ? '<video src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
+          : '<img src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
+        return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
+          + media_el
+          + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
+          + delbtn
+          + '</div>';
+      }).join('') + '</div>';
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-title">Could not load media</div></div>';
   }
 }
 
@@ -1767,6 +1810,8 @@ document.addEventListener('click', function(e) {
         renderMedia();
       } else if (mTab === 'initial') {
         initialLoaded = false; loadInitialTryoutTab();
+      } else if (mTab === 'final') {
+        finalLoaded = false; loadFinalMedia();
       } else {
         developmentLoaded = false; loadDevelopmentTab();
       }
