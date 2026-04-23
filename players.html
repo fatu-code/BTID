@@ -611,7 +611,7 @@ async function savePlayer() {
     });
     showToast('Player added!', 'success');
     closeModal();
-    loadPlayers();
+    loadPlayersReal();
   } catch(e) {
     showToast(e.message, 'error');
   } finally {
