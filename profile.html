@@ -523,7 +523,7 @@ function renderProfile() {
       <!-- Photos & Videos — full width below the notes/details columns -->
       <div class="card" style="margin-top:14px">
         <div class="card-head"><span class="card-title">Photos &amp; Videos</span></div>
-        <div class="media-grid" id="mediaGrid">
+        <div id="mediaGrid">
           <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Loading media...</div>
         </div>
       </div>
@@ -1422,7 +1422,7 @@ function renderMedia() {
     el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">No media uploaded yet.</div>';
     return;
   }
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px" id="homeVisitMediaGrid">'
+  el.innerHTML = '<div style="display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px;width:100%" id="homeVisitMediaGrid">'
     + media.map(m => {
         const url = m.url.startsWith('http') ? m.url : API_BASE + m.url;
         const delbtn = isAdmin
