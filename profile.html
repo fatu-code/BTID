@@ -115,6 +115,34 @@
 .profile-photo-wrap { position: relative; }
 .profile-photo-wrap:hover .photo-del-btn { opacity: 1 !important; }
 .photo-del-btn:hover { background: rgba(215,40,44,.95) !important; transform: scale(1.08); }
+
+/* Universal photo cap — prevents any image on the profile from rendering at full native resolution.
+   Protects against huge phone photos taking over the screen. */
+.content img,
+.card img,
+.profile-hero img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Standalone "full" photo view (as seen on Mugisha's profile with the corn-field image) —
+   if the image is rendered on its own in the content flow, cap it professionally. */
+.content > img,
+.card > img {
+  display: block;
+  max-height: 420px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+  cursor: zoom-in;
+}
+@media (max-width: 768px) {
+  .content > img,
+  .card > img {
+    max-height: 300px;
+  }
+}
 </style>
 </head>
 <body>
