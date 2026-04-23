@@ -1,4 +1,4 @@
-// ── BTID — ATHLETE MANAGEMENT SYSTEM ────────────────────────────
+// ── BTID - ATHLETE MANAGEMENT SYSTEM ────────────────────────────
 // App utilities, sidebar, auth, helpers
 
 // ── ROLES ────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ function calcAge(dob) {
   return age;
 }
 
-// GPHP — Mid-Parental Height Formula
+// GPHP - Mid-Parental Height Formula
 // unit: 'cm' or 'in'
 // Boys: (Dad + Mom + 13cm) / 2  |  Girls: (Dad + Mom - 13cm) / 2
 // In inches: Boys +5in, Girls -5in

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>KR Calculator — BTID</title>
+<title>KR Calculator - BTID</title>
 <link rel="stylesheet" href="css/style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,7 +201,7 @@ async function loadPlayerList() {
       .forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = p.name + (p.district ? ' — ' + p.district : '');
+        opt.textContent = p.name + (p.district ? ' - ' + p.district : '');
         sel.appendChild(opt);
       });
   } catch(e) { /* silent */ }
@@ -332,7 +332,7 @@ function showSaveCard() {
     btn.style.cursor = 'pointer';
   } else {
     intro.innerHTML = 'Want to save this to a player? <span style="font-weight:900">Go back to Step 1</span> and pick a player first.';
-    hint.textContent = 'No player is loaded — you can still enter the height below but there\'s nowhere to save it.';
+    hint.textContent = 'No player is loaded - you can still enter the height below but there\'s nowhere to save it.';
     btn.disabled = true;
     btn.style.opacity = '.45';
     btn.style.cursor = 'not-allowed';
