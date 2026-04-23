@@ -121,9 +121,14 @@
 /* Development tab responsive grids — collapse on mobile */
 .dev-metrics-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
 .dev-details-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Final Tryout attempts grid — 4 cols on desktop, 2 cols on mobile */
+.tryout-attempts-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+
 @media (max-width: 768px) {
   .dev-metrics-grid { grid-template-columns: 1fr; gap: 12px; }
   .dev-details-grid { grid-template-columns: 1fr; gap: 12px; }
+  .tryout-attempts-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
 }
 
 /* Universal photo cap — prevents any image on the profile from rendering at full native resolution.
@@ -584,7 +589,7 @@ function renderProfile() {
         </div>
 
         <div class="metric-section-title">30 Yard Dash</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="tryout-attempts-grid">
           <div><label class="form-label">Attempt 1</label><input class="form-input" id="m_30_1" type="number" step=".01" placeholder="secs" value="${tryoutResult?.dash_1||''}" oninput="autoCalcDash()"></div>
           <div><label class="form-label">Attempt 2</label><input class="form-input" id="m_30_2" type="number" step=".01" placeholder="secs" value="${tryoutResult?.dash_2||''}" oninput="autoCalcDash()"></div>
           <div><label class="form-label">Average</label>
@@ -594,7 +599,7 @@ function renderProfile() {
         </div>
 
         <div class="metric-section-title">Broad Jump</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="tryout-attempts-grid">
           <div><label class="form-label">Attempt 1 (in)</label><input class="form-input" id="m_b1" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_1||''}" oninput="autoCalcBroad()"></div>
           <div><label class="form-label">Attempt 2 (in)</label><input class="form-input" id="m_b2" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_2||''}" oninput="autoCalcBroad()"></div>
           <div><label class="form-label">Attempt 3 (in)</label><input class="form-input" id="m_b3" type="number" step=".1" placeholder="inches" value="${tryoutResult?.broad_3||''}" oninput="autoCalcBroad()"></div>
@@ -604,7 +609,7 @@ function renderProfile() {
         </div>
 
         <div class="metric-section-title">Velocity — Standing</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="tryout-attempts-grid">
           <div><label class="form-label">Attempt 1 (mph)</label><input class="form-input" id="m_vs1" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_st_1||''}" oninput="autoCalcVeloSt()"></div>
           <div><label class="form-label">Attempt 2 (mph)</label><input class="form-input" id="m_vs2" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_st_2||''}" oninput="autoCalcVeloSt()"></div>
           <div><label class="form-label">Average</label>
@@ -614,7 +619,7 @@ function renderProfile() {
         </div>
 
         <div class="metric-section-title">Velocity — Pitching Down</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div class="tryout-attempts-grid">
           <div><label class="form-label">Attempt 1 (mph)</label><input class="form-input" id="m_vp1" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_pd_1||''}" oninput="autoCalcVeloPd()"></div>
           <div><label class="form-label">Attempt 2 (mph)</label><input class="form-input" id="m_vp2" type="number" step=".1" placeholder="mph" value="${tryoutResult?.velo_pd_2||''}" oninput="autoCalcVeloPd()"></div>
           <div><label class="form-label">Average</label>
