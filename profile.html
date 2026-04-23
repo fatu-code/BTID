@@ -852,14 +852,20 @@ async function loadDevelopmentTab() {
             <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Range: 6.5 – 12.0 secs</div>
           </div>
 
-          <!-- KR — 20-80 scouting scale -->
+          <!-- KR — projected adult height from external calculator -->
           <div>
-            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">KR (Scout Grade)</div>
-            <select id="devMetKR" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700" ${!isAdmin?'disabled':''}>
-              <option value="">Select</option>
-              ${[['20','20 — Well below average'],['30','30 — Below average'],['40','40 — Below average'],['45','45 — Average'],['50','50 — Average'],['55','55 — Above average'],['60','60 — Above average'],['70','70 — Well above average'],['80','80 — Elite']].map(([v,l])=>`<option value="${v}" ${p.dev_kr===v?'selected':''}>${l}</option>`).join('')}
-            </select>
-            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">MLB 20-80 scouting scale</div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:4px">Projected Height (KR)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <select id="devMetKRFt" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700" ${!isAdmin?'disabled':''}>
+                <option value="">ft</option>
+                ${[4,5,6,7].map(v => `<option value="${v}" ${(p.dev_kr||'').split("'")[0]==String(v)?'selected':''}>${v} ft</option>`).join('')}
+              </select>
+              <select id="devMetKRIn" class="form-select" style="height:32px;font-size:0.78rem;font-weight:700" ${!isAdmin?'disabled':''}>
+                <option value="">in</option>
+                ${[0,1,2,3,4,5,6,7,8,9,10,11].map(v => `<option value="${v}" ${(p.dev_kr||'').split("'")[1]==String(v)?'selected':''}>${v} in</option>`).join('')}
+              </select>
+            </div>
+            <div style="font-family:var(--font2);font-size:0.58rem;color:var(--muted);margin-top:3px">Predicted adult height — use your external calculator</div>
           </div>
 
         </div>
@@ -1087,6 +1093,15 @@ function buildHeightString() {
   return null;
 }
 
+function buildKRString() {
+  const ft = document.getElementById('devMetKRFt')?.value;
+  const inches = document.getElementById('devMetKRIn')?.value;
+  if (!ft && !inches) return null;
+  if (ft && inches !== '') return ft + "'" + inches + '"';
+  if (ft) return ft + "'";
+  return null;
+}
+
 async function saveDevMetrics() {
   const btn = document.querySelector('[onclick="saveDevMetrics()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
@@ -1097,7 +1112,7 @@ async function saveDevMetrics() {
       dev_weight_lbs: document.getElementById('devMetWeight')?.value      || null,
       dev_broad:      document.getElementById('devMetBroad')?.value       || null,
       dev_dash:       document.getElementById('devMetDash')?.value        || null,
-      dev_kr:         document.getElementById('devMetKR')?.value          || null,
+      dev_kr:         buildKRString()                                      || null,
     };
     // Save metrics and log to history in parallel
     await Promise.all([
@@ -1779,7 +1794,10 @@ function editPlayer() {
   document.getElementById('epMomHt').value         = p.mom_ht || '';
   document.getElementById('epTier').value          = p.tier || '';
   document.getElementById('epScout').value         = p.scout || '';
-  document.getElementById('epKR').value            = p.kr || '';
+  // KR: split stored "5'11" into feet + inches dropdowns
+  const krParts = (p.kr || '').toString().match(/^(\d+)'(\d*)"?$/);
+  document.getElementById('epKRFt').value = krParts ? krParts[1] : '';
+  document.getElementById('epKRIn').value = krParts && krParts[2] !== undefined ? krParts[2] : '';
   document.getElementById('epNotes').value         = p.notes || '';
   // Populate district select
   const ds = document.getElementById('epDistrict');
@@ -1827,7 +1845,14 @@ async function saveEditPlayer() {
       mom_ht:         document.getElementById('epMomHt').value || null,
       tier:           document.getElementById('epTier').value || null,
       scout:          document.getElementById('epScout').value.trim(),
-      kr:             document.getElementById('epKR').value.trim(),
+      kr:             (() => {
+        const ft = document.getElementById('epKRFt').value;
+        const inches = document.getElementById('epKRIn').value;
+        if (!ft && !inches) return null;
+        if (ft && inches !== '') return ft + "'" + inches + '"';
+        if (ft) return ft + "'";
+        return null;
+      })(),
       notes:          document.getElementById('epNotes').value.trim(),
     };
     // Recalculate GPHP
@@ -2154,7 +2179,33 @@ function copyShareLink() {
           <div class="form-group"><label class="form-label">GPHP (auto-calculated)</label><div class="form-input" id="epGPHP" style="background:var(--bg);color:var(--muted);display:flex;align-items:center">Set parent heights</div></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <div class="form-group"><label class="form-label">Tier</label><select class="form-select" id="epTier"><option value="">No tier</option><option value="1">Tier 1</option><option value="1.5">Tier 1.5</option><option value="2">Tier 2</option><option value="3">Tier 3</option></select></div>
-            <div class="form-group"><label class="form-label">KR</label><input class="form-input" id="epKR" type="text"></div>
+            <div class="form-group">
+              <label class="form-label">Projected Height (KR)</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <select class="form-select" id="epKRFt">
+                  <option value="">ft</option>
+                  <option value="4">4 ft</option>
+                  <option value="5">5 ft</option>
+                  <option value="6">6 ft</option>
+                  <option value="7">7 ft</option>
+                </select>
+                <select class="form-select" id="epKRIn">
+                  <option value="">in</option>
+                  <option value="0">0 in</option>
+                  <option value="1">1 in</option>
+                  <option value="2">2 in</option>
+                  <option value="3">3 in</option>
+                  <option value="4">4 in</option>
+                  <option value="5">5 in</option>
+                  <option value="6">6 in</option>
+                  <option value="7">7 in</option>
+                  <option value="8">8 in</option>
+                  <option value="9">9 in</option>
+                  <option value="10">10 in</option>
+                  <option value="11">11 in</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div class="form-group"><label class="form-label">Scout</label><input class="form-input" id="epScout" type="text"></div>
           <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="epNotes" rows="3" placeholder="Scout notes..."></textarea></div>
