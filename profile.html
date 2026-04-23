@@ -770,7 +770,7 @@ async function loadTabMedia(tabName, gridId) {
           : '';
         const media_el = m.type === 'video'
           ? '<video src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
-          : '<img src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
+          : '<img class="media-photo" src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
         return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
           + media_el
           + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
@@ -973,7 +973,7 @@ async function loadDevelopmentTab() {
           + media.map(m => {
               const db = isAdmin ? '<button class="dev-del-btn" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
               return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
-                + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#000" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
+                + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#000" controls preload="metadata"></video>' : '<img class="media-photo" src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
                 + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
                 + db + '</div>';
             }).join('') + '</div>'}
@@ -1004,7 +1004,7 @@ async function loadInitialTryoutTab() {
             + media.map(m => {
                 const db = isAdmin ? '<button class="dev-del-btn" data-tab="initial" data-id="' + m.id + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>' : '';
                 return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
-                  + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;max-height:280px;object-fit:contain;display:block;background:#000" controls preload="metadata"></video>' : '<img src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover" loading="lazy">')
+                  + (m.type === 'video' ? '<video src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;max-height:280px;object-fit:contain;display:block;background:#000" controls preload="metadata"></video>' : '<img class="media-photo" src="' + (m.url.startsWith('http') ? m.url : API_BASE + m.url) + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">')
                   + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted)">' + (m.filename||'') + '</div>'
                   + db + '</div>';
               }).join('') + '</div>'}
@@ -1296,7 +1296,7 @@ async function loadFinalMedia() {
           : '';
         const media_el = m.type === 'video'
           ? '<video src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
-          : '<img src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
+          : '<img class="media-photo" src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
         return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
           + media_el
           + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
@@ -1473,7 +1473,7 @@ function renderMedia() {
           : '';
         const media_el = m.type === 'video'
           ? '<video src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
-          : '<img src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" loading="lazy">';
+          : '<img class="media-photo" src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
         return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
           + media_el
           + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
@@ -1509,6 +1509,13 @@ function openLightbox(url) {
 function closeLightbox() {
   document.getElementById('lightbox').style.display = 'none';
 }
+// Escape key closes lightbox
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const lb = document.getElementById('lightbox');
+    if (lb && lb.style.display === 'flex') closeLightbox();
+  }
+});
 
 // ── HOME VISIT SAVE ───────────────────────────────────────────────
 async function saveHVNotes() {
@@ -1795,8 +1802,7 @@ document.addEventListener('click', function(e) {
   const devBtn = e.target.closest('.dev-del-btn');
   const btn    = tabBtn || hvBtn || devBtn;
   if (!btn) return;
-  e.stopPropagation();
-  const mId  = btn.getAttribute('data-id');
+  e.stopPropagation();  const mId  = btn.getAttribute('data-id');
   const mTab = btn.getAttribute('data-tab') || '';
   showConfirmDelete('Delete Media', 'Are you sure you want to delete this photo or video? This cannot be undone.', async () => {
     try {
@@ -1817,6 +1823,15 @@ document.addEventListener('click', function(e) {
       }
     } catch(err) { showToast(err.message, 'error'); }
   });
+});
+
+// ── GLOBAL MEDIA PHOTO LIGHTBOX ──────────────────────────────────
+// Clicking any photo with class "media-photo" expands it in the lightbox.
+// Delete X buttons use e.stopPropagation() so they don't trigger this.
+document.addEventListener('click', function(e) {
+  const img = e.target.closest('.media-photo');
+  if (!img) return;
+  openLightbox(img.src);
 });
 
 // ── PHOTO UPLOAD ──────────────────────────────────────────────────
