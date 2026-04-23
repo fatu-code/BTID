@@ -305,7 +305,7 @@ async function load() {
         <div class="hero-top">
           <div class="hero-photo">
             ${p.photo_url
-              ? `<img src="${API_BASE}${p.photo_url}" alt="${p.name}">`
+              ? `<img src="${p.photo_url.startsWith('http') ? p.photo_url : API_BASE + p.photo_url}" alt="${p.name}">`
               : initials(p.name)}
           </div>
           <div style="flex:1;min-width:0">
@@ -410,12 +410,15 @@ async function load() {
             <div class="card-title">Photos & Videos</div>
             ${hv?.media && hv.media.length ? `
             <div class="media-grid">
-              ${hv.media.map(m => `
-                <div class="media-thumb" onclick="${m.type === 'image' ? `openLightbox('${API_BASE}${m.url}')` : ''}">
+              ${hv.media.map(m => {
+                const mediaUrl = m.url.startsWith('http') ? m.url : API_BASE + m.url;
+                return `
+                <div class="media-thumb" onclick="${m.type === 'image' ? `openLightbox('${mediaUrl}')` : ''}">
                   ${m.type === 'image'
-                    ? `<img src="${API_BASE}${m.url}" loading="lazy">`
-                    : `<video src="${API_BASE}${m.url}" preload="metadata" controls></video>`}
-                </div>`).join('')}
+                    ? `<img src="${mediaUrl}" loading="lazy">`
+                    : `<video src="${mediaUrl}" preload="metadata" controls></video>`}
+                </div>`;
+              }).join('')}
             </div>` : `<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">No media uploaded.</div>`}
           </div>
         </div>
