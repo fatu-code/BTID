@@ -113,8 +113,10 @@
 
 /* Remove-photo X button — reveals on avatar hover */
 .profile-photo-wrap { position: relative; }
-.profile-photo-wrap:hover .photo-del-btn { opacity: 1 !important; }
+.profile-photo-wrap:hover .photo-del-btn,
+.profile-photo-wrap:hover .photo-expand-btn { opacity: 1 !important; }
 .photo-del-btn:hover { background: rgba(215,40,44,.95) !important; transform: scale(1.08); }
+.photo-expand-btn:hover { background: rgba(0,0,0,.9) !important; transform: scale(1.08); }
 
 /* Universal photo cap — prevents any image on the profile from rendering at full native resolution.
    Protects against huge phone photos taking over the screen. */
@@ -286,13 +288,14 @@ function renderProfile() {
     <div class="profile-hero" style="margin-bottom:14px">
       <div class="profile-hero-top">
         <!-- Photo -->
-        <div class="profile-photo-wrap" id="photoWrap" ${isAdmin ? 'onclick="triggerPhotoUpload()"' : ''}>
+        <div class="profile-photo-wrap" id="photoWrap" ${isAdmin ? 'onclick="triggerPhotoUpload()"' : (player.photo_url ? 'onclick="openAvatarLightbox()" style="cursor:zoom-in"' : '')}>
           ${player.photo_url
             ? `<img src="${player.photo_url.startsWith('http') ? player.photo_url : API_BASE + player.photo_url}" alt="${player.name}" id="profilePhoto" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
             : `<div class="profile-photo-initials" id="profilePhoto">${initials(player.name)}</div>`}
           ${isAdmin ? `<div class="photo-edit-hint" style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-family:var(--font2);font-size:0.6rem;font-weight:700;text-align:center;padding:4px;cursor:pointer">
             ${player.photo_url ? '📷 Change' : '📷 Add Photo'}
           </div>` : ''}
+          ${isAdmin && player.photo_url ? `<button onclick="event.stopPropagation();openAvatarLightbox()" class="photo-expand-btn" title="View full size" style="position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:12px;cursor:zoom-in;z-index:10;opacity:0;transition:opacity .15s;align-items:center;justify-content:center;display:flex">⛶</button>` : ''}
           ${isAdmin && player.photo_url ? `<button onclick="event.stopPropagation();deletePlayerPhoto()" class="photo-del-btn" title="Remove photo" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(239,62,66,.9);border:none;color:#fff;font-size:12px;cursor:pointer;font-weight:bold;z-index:10;opacity:0;transition:opacity .15s;align-items:center;justify-content:center;display:flex">✕</button>` : ''}
         </div>
 
@@ -1520,6 +1523,13 @@ function openLightbox(url, type) {
     img.style.display = 'block';
   }
   lb.style.display = 'flex';
+}
+function openAvatarLightbox() {
+  if (!player || !player.photo_url) return;
+  const url = player.photo_url.startsWith('http')
+    ? player.photo_url
+    : API_BASE + player.photo_url;
+  openLightbox(url, 'image');
 }
 function closeLightbox() {
   const img   = document.getElementById('lightboxImg');
