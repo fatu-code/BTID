@@ -1419,7 +1419,7 @@ function renderMedia() {
     el.innerHTML = '<div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">No media uploaded yet.</div>';
     return;
   }
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px" id="homeVisitMediaGrid">'
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px" id="homeVisitMediaGrid">'
     + media.map(m => {
         const url = m.url.startsWith('http') ? m.url : API_BASE + m.url;
         const delbtn = isAdmin
