@@ -170,6 +170,8 @@ const NAV_ITEMS = [
     icon: '<rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/>' },
   { id: 'players',    label: 'Players',          href: 'players.html',    minLevel: 1,
     icon: '<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>' },
+  { id: 'kr',         label: 'KR Calculator',    href: 'kr.html',         minLevel: 1,
+    icon: '<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 4h6M5 7h2M8 7h1M10 7h1M5 9h2M8 9h1M10 9h1M5 11h2M8 11h1M10 11h1"/>' },
 
   { section: 'Tryouts', minLevel: 2 },
   { id: 'tryouts',    label: 'Tryout Batches',   href: 'tryouts.html',    minLevel: 2,

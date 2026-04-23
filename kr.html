@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KR Calculator — BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+  .kr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .kr-subgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  @media (max-width:768px) { .kr-grid { grid-template-columns:1fr; } }
+
+  .kr-step {
+    font-family: var(--font2);
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    margin-bottom: 6px;
+  }
+
+  .kr-save-card {
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    color: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-top: 18px;
+  }
+  .kr-save-label {
+    font-family: var(--font2);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    opacity: .75;
+    margin-bottom: 8px;
+  }
+  .kr-save-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .kr-save-input {
+    width: 88px; height: 42px;
+    border-radius: 10px; border: none;
+    padding: 0 14px;
+    font-family: var(--font2); font-size: 1rem; font-weight: 800;
+    color: var(--text); text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        <div>
+          <div class="topbar-title">KR Calculator</div>
+          <div class="topbar-sub">Predict a player's adult height</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Height Projection</span>
+        </div>
+
+        <!-- STEP 1: Select a player (or start fresh) -->
+        <div class="kr-step">Step 1 · Player</div>
+        <div style="background:var(--bg);border-radius:10px;padding:12px 14px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="font-family:var(--font2);font-size:0.72rem;font-weight:700;color:var(--muted);flex-shrink:0">
+            Load from:
+          </div>
+          <select class="form-select" id="loadPlayerSelect" style="flex:1;min-width:220px;height:34px;font-size:0.8rem;font-weight:700" onchange="loadFromPlayer()">
+            <option value="">Start from scratch…</option>
+          </select>
+        </div>
+
+        <!-- STEP 2: Review / edit the inputs -->
+        <div class="kr-step">Step 2 · Inputs</div>
+        <div class="kr-grid" style="margin-bottom:16px">
+          <!-- LEFT: Child -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Child</div>
+
+            <div class="form-group">
+              <label class="form-label">Sex</label>
+              <select class="form-select" id="krSex">
+                <option value="m">Male</option>
+                <option value="f">Female</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Age (years)</label>
+              <input class="form-input" id="krAge" type="number" min="4" max="18" step=".1" placeholder="e.g. 11.8">
+              <div style="font-family:var(--font2);font-size:0.6rem;color:var(--muted);margin-top:3px">Decimal years (e.g. 11.8 for 11 years 10 months)</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Current Height</label>
+              <div class="kr-subgrid">
+                <input class="form-input" id="krHtFt" type="number" min="3" max="7" placeholder="Feet" step="1">
+                <input class="form-input" id="krHtIn" type="number" min="0" max="11" step=".1" placeholder="Inches">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Current Weight (lbs)</label>
+              <input class="form-input" id="krWt" type="number" min="30" max="300" step=".1" placeholder="e.g. 95">
+            </div>
+          </div>
+
+          <!-- RIGHT: Parents -->
+          <div>
+            <div style="font-family:var(--font2);font-size:0.65rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Parents</div>
+
+            <div class="form-group">
+              <label class="form-label">Mother's Height</label>
+              <div class="kr-subgrid">
+                <input class="form-input" id="krMomFt" type="number" min="3" max="7" placeholder="Feet" step="1">
+                <input class="form-input" id="krMomIn" type="number" min="0" max="11" step=".1" placeholder="Inches">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Father's Height</label>
+              <div class="kr-subgrid">
+                <input class="form-input" id="krDadFt" type="number" min="3" max="7" placeholder="Feet" step="1">
+                <input class="form-input" id="krDadIn" type="number" min="0" max="11" step=".1" placeholder="Inches">
+              </div>
+            </div>
+
+            <div style="background:var(--green-pale);border-radius:10px;padding:12px 14px;margin-top:16px">
+              <div style="font-family:var(--font2);font-size:0.68rem;font-weight:800;color:var(--green-dark);margin-bottom:4px">About the calculation</div>
+              <div style="font-family:var(--font2);font-size:0.68rem;color:var(--muted);line-height:1.5">
+                Uses the Khamis-Roche method. Accuracy is about ±2 inches for boys and ±1.7 inches for girls. Most accurate for ages 7 to 17.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Calculate -->
+        <div class="kr-step">Step 3 · Calculate</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" style="flex:1;min-width:220px" onclick="runCalculation()">
+            <svg viewBox="0 0 16 16" style="stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><rect x="3" y="2" width="10" height="12" rx="1.5"/><path d="M5 5h6M5 8h2M8 8h1M10 8h1M5 11h2M8 11h1M10 11h1"/></svg>
+            Run Calculation
+          </button>
+          <button class="btn btn-outline" onclick="resetForm()">Reset</button>
+        </div>
+
+        <!-- STEP 4: Save back to player -->
+        <div class="kr-save-card" id="saveCard" style="display:none">
+          <div class="kr-save-label">Step 4 · Save projected height</div>
+          <div style="font-family:var(--font2);font-size:0.85rem;font-weight:700;margin-bottom:12px;line-height:1.5" id="saveCardIntro">
+            Enter the projected adult height from the calculation below, then save it to <span id="saveCardPlayerName" style="font-weight:900"></span>'s KR field.
+          </div>
+          <div class="kr-save-row">
+            <input id="krResultFt" class="kr-save-input" type="number" min="3" max="7" step="1" placeholder="ft">
+            <input id="krResultIn" class="kr-save-input" type="number" min="0" max="11" step="1" placeholder="in">
+            <button class="btn" id="saveKrBtn" onclick="saveToPlayer()" style="background:#fff;color:var(--green-dark);flex:1;min-width:180px;font-weight:900;padding:12px 20px;border:none;border-radius:10px;cursor:pointer;font-family:var(--font2);font-size:0.82rem">
+              Save to player
+            </button>
+          </div>
+          <div id="saveHint" style="font-family:var(--font2);font-size:0.7rem;opacity:.75;margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+Auth.require();
+buildSidebar('kr');
+
+let allPlayers = [];
+let loadedPlayer = null;
+
+// ── POPULATE PLAYER DROPDOWN ──────────────────────────────────────
+async function loadPlayerList() {
+  try {
+    const r = await PlayerAPI.getAll();
+    allPlayers = r.players || r || [];
+    const sel = document.getElementById('loadPlayerSelect');
+    allPlayers
+      .slice()
+      .sort((a,b) => (a.name||'').localeCompare(b.name||''))
+      .forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + (p.district ? ' — ' + p.district : '');
+        sel.appendChild(opt);
+      });
+  } catch(e) { /* silent */ }
+}
+loadPlayerList();
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function parseHeightString(s) {
+  if (!s) return { ft: '', in: '' };
+  const str = String(s).trim();
+  const m = str.match(/^(\d+)['"]?\s*(\d+(?:\.\d+)?)?['"]?$/);
+  if (!m) return { ft: '', in: '' };
+  return { ft: m[1], in: m[2] || '0' };
+}
+
+function cmNumToFtIn(cm) {
+  if (!cm) return { ft: '', in: '' };
+  const n = parseFloat(cm);
+  if (isNaN(n) || n <= 0) return { ft: '', in: '' };
+  const totalIn = n / 2.54;
+  const ft = Math.floor(totalIn / 12);
+  const inches = Math.round(totalIn % 12);
+  return { ft: String(ft), in: String(inches) };
+}
+
+function ageDecimalFromDob(dob) {
+  if (!dob) return '';
+  const birth = new Date(dob);
+  const now = new Date();
+  const ms = now - birth;
+  const years = ms / (365.25 * 24 * 60 * 60 * 1000);
+  return years.toFixed(1);
+}
+
+// ── LOAD PLAYER INTO FORM ─────────────────────────────────────────
+function loadFromPlayer() {
+  const id = document.getElementById('loadPlayerSelect').value;
+  if (!id) { loadedPlayer = null; hideSaveCard(); return; }
+  const p = allPlayers.find(x => String(x.id) === String(id));
+  if (!p) return;
+  loadedPlayer = p;
+
+  document.getElementById('krSex').value = (p.gender === 'F' ? 'f' : 'm');
+  document.getElementById('krAge').value = ageDecimalFromDob(p.dob);
+
+  const heightStr = p.dev_height_ft || p.height_ft || '';
+  const ht = parseHeightString(heightStr);
+  document.getElementById('krHtFt').value = ht.ft;
+  document.getElementById('krHtIn').value = ht.in;
+
+  document.getElementById('krWt').value = p.dev_weight_lbs || p.weight_lbs || '';
+
+  const mom = cmNumToFtIn(p.mom_ht);
+  document.getElementById('krMomFt').value = mom.ft;
+  document.getElementById('krMomIn').value = mom.in;
+  const dad = cmNumToFtIn(p.dad_ht);
+  document.getElementById('krDadFt').value = dad.ft;
+  document.getElementById('krDadIn').value = dad.in;
+
+  hideSaveCard();
+}
+
+// ── RUN CALCULATION ───────────────────────────────────────────────
+// Opens calculator.net in a new tab with all values pre-filled via query params
+function runCalculation() {
+  const sex   = document.getElementById('krSex').value;
+  const age   = document.getElementById('krAge').value;
+  const htFt  = document.getElementById('krHtFt').value;
+  const htIn  = document.getElementById('krHtIn').value;
+  const wtLb  = document.getElementById('krWt').value;
+  const momFt = document.getElementById('krMomFt').value;
+  const momIn = document.getElementById('krMomIn').value;
+  const dadFt = document.getElementById('krDadFt').value;
+  const dadIn = document.getElementById('krDadIn').value;
+
+  const missing = [];
+  if (!age)                missing.push('age');
+  if (!htFt && !htIn)      missing.push('current height');
+  if (!wtLb)               missing.push('weight');
+  if (!momFt && !momIn)    missing.push("mother's height");
+  if (!dadFt && !dadIn)    missing.push("father's height");
+  if (missing.length) {
+    showToast('Please fill in: ' + missing.join(', '), 'error');
+    return;
+  }
+
+  // Build calculator.net URL. Parameters:
+  // cage, csex (m|f), cheightfeet, cheightinch, cpound, mcheightfeet, mcheightinch,
+  // fcheightfeet, fcheightinch, ctype=standard, ptype=1
+  const params = new URLSearchParams({
+    cage: age,
+    csex: sex,
+    cheightfeet: htFt || '0',
+    cheightinch: htIn || '0',
+    cpound: wtLb,
+    mcheightfeet: momFt || '0',
+    mcheightinch: momIn || '0',
+    fcheightfeet: dadFt || '0',
+    fcheightinch: dadIn || '0',
+    ctype: 'standard',
+    ptype: '1',
+    x: 'Calculate'
+  });
+  const url = 'https://www.calculator.net/height-calculator.html?' + params.toString();
+  window.open(url, '_blank');
+
+  // Reveal the save card so Joshua can type the result back
+  showSaveCard();
+}
+
+// ── SAVE CARD VISIBILITY ──────────────────────────────────────────
+function showSaveCard() {
+  const card = document.getElementById('saveCard');
+  const intro = document.getElementById('saveCardIntro');
+  const hint  = document.getElementById('saveHint');
+  const btn   = document.getElementById('saveKrBtn');
+
+  card.style.display = 'block';
+  document.getElementById('krResultFt').value = '';
+  document.getElementById('krResultIn').value = '';
+
+  if (loadedPlayer) {
+    document.getElementById('saveCardPlayerName').textContent = loadedPlayer.name;
+    intro.innerHTML = 'Copy the projected height from the calculator tab, then save it to <span style="font-weight:900">' + loadedPlayer.name + "'s</span> KR field.";
+    hint.textContent = 'The value will be saved as this player\'s projected adult height.';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    intro.innerHTML = 'Want to save this to a player? <span style="font-weight:900">Go back to Step 1</span> and pick a player first.';
+    hint.textContent = 'No player is loaded — you can still enter the height below but there\'s nowhere to save it.';
+    btn.disabled = true;
+    btn.style.opacity = '.45';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+function hideSaveCard() {
+  document.getElementById('saveCard').style.display = 'none';
+}
+
+// ── SAVE TO PLAYER ────────────────────────────────────────────────
+async function saveToPlayer() {
+  if (!loadedPlayer) return;
+  const ft = document.getElementById('krResultFt').value;
+  const inches = document.getElementById('krResultIn').value;
+  if (!ft && !inches) { showToast('Enter the projected height first', 'error'); return; }
+  const krStr = (ft ? ft : '0') + "'" + (inches !== '' ? inches : '0') + '"';
+
+  const btn = document.getElementById('saveKrBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    await PlayerAPI.update(loadedPlayer.id, { dev_kr: krStr, kr: krStr });
+    showToast(krStr + ' saved as ' + loadedPlayer.name + "'s projected height", 'success');
+    btn.textContent = '✓ Saved';
+    setTimeout(() => { btn.textContent = 'Save to player'; btn.disabled = false; }, 1800);
+  } catch(e) {
+    showToast(e.message || 'Could not save', 'error');
+    btn.textContent = 'Save to player';
+    btn.disabled = false;
+  }
+}
+
+// ── RESET ─────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('loadPlayerSelect').value = '';
+  ['krAge','krHtFt','krHtIn','krWt','krMomFt','krMomIn','krDadFt','krDadIn'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('krSex').value = 'm';
+  hideSaveCard();
+  loadedPlayer = null;
+}
+</script>
+</body>
+</html>
