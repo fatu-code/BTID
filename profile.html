@@ -517,12 +517,14 @@ function renderProfile() {
               <div style="font-family:var(--font2);font-size:0.65rem;color:var(--muted);margin-top:3px">Videos are compressed to preserve quality</div>
             </div>
           </div>` : ''}
-          <div class="card">
-            <div class="card-head"><span class="card-title">Photos &amp; Videos</span></div>
-            <div class="media-grid" id="mediaGrid">
-              <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Loading media...</div>
-            </div>
-          </div>
+        </div>
+      </div>
+
+      <!-- Photos & Videos — full width below the notes/details columns -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-head"><span class="card-title">Photos &amp; Videos</span></div>
+        <div class="media-grid" id="mediaGrid">
+          <div style="font-family:var(--font2);font-size:0.72rem;color:var(--muted)">Loading media...</div>
         </div>
       </div>
     </div>
@@ -753,12 +755,13 @@ async function loadTabMedia(tabName, gridId) {
     }
     el.innerHTML = uploadBtn + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px" id="mediaGrid_' + tabName + '">' +
       media.map(m => {
+        const url = m.url.startsWith('http') ? m.url : API_BASE + m.url;
         const delbtn = isAdmin
           ? '<button class="media-del-btn" data-id="' + m.id + '" data-tab="' + tabName + '" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;z-index:10;display:flex;align-items:center;justify-content:center">&times;</button>'
           : '';
         const media_el = m.type === 'video'
-          ? '<video src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
-          : '<img src="' + API_BASE + m.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
+          ? '<video src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover" controls preload="metadata"></video>'
+          : '<img src="' + url + '" style="width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in" loading="lazy">';
         return '<div style="border-radius:10px;overflow:hidden;background:var(--bg);border:1.5px solid var(--border);position:relative">'
           + media_el
           + '<div style="padding:5px 8px;font-family:var(--font2);font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (m.filename||'') + '</div>'
