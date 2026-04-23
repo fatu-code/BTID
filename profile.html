@@ -118,6 +118,14 @@
 .photo-del-btn:hover { background: rgba(215,40,44,.95) !important; transform: scale(1.08); }
 .photo-expand-btn:hover { background: rgba(0,0,0,.9) !important; transform: scale(1.08); }
 
+/* Development tab responsive grids — collapse on mobile */
+.dev-metrics-grid  { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.dev-details-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 768px) {
+  .dev-metrics-grid { grid-template-columns: 1fr; gap: 12px; }
+  .dev-details-grid { grid-template-columns: 1fr; gap: 12px; }
+}
+
 /* Universal photo cap — prevents any image on the profile from rendering at full native resolution.
    Protects against huge phone photos taking over the screen. */
 .content img,
@@ -816,7 +824,7 @@ async function loadDevelopmentTab() {
             </button>` : ''}
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:${history.length ? '16px' : '0'}">
+        <div class="dev-metrics-grid" style="margin-bottom:${history.length ? '16px' : '0'}">
 
           <!-- VELOCITY with live indicator -->
           <div>
@@ -926,7 +934,7 @@ async function loadDevelopmentTab() {
           </div>
         </div>` : ''}
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="dev-details-grid" style="margin-bottom:12px">
         <div class="card">
           <div class="card-head">
             <span class="card-title">Academy Details</span>
