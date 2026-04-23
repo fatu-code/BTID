@@ -1232,7 +1232,7 @@ async function deleteTabMedia(mediaId, tab) {
           throw new Error(err.error || 'Delete failed');
         }
         showToast('Media deleted!', 'success');
-        if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
+        if (tab === 'initial')     { initialLoaded = false;     loadInitialTryoutTab(); }
         if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
       } catch(e) { showToast(e.message, 'error'); }
     }
@@ -1258,8 +1258,8 @@ async function uploadTabMedia(tab, input) {
   }
   if (ok > 0) {
     showToast(ok + ' file' + (ok > 1 ? 's' : '') + ' uploaded!', 'success');
-    if (tab === 'initial')     { initialLoaded = false;     loadTabMedia('initial', 'initialMediaGrid'); }
-    if (tab === 'development') { developmentLoaded = false;  loadTabMedia('development', 'developmentMediaGrid'); }
+    if (tab === 'initial')     { initialLoaded = false;     loadInitialTryoutTab(); }
+    if (tab === 'development') { developmentLoaded = false;  loadDevelopmentTab(); }
   } else {
     showToast('Upload failed', 'error');
   }
@@ -1766,7 +1766,7 @@ document.addEventListener('click', function(e) {
         homeVisit.media = (homeVisit.media || []).filter(m => String(m.id) !== String(mId));
         renderMedia();
       } else if (mTab === 'initial') {
-        initialLoaded = false; loadTabMedia('initial', 'initialMediaGrid');
+        initialLoaded = false; loadInitialTryoutTab();
       } else {
         developmentLoaded = false; loadDevelopmentTab();
       }
