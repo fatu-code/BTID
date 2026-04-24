@@ -172,6 +172,8 @@ const NAV_ITEMS = [
     icon: '<circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="13" cy="5" r="2.5"/><path d="M11 13c0-1.4.5-2.7 1.3-3.7"/>' },
   { id: 'kr',         label: 'KR Calculator',    href: 'kr.html',         minLevel: 1,
     icon: '<rect x="2" y="1" width="12" height="14" rx="1.5"/><path d="M5 4h6M5 7h2M8 7h1M10 7h1M5 9h2M8 9h1M10 9h1M5 11h2M8 11h1M10 11h1"/>' },
+  { id: 'hall',       label: 'Hall of Fame',     href: 'hall.html',       minLevel: 1,
+    icon: '<path d="M4 2h8v3a4 4 0 1 1-8 0V2z"/><path d="M4 3H2v1a2.5 2.5 0 0 0 2.5 2.5"/><path d="M12 3h2v1a2.5 2.5 0 0 1-2.5 2.5"/><path d="M6 9h4v2H6z"/><path d="M5 11h6v2H5z"/><path d="M4 13h8v2H4z"/>' },
 
   { section: 'Tryouts', minLevel: 2 },
   { id: 'tryouts',    label: 'Tryout Batches',   href: 'tryouts.html',    minLevel: 2,

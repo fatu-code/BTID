@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Hall of Fame - BTID</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════════════════════════════
+     HALL OF FAME - Joshua's scouting command center
+     One page, seven sections, one consistent Dodgers-blue + gold theme.
+     ══════════════════════════════════════════════════════════════ */
+
+  :root {
+    --hof-navy:       #003A6B;
+    --hof-navy-deep:  #001f3c;
+    --hof-gold:       #E2B13C;
+    --hof-gold-soft:  rgba(226,177,60,.18);
+    --hof-gold-dim:   rgba(226,177,60,.55);
+    --hof-ink:        #f7f9fc;
+    --hof-ink-dim:    rgba(247,249,252,.6);
+    --hof-ink-mute:   rgba(247,249,252,.38);
+  }
+
+  /* Shared section wrapper */
+  .hof-section {
+    margin-bottom: 28px;
+  }
+  .hof-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .hof-section-title {
+    font-family: var(--font2);
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: var(--hof-navy);
+    text-transform: uppercase;
+    letter-spacing: .16em;
+  }
+  .hof-section-sub {
+    font-family: var(--font2);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+
+  /* ── 1. HERO ── */
+  .hof-hero {
+    position: relative;
+    background:
+      radial-gradient(1200px 400px at 10% 0%, rgba(226,177,60,.15), transparent 60%),
+      radial-gradient(800px 500px at 100% 100%, rgba(0,58,107,.6), transparent 60%),
+      linear-gradient(135deg, var(--hof-navy-deep) 0%, var(--hof-navy) 100%);
+    border-radius: 18px;
+    padding: 28px 30px;
+    color: var(--hof-ink);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .hof-hero::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, var(--hof-gold-soft) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hof-hero-top {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+    position: relative; z-index: 1;
+  }
+  .hof-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--hof-gold), #c99a22);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font2);
+    font-size: 1.4rem; font-weight: 900;
+    color: var(--hof-navy-deep);
+    box-shadow: 0 4px 16px rgba(226,177,60,.3);
+    flex-shrink: 0;
+  }
+  .hof-hero-name {
+    font-family: var(--font2);
+    font-size: 1.4rem; font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+  .hof-hero-title {
+    font-family: var(--font2);
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--hof-gold);
+    text-transform: uppercase;
+    letter-spacing: .15em;
+  }
+  .hof-hero-season {
+    position: absolute; top: 26px; right: 30px;
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 800;
+    color: var(--hof-ink-mute);
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    z-index: 1;
+  }
+  .hof-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    position: relative; z-index: 1;
+  }
+  .hof-stat {
+    padding: 14px 0;
+  }
+  .hof-stat-val {
+    font-family: var(--font2);
+    font-size: 2.4rem; font-weight: 900;
+    line-height: 1;
+    color: var(--hof-gold);
+    letter-spacing: -.02em;
+  }
+  .hof-stat-lbl {
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 800;
+    color: var(--hof-ink-dim);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin-top: 4px;
+  }
+  @media (max-width: 640px) {
+    .hof-hero { padding: 22px 20px; }
+    .hof-hero-season { position: static; display: block; margin-bottom: 8px; }
+    .hof-hero-stats { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .hof-stat-val { font-size: 1.7rem; }
+    .hof-hero-name { font-size: 1.15rem; }
+  }
+
+  /* ── 2. DISCOVERY REEL (rare finds) ── */
+  .hof-reel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hof-reel::-webkit-scrollbar { height: 6px; }
+  .hof-reel::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 3px; }
+  .hof-find {
+    flex: 0 0 200px;
+    scroll-snap-align: start;
+    background: linear-gradient(180deg, var(--hof-navy) 0%, var(--hof-navy-deep) 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    color: var(--hof-ink);
+    position: relative;
+    cursor: pointer;
+    transition: transform .15s;
+    text-decoration: none;
+  }
+  .hof-find:hover { transform: translateY(-2px); }
+  .hof-find-photo {
+    width: 100%; height: 140px;
+    background: rgba(0,0,0,.3) center/cover no-repeat;
+    position: relative;
+  }
+  .hof-find-photo-initials {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font2);
+    font-size: 2.4rem; font-weight: 900;
+    color: rgba(255,255,255,.22);
+  }
+  .hof-find-gem {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--hof-gold);
+    color: var(--hof-navy-deep);
+    font-family: var(--font2);
+    font-size: 0.55rem; font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .hof-find-body {
+    padding: 12px 14px;
+  }
+  .hof-find-name {
+    font-family: var(--font2);
+    font-size: 0.85rem; font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+  .hof-find-meta {
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 700;
+    color: var(--hof-ink-mute);
+    margin-bottom: 8px;
+  }
+  .hof-find-stat {
+    font-family: var(--font2);
+    font-size: 0.72rem; font-weight: 800;
+    color: var(--hof-gold);
+  }
+  .hof-empty {
+    font-family: var(--font2);
+    font-size: 0.78rem; font-weight: 700;
+    color: var(--muted);
+    padding: 18px 20px;
+    background: var(--bg);
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  /* ── 3. DISTRICT MAP ── */
+  .hof-map-wrap {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 768px) {
+    .hof-map-wrap { grid-template-columns: 1fr; }
+  }
+  .hof-districts-visual {
+    background: linear-gradient(135deg, #f3f7fc 0%, #e8f0f9 100%);
+    border-radius: 14px;
+    padding: 18px;
+    min-height: 260px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hof-districts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+    gap: 6px;
+  }
+  .hof-district-pin {
+    background: var(--hof-navy);
+    color: #fff;
+    padding: 8px 4px;
+    border-radius: 8px;
+    text-align: center;
+    position: relative;
+  }
+  .hof-district-pin .d-name {
+    font-family: var(--font2);
+    font-size: 0.58rem; font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hof-district-pin .d-count {
+    font-family: var(--font2);
+    font-size: 1.1rem; font-weight: 900;
+    color: var(--hof-gold);
+    line-height: 1;
+  }
+  .hof-district-pin.heavy { background: var(--hof-navy-deep); }
+  .hof-district-pin.heavy::before {
+    content: ''; position: absolute; top: 4px; right: 4px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--hof-gold);
+  }
+
+  .hof-rankings h4 {
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    margin: 0 0 8px 0;
+  }
+  .hof-rank-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .hof-rank-row .d-name {
+    font-family: var(--font2);
+    font-size: 0.78rem; font-weight: 800;
+    color: var(--text);
+  }
+  .hof-rank-row .d-count {
+    font-family: var(--font2);
+    font-size: 0.9rem; font-weight: 900;
+    color: var(--hof-navy);
+  }
+
+  /* ── 4. VELOCITY CHART ── */
+  .hof-chart-wrap {
+    background: var(--bg);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .hof-chart {
+    width: 100%;
+    height: 180px;
+    display: block;
+  }
+  .hof-chart-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .hof-chart-stat .n {
+    font-family: var(--font2);
+    font-size: 1.2rem; font-weight: 900;
+    color: var(--hof-navy);
+    line-height: 1;
+  }
+  .hof-chart-stat .l {
+    font-family: var(--font2);
+    font-size: 0.6rem; font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-top: 3px;
+  }
+
+  /* ── 5. GOALS (active + completed) ── */
+  .hof-goals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 768px) {
+    .hof-goals { grid-template-columns: 1fr; }
+  }
+  .hof-goal {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+    border: 1px solid rgba(0,0,0,.04);
+  }
+  .hof-goal.complete {
+    background: linear-gradient(135deg, rgba(226,177,60,.12), rgba(226,177,60,.04));
+    border-color: var(--hof-gold-dim);
+  }
+  .hof-goal-label {
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+  .hof-goal-title {
+    font-family: var(--font2);
+    font-size: 0.9rem; font-weight: 800;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .hof-goal-bar {
+    height: 8px;
+    background: rgba(0,0,0,.06);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .hof-goal-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--hof-navy), var(--hof-gold));
+    border-radius: 4px;
+    transition: width .8s ease-out;
+  }
+  .hof-goal-progress {
+    font-family: var(--font2);
+    font-size: 0.72rem; font-weight: 800;
+    color: var(--hof-navy);
+  }
+  .hof-goal.complete .hof-goal-progress {
+    color: var(--hof-gold);
+  }
+  .hof-goal-check {
+    position: absolute; top: 14px; right: 14px;
+    width: 22px; height: 22px;
+    background: var(--hof-gold);
+    border-radius: 50%;
+    display: none;
+    align-items: center; justify-content: center;
+    color: var(--hof-navy-deep);
+    font-weight: 900;
+    font-size: 0.72rem;
+  }
+  .hof-goal.complete .hof-goal-check { display: flex; }
+
+  /* ── 6. PERSONAL RECORDS ── */
+  .hof-records {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 640px) {
+    .hof-records { grid-template-columns: 1fr; }
+  }
+  .hof-record {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: 10px;
+    border-left: 3px solid var(--hof-gold);
+  }
+  .hof-record-label {
+    font-family: var(--font2);
+    font-size: 0.68rem; font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .hof-record-value {
+    font-family: var(--font2);
+    font-size: 0.85rem; font-weight: 900;
+    color: var(--hof-navy);
+    text-align: right;
+  }
+  .hof-record-value .sub {
+    display: block;
+    font-size: 0.6rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* ── 7. WRAP-UP ── */
+  .hof-wrap {
+    background: linear-gradient(135deg, var(--hof-navy) 0%, var(--hof-navy-deep) 100%);
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: var(--hof-ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .hof-wrap::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--hof-gold), transparent);
+  }
+  .hof-wrap-label {
+    font-family: var(--font2);
+    font-size: 0.65rem; font-weight: 900;
+    color: var(--hof-gold);
+    text-transform: uppercase;
+    letter-spacing: .16em;
+    margin-bottom: 14px;
+  }
+  .hof-wrap-text {
+    font-family: var(--font2);
+    font-size: 1.05rem; font-weight: 700;
+    line-height: 1.55;
+  }
+  .hof-wrap-text strong {
+    color: var(--hof-gold);
+    font-weight: 900;
+  }
+
+  /* Loading state */
+  .hof-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: var(--font2);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-area">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        <div>
+          <div class="topbar-title">Hall of Fame</div>
+          <div class="topbar-sub">Your scouting season at a glance</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="hofLoading" class="hof-loading">Loading your Hall of Fame…</div>
+      <div id="hofContent" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="js/app.js"></script>
+<script>
+Auth.require();
+buildSidebar('hall');
+
+// ════════════════════════════════════════════════════════════════
+// HALL OF FAME - data aggregation + rendering
+// ════════════════════════════════════════════════════════════════
+
+// All computation runs client-side from two endpoints:
+//   PlayerAPI.getAll()  - every player with every field
+//   TryoutAPI.getAll()  - every tryout batch
+// This keeps V1 simple (no new backend endpoints).
+
+const currentUser = Auth.require();
+const scoutName = currentUser?.name || 'Scout';
+const scoutInitials = (scoutName.split(' ').map(s => s[0]).join('').slice(0,2) || 'JM').toUpperCase();
+const currentYear = new Date().getFullYear();
+
+// ── HELPERS ─────────────────────────────────────────────────────
+function num(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+function age(dob) {
+  if (!dob) return null;
+  const b = new Date(dob);
+  if (isNaN(b.getTime())) return null;
+  const ms = Date.now() - b.getTime();
+  return ms / (365.25 * 24 * 60 * 60 * 1000);
+}
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+}
+function initials(name) {
+  return (name||'').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
+}
+// Get best available velo for a player (prioritise latest dev reading over initial)
+function bestVelo(p) {
+  return num(p.dev_velo) ?? num(p.velo);
+}
+function bestHeight(p) {
+  return p.dev_height_ft || p.height_ft || p.init_height_ft;
+}
+function bestWeight(p) {
+  return num(p.dev_weight_lbs) ?? num(p.weight_lbs);
+}
+
+// Classify a player's rarity based on age-adjusted velocity.
+// Thresholds chosen to keep "elite" rare. Returns null if no velo data.
+function classifyRarity(p) {
+  const v = bestVelo(p);
+  const a = age(p.dob);
+  if (v === null) return null;
+
+  // Baseline velocity targets by age (boys, mph). Elite = +8 above baseline.
+  const baselines = [
+    { maxAge: 10, baseline: 45 },
+    { maxAge: 12, baseline: 52 },
+    { maxAge: 14, baseline: 60 },
+    { maxAge: 16, baseline: 68 },
+    { maxAge: 18, baseline: 74 },
+    { maxAge: 99, baseline: 78 },
+  ];
+  let base = 60;
+  if (a !== null) {
+    for (const t of baselines) { if (a <= t.maxAge) { base = t.baseline; break; } }
+  }
+  const delta = v - base;
+  if (delta >= 10) return 'ELITE';
+  if (delta >= 5)  return 'PROMISING';
+  return null;
+}
+
+// ── SECTION RENDERERS ───────────────────────────────────────────
+function renderHero(players, batches) {
+  const admitted = players.filter(p => p.outcome === 'admitted');
+  const districts = new Set(players.map(p => p.district).filter(Boolean));
+  const batchesThisYear = (batches||[]).filter(b => {
+    const y = b.start_date ? new Date(b.start_date).getFullYear() : currentYear;
+    return y === currentYear;
+  });
+
+  return `
+    <div class="hof-hero">
+      <div class="hof-hero-season">${currentYear} Season</div>
+      <div class="hof-hero-top">
+        <div class="hof-avatar">${scoutInitials}</div>
+        <div>
+          <div class="hof-hero-name">${scoutName}</div>
+          <div class="hof-hero-title">Head Scout · Uganda</div>
+        </div>
+      </div>
+      <div class="hof-hero-stats">
+        <div class="hof-stat">
+          <div class="hof-stat-val">${admitted.length}</div>
+          <div class="hof-stat-lbl">Players Admitted</div>
+        </div>
+        <div class="hof-stat">
+          <div class="hof-stat-val">${districts.size}</div>
+          <div class="hof-stat-lbl">Districts Scouted</div>
+        </div>
+        <div class="hof-stat">
+          <div class="hof-stat-val">${batchesThisYear.length}</div>
+          <div class="hof-stat-lbl">Tryout Batches</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDiscoveryReel(players) {
+  // Rank by rarity + velocity, keep top 8 with photos first
+  const scored = players
+    .map(p => {
+      const rarity = classifyRarity(p);
+      if (!rarity) return null;
+      const v = bestVelo(p);
+      return { p, rarity, v, hasPhoto: !!p.photo_url };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      // Elite first, then by velocity desc
+      if (a.rarity !== b.rarity) return a.rarity === 'ELITE' ? -1 : 1;
+      return b.v - a.v;
+    })
+    .slice(0, 8);
+
+  if (scored.length === 0) {
+    return `
+      <div class="hof-section">
+        <div class="hof-section-head">
+          <div class="hof-section-title">Rare Finds</div>
+          <div class="hof-section-sub">Your best discoveries</div>
+        </div>
+        <div class="hof-empty">
+          No rare finds yet. Add velocity readings to players and your best discoveries will show up here.
+        </div>
+      </div>`;
+  }
+
+  const cards = scored.map(({ p, rarity, v }) => {
+    const photo = p.photo_url
+      ? `<div class="hof-find-photo" style="background-image:url('${p.photo_url}')"></div>`
+      : `<div class="hof-find-photo"><div class="hof-find-photo-initials">${initials(p.name)}</div></div>`;
+    return `
+      <a class="hof-find" href="profile.html?id=${p.id}">
+        ${photo}
+        <div class="hof-find-gem">${rarity}</div>
+        <div class="hof-find-body">
+          <div class="hof-find-name">${p.name||'Unknown'}</div>
+          <div class="hof-find-meta">${p.district||'—'} · ${p.class||'—'}</div>
+          <div class="hof-find-stat">${v} mph velocity</div>
+        </div>
+      </a>
+    `;
+  }).join('');
+
+  return `
+    <div class="hof-section">
+      <div class="hof-section-head">
+        <div class="hof-section-title">Rare Finds</div>
+        <div class="hof-section-sub">${scored.length} discoveries · tap to view</div>
+      </div>
+      <div class="hof-reel">${cards}</div>
+    </div>
+  `;
+}
+
+function renderDistricts(players) {
+  const counts = {};
+  players.forEach(p => {
+    if (p.district) counts[p.district] = (counts[p.district]||0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  if (entries.length === 0) {
+    return `
+      <div class="hof-section">
+        <div class="hof-section-head">
+          <div class="hof-section-title">Your Territory</div>
+          <div class="hof-section-sub">Districts covered</div>
+        </div>
+        <div class="hof-empty">No district data yet. Add districts to your players to see your territory map.</div>
+      </div>`;
+  }
+
+  const max = entries[0][1];
+  const pins = entries.map(([d, n]) => {
+    const heavy = n >= Math.max(3, max * 0.5);
+    return `
+      <div class="hof-district-pin${heavy ? ' heavy' : ''}">
+        <div class="d-name">${d}</div>
+        <div class="d-count">${n}</div>
+      </div>
+    `;
+  }).join('');
+
+  const top5 = entries.slice(0, 5).map(([d, n]) => `
+    <div class="hof-rank-row">
+      <span class="d-name">${d}</span>
+      <span class="d-count">${n}</span>
+    </div>
+  `).join('');
+
+  return `
+    <div class="hof-section">
+      <div class="hof-section-head">
+        <div class="hof-section-title">Your Territory</div>
+        <div class="hof-section-sub">${entries.length} districts · ${players.length} players</div>
+      </div>
+      <div class="hof-map-wrap">
+        <div class="hof-districts-visual">
+          <div class="hof-districts-grid">${pins}</div>
+        </div>
+        <div class="hof-rankings">
+          <h4>Top districts</h4>
+          ${top5}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderVelocityChart(players) {
+  // Take admitted players with velo and dob, sort by first-seen order (by id or created_at if available)
+  const pts = players
+    .filter(p => p.outcome === 'admitted')
+    .map(p => {
+      const v = bestVelo(p);
+      if (v === null) return null;
+      const created = p.created_at ? new Date(p.created_at).getTime() : null;
+      return { v, created, name: p.name };
+    })
+    .filter(Boolean)
+    .sort((a,b) => (a.created||0) - (b.created||0));
+
+  if (pts.length < 3) {
+    return `
+      <div class="hof-section">
+        <div class="hof-section-head">
+          <div class="hof-section-title">Velocity Trajectory</div>
+          <div class="hof-section-sub">Your admits over time</div>
+        </div>
+        <div class="hof-empty">Need at least 3 admitted players with velocity readings to chart the trend.</div>
+      </div>`;
+  }
+
+  // SVG line chart
+  const w = 600, h = 180, padL = 30, padR = 12, padT = 12, padB = 22;
+  const chartW = w - padL - padR;
+  const chartH = h - padT - padB;
+  const vs = pts.map(p => p.v);
+  const vMax = Math.max(...vs);
+  const vMin = Math.min(...vs);
+  const range = Math.max(1, vMax - vMin);
+
+  const x = i => padL + (pts.length === 1 ? chartW/2 : (i/(pts.length-1)) * chartW);
+  const y = v => padT + (1 - (v - vMin) / range) * chartH;
+
+  let path = '';
+  pts.forEach((p, i) => {
+    path += (i === 0 ? 'M' : 'L') + x(i) + ',' + y(p.v) + ' ';
+  });
+  // Area fill path
+  const areaPath = path + 'L' + x(pts.length-1) + ',' + (padT + chartH) + ' L' + x(0) + ',' + (padT + chartH) + ' Z';
+
+  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="3" fill="#003A6B"/>`).join('');
+
+  const avg = (vs.reduce((s,v)=>s+v,0) / vs.length).toFixed(1);
+  const trend = vs.length > 1 ? (vs[vs.length-1] - vs[0]).toFixed(1) : '0';
+  const trendSign = parseFloat(trend) >= 0 ? '+' : '';
+
+  return `
+    <div class="hof-section">
+      <div class="hof-section-head">
+        <div class="hof-section-title">Velocity Trajectory</div>
+        <div class="hof-section-sub">${pts.length} admitted players</div>
+      </div>
+      <div class="hof-chart-wrap">
+        <svg class="hof-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="hofVeloFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#003A6B" stop-opacity=".3"/>
+              <stop offset="100%" stop-color="#003A6B" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="${padL}" y1="${padT+chartH}" x2="${w-padR}" y2="${padT+chartH}" stroke="#e0e6ee" stroke-width="1"/>
+          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="#e0e6ee" stroke-width="1"/>
+          <path d="${areaPath}" fill="url(#hofVeloFill)"/>
+          <path d="${path}" fill="none" stroke="#003A6B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          ${dots}
+          <text x="${padL-4}" y="${padT+6}" text-anchor="end" font-size="9" fill="#888" font-family="Nunito,sans-serif" font-weight="700">${vMax}</text>
+          <text x="${padL-4}" y="${padT+chartH}" text-anchor="end" font-size="9" fill="#888" font-family="Nunito,sans-serif" font-weight="700">${vMin}</text>
+        </svg>
+        <div class="hof-chart-stats">
+          <div class="hof-chart-stat">
+            <div class="n">${avg}</div>
+            <div class="l">Avg mph</div>
+          </div>
+          <div class="hof-chart-stat">
+            <div class="n">${vMax}</div>
+            <div class="l">Peak mph</div>
+          </div>
+          <div class="hof-chart-stat">
+            <div class="n">${trendSign}${trend}</div>
+            <div class="l">Season trend</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGoals(players, batches) {
+  const admitted = players.filter(p => p.outcome === 'admitted');
+  const districts = new Set(players.map(p => p.district).filter(Boolean));
+
+  // Goal 1: Reach all 4 regions (proxy: count distinct divisions)
+  const divisions = new Set(players.map(p => p.division).filter(Boolean));
+  const regionsTarget = 4;
+  const regionsDone = Math.min(regionsTarget, divisions.size);
+
+  // Goal 2: Admit 50 players this season
+  const admitTarget = 50;
+  const admitDone = Math.min(admitTarget, admitted.length);
+
+  // Goal 3: Complete 10 tryout batches
+  const batchTarget = 10;
+  const batchDone = Math.min(batchTarget, (batches||[]).length);
+
+  const goalCard = (label, title, done, target, unit) => {
+    const pct = Math.min(100, Math.round((done / target) * 100));
+    const complete = done >= target;
+    return `
+      <div class="hof-goal${complete ? ' complete' : ''}">
+        <div class="hof-goal-check">✓</div>
+        <div class="hof-goal-label">${label}</div>
+        <div class="hof-goal-title">${title}</div>
+        <div class="hof-goal-bar"><div class="hof-goal-bar-fill" style="width:${pct}%"></div></div>
+        <div class="hof-goal-progress">${done} / ${target} ${unit}</div>
+      </div>
+    `;
+  };
+
+  return `
+    <div class="hof-section">
+      <div class="hof-section-head">
+        <div class="hof-section-title">Season Goals</div>
+        <div class="hof-section-sub">Progress toward ${currentYear} targets</div>
+      </div>
+      <div class="hof-goals">
+        ${goalCard('Territory', 'Cover all regions of Uganda', regionsDone, regionsTarget, 'regions')}
+        ${goalCard('Admissions', 'Admit 50 players to the program', admitDone, admitTarget, 'players')}
+        ${goalCard('Tryouts', 'Run 10 tryout batches', batchDone, batchTarget, 'batches')}
+      </div>
+    </div>
+  `;
+}
+
+function renderRecords(players) {
+  let fastest = null, tallest = null, youngest = null, heaviest = null, mostRecent = null;
+
+  players.forEach(p => {
+    const v = bestVelo(p);
+    if (v !== null && (!fastest || v > fastest.v)) fastest = { v, p };
+
+    const h = bestHeight(p);
+    if (h) {
+      const m = String(h).match(/^(\d+)'(\d+(?:\.\d+)?)/);
+      if (m) {
+        const totalIn = parseInt(m[1])*12 + parseFloat(m[2]);
+        if (!tallest || totalIn > tallest.totalIn) tallest = { totalIn, h, p };
+      }
+    }
+
+    const a = age(p.dob);
+    if (a !== null && p.outcome === 'admitted') {
+      if (!youngest || a < youngest.a) youngest = { a, p };
+    }
+
+    const w = bestWeight(p);
+    if (w !== null && (!heaviest || w > heaviest.w)) heaviest = { w, p };
+
+    if (p.created_at) {
+      const t = new Date(p.created_at).getTime();
+      if (!mostRecent || t > mostRecent.t) mostRecent = { t, p };
+    }
+  });
+
+  const records = [];
+  if (fastest)    records.push({ label: 'Fastest Velocity', value: fastest.v + ' mph', sub: fastest.p.name });
+  if (tallest)    records.push({ label: 'Tallest Player',   value: tallest.h,         sub: tallest.p.name });
+  if (youngest)   records.push({ label: 'Youngest Admit',   value: youngest.a.toFixed(1) + ' yrs', sub: youngest.p.name });
+  if (heaviest)   records.push({ label: 'Heaviest Player',  value: heaviest.w + ' lbs', sub: heaviest.p.name });
+  if (mostRecent) records.push({ label: 'Most Recent Find', value: fmtDate(mostRecent.p.created_at), sub: mostRecent.p.name });
+  records.push({ label: 'Total Pipeline', value: players.length + ' players', sub: 'across all tiers' });
+
+  if (records.length === 0) {
+    return '';
+  }
+
+  const rows = records.map(r => `
+    <div class="hof-record">
+      <div class="hof-record-label">${r.label}</div>
+      <div class="hof-record-value">${r.value}<span class="sub">${r.sub||''}</span></div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="hof-section">
+      <div class="hof-section-head">
+        <div class="hof-section-title">Personal Records</div>
+        <div class="hof-section-sub">Your superlatives this season</div>
+      </div>
+      <div class="hof-records">${rows}</div>
+    </div>
+  `;
+}
+
+function renderWrapUp(players) {
+  const admitted = players.filter(p => p.outcome === 'admitted');
+  const districts = new Set(players.map(p => p.district).filter(Boolean));
+
+  // Top find = highest-velocity admitted player
+  let topFind = null;
+  admitted.forEach(p => {
+    const v = bestVelo(p);
+    if (v !== null && (!topFind || v > topFind.v)) topFind = { v, p };
+  });
+
+  let story;
+  if (topFind) {
+    story = `
+      You've scouted <strong>${players.length} players</strong> across
+      <strong>${districts.size} districts</strong> this season, admitting
+      <strong>${admitted.length}</strong> to the program.
+      Your top find so far? <strong>${topFind.p.name}</strong> out of
+      <strong>${topFind.p.district || 'Uganda'}</strong>, throwing
+      <strong>${topFind.v} mph</strong>.
+    `;
+  } else {
+    story = `
+      You've scouted <strong>${players.length} players</strong> across
+      <strong>${districts.size} districts</strong> this season. Keep the
+      measurements coming and your top finds will surface here.
+    `;
+  }
+
+  return `
+    <div class="hof-section">
+      <div class="hof-wrap">
+        <div class="hof-wrap-label">The Season So Far</div>
+        <div class="hof-wrap-text">${story}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── MAIN ────────────────────────────────────────────────────────
+async function loadHallOfFame() {
+  try {
+    const [playersRes, batchesRes] = await Promise.all([
+      PlayerAPI.getAll(),
+      TryoutAPI.getAll().catch(() => [])
+    ]);
+    const players = playersRes.players || playersRes || [];
+    const batches = batchesRes.batches || batchesRes || [];
+
+    const html = [
+      renderHero(players, batches),
+      renderDiscoveryReel(players),
+      renderDistricts(players),
+      renderVelocityChart(players),
+      renderGoals(players, batches),
+      renderRecords(players),
+      renderWrapUp(players)
+    ].join('');
+
+    document.getElementById('hofLoading').style.display = 'none';
+    const content = document.getElementById('hofContent');
+    content.innerHTML = html;
+    content.style.display = 'block';
+  } catch (e) {
+    document.getElementById('hofLoading').innerHTML =
+      'Could not load Hall of Fame. ' + (e.message || 'Please try again.');
+  }
+}
+
+loadHallOfFame();
+</script>
+</body>
+</html>
