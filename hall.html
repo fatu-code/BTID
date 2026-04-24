@@ -10,474 +10,434 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Varela+Round&display=swap" rel="stylesheet">
 <style>
   /* ══════════════════════════════════════════════════════════════
-     HALL OF FAME - Joshua's scouting command center
-     One page, seven sections, one consistent Dodgers-blue + gold theme.
+     HALL OF FAME — uses global design system variables only.
+     Local rules cover entry animations + reel/chart/tile specifics.
      ══════════════════════════════════════════════════════════════ */
 
-  :root {
-    --hof-navy:       #003A6B;
-    --hof-navy-deep:  #001f3c;
-    --hof-gold:       #E2B13C;
-    --hof-gold-soft:  rgba(226,177,60,.18);
-    --hof-gold-dim:   rgba(226,177,60,.55);
-    --hof-ink:        #f7f9fc;
-    --hof-ink-dim:    rgba(247,249,252,.6);
-    --hof-ink-mute:   rgba(247,249,252,.38);
+  @keyframes hofFadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
+  @keyframes hofSlideInRight {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes hofDrawLine { to { stroke-dashoffset: 0; } }
 
-  /* Shared section wrapper */
-  .hof-section {
-    margin-bottom: 28px;
+  .hof-sec {
+    opacity: 0;
+    animation: hofFadeUp 0.6s cubic-bezier(0.4,0,0.2,1) forwards;
   }
-  .hof-section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 12px;
-  }
-  .hof-section-title {
-    font-family: var(--font2);
-    font-size: 0.72rem;
-    font-weight: 900;
-    color: var(--hof-navy);
-    text-transform: uppercase;
-    letter-spacing: .16em;
-  }
-  .hof-section-sub {
-    font-family: var(--font2);
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-  }
+  .hof-sec.d0 { animation-delay: 0.00s; }
+  .hof-sec.d1 { animation-delay: 0.08s; }
+  .hof-sec.d2 { animation-delay: 0.16s; }
+  .hof-sec.d3 { animation-delay: 0.24s; }
+  .hof-sec.d4 { animation-delay: 0.32s; }
+  .hof-sec.d5 { animation-delay: 0.40s; }
+  .hof-sec.d6 { animation-delay: 0.48s; }
 
-  /* ── 1. HERO ── */
-  .hof-hero {
-    position: relative;
-    background:
-      radial-gradient(1200px 400px at 10% 0%, rgba(226,177,60,.15), transparent 60%),
-      radial-gradient(800px 500px at 100% 100%, rgba(0,58,107,.6), transparent 60%),
-      linear-gradient(135deg, var(--hof-navy-deep) 0%, var(--hof-navy) 100%);
-    border-radius: 18px;
-    padding: 28px 30px;
-    color: var(--hof-ink);
-    overflow: hidden;
-    margin-bottom: 28px;
+  .metrics-grid.hof-cascade .metric-card {
+    opacity: 0;
+    animation: hofFadeUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
   }
-  .hof-hero::after {
-    content: '';
-    position: absolute;
-    right: -40px; top: -40px;
-    width: 220px; height: 220px;
-    background: radial-gradient(circle, var(--hof-gold-soft) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hof-hero-top {
-    display: flex; align-items: center; gap: 16px;
-    margin-bottom: 24px;
-    position: relative; z-index: 1;
-  }
-  .hof-avatar {
-    width: 64px; height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--hof-gold), #c99a22);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font2);
-    font-size: 1.4rem; font-weight: 900;
-    color: var(--hof-navy-deep);
-    box-shadow: 0 4px 16px rgba(226,177,60,.3);
-    flex-shrink: 0;
-  }
-  .hof-hero-name {
-    font-family: var(--font2);
-    font-size: 1.4rem; font-weight: 900;
-    line-height: 1.1;
-    margin-bottom: 3px;
-  }
-  .hof-hero-title {
-    font-family: var(--font2);
-    font-size: 0.7rem; font-weight: 700;
-    color: var(--hof-gold);
-    text-transform: uppercase;
-    letter-spacing: .15em;
-  }
-  .hof-hero-season {
-    position: absolute; top: 26px; right: 30px;
-    font-family: var(--font2);
-    font-size: 0.62rem; font-weight: 800;
-    color: var(--hof-ink-mute);
-    text-transform: uppercase;
-    letter-spacing: .18em;
-    z-index: 1;
-  }
-  .hof-hero-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    position: relative; z-index: 1;
-  }
-  .hof-stat {
-    padding: 14px 0;
-  }
-  .hof-stat-val {
-    font-family: var(--font2);
-    font-size: 2.4rem; font-weight: 900;
-    line-height: 1;
-    color: var(--hof-gold);
-    letter-spacing: -.02em;
-  }
-  .hof-stat-lbl {
-    font-family: var(--font2);
-    font-size: 0.62rem; font-weight: 800;
-    color: var(--hof-ink-dim);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    margin-top: 4px;
-  }
-  @media (max-width: 640px) {
-    .hof-hero { padding: 22px 20px; }
-    .hof-hero-season { position: static; display: block; margin-bottom: 8px; }
-    .hof-hero-stats { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .hof-stat-val { font-size: 1.7rem; }
-    .hof-hero-name { font-size: 1.15rem; }
-  }
+  .metrics-grid.hof-cascade .metric-card:nth-child(1) { animation-delay: 0.10s; }
+  .metrics-grid.hof-cascade .metric-card:nth-child(2) { animation-delay: 0.20s; }
+  .metrics-grid.hof-cascade .metric-card:nth-child(3) { animation-delay: 0.30s; }
 
-  /* ── 2. DISCOVERY REEL (rare finds) ── */
+  /* Rare Finds reel */
   .hof-reel {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding: 2px 2px 8px 2px;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
+    margin: 0 -2px;
   }
   .hof-reel::-webkit-scrollbar { height: 6px; }
-  .hof-reel::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 3px; }
+  .hof-reel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
+  .hof-reel::-webkit-scrollbar-track { background: transparent; }
+
   .hof-find {
-    flex: 0 0 200px;
+    flex: 0 0 180px;
     scroll-snap-align: start;
-    background: linear-gradient(180deg, var(--hof-navy) 0%, var(--hof-navy-deep) 100%);
-    border-radius: 12px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
     overflow: hidden;
-    color: var(--hof-ink);
-    position: relative;
     cursor: pointer;
-    transition: transform .15s;
     text-decoration: none;
-  }
-  .hof-find:hover { transform: translateY(-2px); }
-  .hof-find-photo {
-    width: 100%; height: 140px;
-    background: rgba(0,0,0,.3) center/cover no-repeat;
+    color: inherit;
+    transition: all 0.15s;
+    opacity: 0;
+    animation: hofSlideInRight 0.45s cubic-bezier(0.4,0,0.2,1) forwards;
     position: relative;
   }
-  .hof-find-photo-initials {
-    width: 100%; height: 100%;
+  .hof-find:nth-child(1) { animation-delay: 0.20s; }
+  .hof-find:nth-child(2) { animation-delay: 0.26s; }
+  .hof-find:nth-child(3) { animation-delay: 0.32s; }
+  .hof-find:nth-child(4) { animation-delay: 0.38s; }
+  .hof-find:nth-child(5) { animation-delay: 0.44s; }
+  .hof-find:nth-child(6) { animation-delay: 0.50s; }
+  .hof-find:nth-child(7) { animation-delay: 0.56s; }
+  .hof-find:nth-child(8) { animation-delay: 0.62s; }
+  .hof-find:hover {
+    border-color: var(--green-mid);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px var(--green-shadow);
+  }
+  .hof-find-photo {
+    width: 100%; height: 130px;
+    background: var(--green-pale) center/cover no-repeat;
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--font2);
-    font-size: 2.4rem; font-weight: 900;
-    color: rgba(255,255,255,.22);
+    position: relative;
+    border-bottom: 1.5px solid var(--border);
   }
-  .hof-find-gem {
-    position: absolute; top: 8px; right: 8px;
-    background: var(--hof-gold);
-    color: var(--hof-navy-deep);
-    font-family: var(--font2);
-    font-size: 0.55rem; font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    padding: 4px 8px;
-    border-radius: 4px;
+  .hof-find-ini {
+    font-family: var(--font1);
+    font-size: 2rem;
+    color: var(--green-dark);
+    opacity: 0.35;
   }
-  .hof-find-body {
-    padding: 12px 14px;
-  }
+  .hof-find-pill { position: absolute; top: 8px; right: 8px; }
+  .hof-find-body { padding: 10px 12px 12px; }
   .hof-find-name {
     font-family: var(--font2);
-    font-size: 0.85rem; font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 3px;
+    font-size: 0.82rem; font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .hof-find-meta {
     font-family: var(--font2);
     font-size: 0.62rem; font-weight: 700;
-    color: var(--hof-ink-mute);
+    color: var(--muted);
     margin-bottom: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .hof-find-stat {
-    font-family: var(--font2);
-    font-size: 0.72rem; font-weight: 800;
-    color: var(--hof-gold);
+    font-family: var(--font1);
+    font-size: 1rem;
+    color: var(--green-dark);
   }
-  .hof-empty {
+  .hof-find-stat-sub {
     font-family: var(--font2);
-    font-size: 0.78rem; font-weight: 700;
+    font-size: 0.58rem; font-weight: 700;
     color: var(--muted);
-    padding: 18px 20px;
-    background: var(--bg);
-    border-radius: 10px;
-    text-align: center;
-  }
-
-  /* ── 3. DISTRICT MAP ── */
-  .hof-map-wrap {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 18px;
-  }
-  @media (max-width: 768px) {
-    .hof-map-wrap { grid-template-columns: 1fr; }
-  }
-  .hof-districts-visual {
-    background: linear-gradient(135deg, #f3f7fc 0%, #e8f0f9 100%);
-    border-radius: 14px;
-    padding: 18px;
-    min-height: 260px;
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  .hof-districts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
-    gap: 6px;
-  }
-  .hof-district-pin {
-    background: var(--hof-navy);
-    color: #fff;
-    padding: 8px 4px;
-    border-radius: 8px;
-    text-align: center;
-    position: relative;
-  }
-  .hof-district-pin .d-name {
-    font-family: var(--font2);
-    font-size: 0.58rem; font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .04em;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .hof-district-pin .d-count {
-    font-family: var(--font2);
-    font-size: 1.1rem; font-weight: 900;
-    color: var(--hof-gold);
-    line-height: 1;
-  }
-  .hof-district-pin.heavy { background: var(--hof-navy-deep); }
-  .hof-district-pin.heavy::before {
-    content: ''; position: absolute; top: 4px; right: 4px;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--hof-gold);
+    letter-spacing: 0.1em;
   }
 
-  .hof-rankings h4 {
+  /* Rarity filter bar */
+  .hof-filter-bar {
+    display: inline-flex;
+    gap: 4px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    padding: 3px;
+  }
+  .hof-filter-btn {
     font-family: var(--font2);
     font-size: 0.62rem; font-weight: 800;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: .14em;
-    margin: 0 0 8px 0;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 100px;
+    border: none; background: none;
+    cursor: pointer;
+    transition: all 0.15s;
   }
-  .hof-rank-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 12px;
-    background: var(--bg);
-    border-radius: 8px;
-    margin-bottom: 6px;
-  }
-  .hof-rank-row .d-name {
-    font-family: var(--font2);
-    font-size: 0.78rem; font-weight: 800;
-    color: var(--text);
-  }
-  .hof-rank-row .d-count {
-    font-family: var(--font2);
-    font-size: 0.9rem; font-weight: 900;
-    color: var(--hof-navy);
+  .hof-filter-btn.active {
+    background: var(--white);
+    color: var(--green-dark);
+    box-shadow: 0 1px 3px rgba(0,37,77,0.08);
   }
 
-  /* ── 4. VELOCITY CHART ── */
-  .hof-chart-wrap {
+  /* District tiles */
+  .hof-districts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 6px;
+  }
+  .hof-district-tile {
+    background: var(--green-pale);
+    border: 1.5px solid var(--green-mid);
+    border-radius: var(--radius-sm);
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .hof-district-tile:hover,
+  .hof-district-tile.highlight {
+    background: var(--white);
+    border-color: var(--green);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px var(--green-shadow);
+  }
+  .hof-district-tile .d-count {
+    font-family: var(--font1);
+    font-size: 1.2rem;
+    color: var(--green-dark);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .hof-district-tile .d-name {
+    font-family: var(--font2);
+    font-size: 0.58rem; font-weight: 800;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hof-district-tile.heavy::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .hof-rank-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
     background: var(--bg);
-    border-radius: 14px;
-    padding: 18px 20px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 6px;
+    transition: all 0.15s;
+  }
+  .hof-rank-row.highlight {
+    background: var(--green-pale);
+    transform: translateX(3px);
+  }
+  .hof-rank-row .r-name {
+    font-family: var(--font2);
+    font-size: 0.75rem; font-weight: 800;
+    color: var(--text);
+  }
+  .hof-rank-row .r-count {
+    font-family: var(--font1);
+    font-size: 0.9rem;
+    color: var(--green-dark);
+  }
+
+  /* Velocity chart */
+  .hof-chart-wrap {
+    position: relative;
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    border: 1.5px solid var(--border);
   }
   .hof-chart {
     width: 100%;
     height: 180px;
     display: block;
+    overflow: visible;
+  }
+  .hof-chart-line {
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1400;
+    stroke-dashoffset: 1400;
+    animation: hofDrawLine 1.4s cubic-bezier(0.4,0,0.2,1) 0.5s forwards;
+  }
+  .hof-chart-area {
+    fill: url(#hofVeloArea);
+    opacity: 0;
+    animation: hofFadeUp 0.8s ease 1.2s forwards;
+  }
+  .hof-chart-dot {
+    fill: var(--green-dark);
+    opacity: 0;
+    animation: hofFadeUp 0.3s ease forwards;
+    cursor: pointer;
+    transition: r 0.15s;
+  }
+  .hof-chart-dot:hover { r: 5.5; }
+  .hof-tooltip {
+    position: fixed;
+    background: var(--dark);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font2);
+    font-size: 0.68rem; font-weight: 700;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    transform: translate(-50%, -100%);
+    z-index: 20;
+    white-space: nowrap;
+  }
+  .hof-tooltip.show { opacity: 1; }
+  .hof-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--dark);
   }
   .hof-chart-stats {
     display: flex;
     gap: 24px;
-    margin-top: 10px;
+    margin-top: 12px;
     flex-wrap: wrap;
   }
   .hof-chart-stat .n {
-    font-family: var(--font2);
-    font-size: 1.2rem; font-weight: 900;
-    color: var(--hof-navy);
+    font-family: var(--font1);
+    font-size: 1.3rem;
+    color: var(--green-dark);
     line-height: 1;
   }
   .hof-chart-stat .l {
     font-family: var(--font2);
-    font-size: 0.6rem; font-weight: 800;
+    font-size: 0.58rem; font-weight: 800;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: 0.1em;
     margin-top: 3px;
   }
 
-  /* ── 5. GOALS (active + completed) ── */
-  .hof-goals {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-  }
-  @media (max-width: 768px) {
-    .hof-goals { grid-template-columns: 1fr; }
-  }
+  /* Season Goals */
   .hof-goal {
-    background: var(--bg);
-    border-radius: 12px;
-    padding: 16px 18px;
-    position: relative;
-    border: 1px solid rgba(0,0,0,.04);
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: all 0.15s;
   }
-  .hof-goal.complete {
-    background: linear-gradient(135deg, rgba(226,177,60,.12), rgba(226,177,60,.04));
-    border-color: var(--hof-gold-dim);
+  .hof-goal:hover {
+    border-color: var(--green-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px var(--green-shadow);
   }
-  .hof-goal-label {
-    font-family: var(--font2);
-    font-size: 0.62rem; font-weight: 800;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    margin-bottom: 6px;
+  .hof-goal.done {
+    background: var(--green-pale);
+    border-color: var(--green-mid);
+  }
+  .hof-goal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
   }
   .hof-goal-title {
     font-family: var(--font2);
-    font-size: 0.9rem; font-weight: 800;
+    font-size: 0.78rem; font-weight: 800;
     color: var(--text);
     line-height: 1.3;
-    margin-bottom: 12px;
   }
-  .hof-goal-bar {
-    height: 8px;
-    background: rgba(0,0,0,.06);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
-  }
-  .hof-goal-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--hof-navy), var(--hof-gold));
-    border-radius: 4px;
-    transition: width .8s ease-out;
+  .hof-goal-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
   }
   .hof-goal-progress {
-    font-family: var(--font2);
-    font-size: 0.72rem; font-weight: 800;
-    color: var(--hof-navy);
+    font-family: var(--font1);
+    font-size: 0.8rem;
+    color: var(--green-dark);
+    flex-shrink: 0;
   }
-  .hof-goal.complete .hof-goal-progress {
-    color: var(--hof-gold);
-  }
-  .hof-goal-check {
-    position: absolute; top: 14px; right: 14px;
-    width: 22px; height: 22px;
-    background: var(--hof-gold);
-    border-radius: 50%;
-    display: none;
-    align-items: center; justify-content: center;
-    color: var(--hof-navy-deep);
-    font-weight: 900;
-    font-size: 0.72rem;
-  }
-  .hof-goal.complete .hof-goal-check { display: flex; }
 
-  /* ── 6. PERSONAL RECORDS ── */
-  .hof-records {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  @media (max-width: 640px) {
-    .hof-records { grid-template-columns: 1fr; }
-  }
+  /* Personal Records */
   .hof-record {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background: var(--bg);
-    border-radius: 10px;
-    border-left: 3px solid var(--hof-gold);
+    padding: 12px 14px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--green);
+    cursor: pointer;
+    transition: all 0.15s;
+    gap: 10px;
+  }
+  .hof-record:hover {
+    border-color: var(--green-mid);
+    border-left-color: var(--green-dark);
+    transform: translateX(2px);
+    box-shadow: 0 3px 10px var(--green-shadow);
   }
   .hof-record-label {
     font-family: var(--font2);
-    font-size: 0.68rem; font-weight: 800;
+    font-size: 0.62rem; font-weight: 800;
     color: var(--muted);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: 0.08em;
   }
-  .hof-record-value {
-    font-family: var(--font2);
-    font-size: 0.85rem; font-weight: 900;
-    color: var(--hof-navy);
+  .hof-record-val {
     text-align: right;
+    min-width: 0;
   }
-  .hof-record-value .sub {
+  .hof-record-val .v {
+    font-family: var(--font1);
+    font-size: 0.95rem;
+    color: var(--green-dark);
+    line-height: 1.1;
+  }
+  .hof-record-val .sub {
     display: block;
-    font-size: 0.6rem;
+    font-family: var(--font2);
+    font-size: 0.58rem; font-weight: 700;
     color: var(--muted);
-    font-weight: 700;
     margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* ── 7. WRAP-UP ── */
-  .hof-wrap {
-    background: linear-gradient(135deg, var(--hof-navy) 0%, var(--hof-navy-deep) 100%);
-    border-radius: 16px;
-    padding: 24px 28px;
-    color: var(--hof-ink);
-    position: relative;
-    overflow: hidden;
-  }
-  .hof-wrap::before {
-    content: ''; position: absolute;
-    top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--hof-gold), transparent);
-  }
+  /* Wrap-up */
+  .hof-wrap { padding: 22px 24px; }
   .hof-wrap-label {
     font-family: var(--font2);
-    font-size: 0.65rem; font-weight: 900;
-    color: var(--hof-gold);
+    font-size: 0.62rem; font-weight: 900;
+    color: var(--green);
     text-transform: uppercase;
-    letter-spacing: .16em;
-    margin-bottom: 14px;
+    letter-spacing: 0.14em;
+    margin-bottom: 10px;
   }
   .hof-wrap-text {
     font-family: var(--font2);
-    font-size: 1.05rem; font-weight: 700;
-    line-height: 1.55;
+    font-size: 0.95rem; font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
   }
-  .hof-wrap-text strong {
-    color: var(--hof-gold);
-    font-weight: 900;
+  .hof-wrap-text strong { color: var(--green-dark); font-weight: 900; }
+  .hof-wrap-text em     { color: var(--accent); font-style: normal; font-weight: 900; }
+
+  .hof-sub {
+    font-family: var(--font2);
+    font-size: 0.62rem; font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  /* Loading state */
   .hof-loading {
-    text-align: center;
     padding: 60px 20px;
-    color: var(--muted);
+    text-align: center;
     font-family: var(--font2);
     font-weight: 700;
+    color: var(--muted);
+  }
+
+  @media (max-width: 768px) {
+    .hof-find { flex-basis: 160px; }
+    .hof-wrap { padding: 18px 16px; }
+    .hof-wrap-text { font-size: 0.88rem; }
+    .hof-chart-stats { gap: 16px; }
   }
 </style>
 </head>
@@ -488,10 +448,12 @@
 
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
-        <button class="mob-sidebar-btn" onclick="toggleSidebar()"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        <button class="mob-sidebar-btn" onclick="toggleSidebar()">
+          <svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+        </button>
         <div>
           <div class="topbar-title">Hall of Fame</div>
-          <div class="topbar-sub">Your scouting season at a glance</div>
+          <div class="topbar-sub" id="hofTopSub">Your scouting season at a glance</div>
         </div>
       </div>
     </div>
@@ -499,6 +461,7 @@
     <div class="content">
       <div id="hofLoading" class="hof-loading">Loading your Hall of Fame…</div>
       <div id="hofContent" style="display:none"></div>
+      <div id="hofTooltip" class="hof-tooltip"></div>
     </div>
 
   </div>
@@ -510,21 +473,24 @@
 Auth.require();
 buildSidebar('hall');
 
-// ════════════════════════════════════════════════════════════════
-// HALL OF FAME - data aggregation + rendering
-// ════════════════════════════════════════════════════════════════
-
-// All computation runs client-side from two endpoints:
-//   PlayerAPI.getAll()  - every player with every field
-//   TryoutAPI.getAll()  - every tryout batch
-// This keeps V1 simple (no new backend endpoints).
-
 const currentUser = Auth.require();
 const scoutName = currentUser?.name || 'Scout';
-const scoutInitials = (scoutName.split(' ').map(s => s[0]).join('').slice(0,2) || 'JM').toUpperCase();
+const firstName = (scoutName.split(' ')[0] || 'Scout');
 const currentYear = new Date().getFullYear();
 
 // ── HELPERS ─────────────────────────────────────────────────────
+function toArray(res) {
+  if (Array.isArray(res)) return res;
+  if (!res || typeof res !== 'object') return [];
+  if (Array.isArray(res.players)) return res.players;
+  if (Array.isArray(res.batches)) return res.batches;
+  if (Array.isArray(res.data))    return res.data;
+  if (Array.isArray(res.rows))    return res.rows;
+  for (const k of Object.keys(res)) {
+    if (Array.isArray(res[k])) return res[k];
+  }
+  return [];
+}
 function num(v) {
   if (v === null || v === undefined || v === '') return null;
   const n = parseFloat(v);
@@ -534,8 +500,7 @@ function age(dob) {
   if (!dob) return null;
   const b = new Date(dob);
   if (isNaN(b.getTime())) return null;
-  const ms = Date.now() - b.getTime();
-  return ms / (365.25 * 24 * 60 * 60 * 1000);
+  return (Date.now() - b.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
 }
 function fmtDate(d) {
   if (!d) return '';
@@ -546,25 +511,17 @@ function fmtDate(d) {
 function initials(name) {
   return (name||'').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase();
 }
-// Get best available velo for a player (prioritise latest dev reading over initial)
-function bestVelo(p) {
-  return num(p.dev_velo) ?? num(p.velo);
-}
-function bestHeight(p) {
-  return p.dev_height_ft || p.height_ft || p.init_height_ft;
-}
-function bestWeight(p) {
-  return num(p.dev_weight_lbs) ?? num(p.weight_lbs);
+function bestVelo(p)   { return num(p.dev_velo)       ?? num(p.velo); }
+function bestWeight(p) { return num(p.dev_weight_lbs) ?? num(p.weight_lbs); }
+function bestHeight(p) { return p.dev_height_ft || p.height_ft || p.init_height_ft; }
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// Classify a player's rarity based on age-adjusted velocity.
-// Thresholds chosen to keep "elite" rare. Returns null if no velo data.
 function classifyRarity(p) {
   const v = bestVelo(p);
   const a = age(p.dob);
   if (v === null) return null;
-
-  // Baseline velocity targets by age (boys, mph). Elite = +8 above baseline.
   const baselines = [
     { maxAge: 10, baseline: 45 },
     { maxAge: 12, baseline: 52 },
@@ -574,46 +531,72 @@ function classifyRarity(p) {
     { maxAge: 99, baseline: 78 },
   ];
   let base = 60;
-  if (a !== null) {
-    for (const t of baselines) { if (a <= t.maxAge) { base = t.baseline; break; } }
-  }
+  if (a !== null) { for (const t of baselines) { if (a <= t.maxAge) { base = t.baseline; break; } } }
   const delta = v - base;
   if (delta >= 10) return 'ELITE';
   if (delta >= 5)  return 'PROMISING';
   return null;
 }
 
-// ── SECTION RENDERERS ───────────────────────────────────────────
+function countUp(el, target, duration) {
+  duration = duration || 900;
+  const start = performance.now();
+  function tick(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(target * eased);
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}
+
+// ── RENDERERS ───────────────────────────────────────────────────
+
 function renderHero(players, batches) {
   const admitted = players.filter(p => p.outcome === 'admitted');
   const districts = new Set(players.map(p => p.district).filter(Boolean));
-  const batchesThisYear = (batches||[]).filter(b => {
-    const y = b.start_date ? new Date(b.start_date).getFullYear() : currentYear;
+  const batchesThisYear = batches.filter(b => {
+    const y = b.start_date ? new Date(b.start_date).getFullYear() :
+              b.created_at ? new Date(b.created_at).getFullYear() : currentYear;
     return y === currentYear;
   });
 
   return `
-    <div class="hof-hero">
-      <div class="hof-hero-season">${currentYear} Season</div>
-      <div class="hof-hero-top">
-        <div class="hof-avatar">${scoutInitials}</div>
-        <div>
-          <div class="hof-hero-name">${scoutName}</div>
-          <div class="hof-hero-title">Head Scout · Uganda</div>
+    <div class="hof-sec d0" style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:12px;flex-wrap:wrap">
+        <div style="font-family:var(--font1);font-size:1.15rem;color:var(--text);letter-spacing:-0.01em">
+          ${escapeHtml(firstName)}'s Hall of Fame
         </div>
+        <span class="pill pill-muted">${currentYear} Season</span>
       </div>
-      <div class="hof-hero-stats">
-        <div class="hof-stat">
-          <div class="hof-stat-val">${admitted.length}</div>
-          <div class="hof-stat-lbl">Players Admitted</div>
+      <div class="metrics-grid hof-cascade">
+        <div class="metric-card" onclick="window.location.href='players.html?outcome=admitted'">
+          <div class="mc-top">
+            <div class="mc-icon">
+              <svg viewBox="0 0 16 16"><path d="M2 8l4 4 8-8"/></svg>
+            </div>
+          </div>
+          <div class="mc-value" data-count="${admitted.length}">0</div>
+          <div class="mc-label">Players Admitted</div>
         </div>
-        <div class="hof-stat">
-          <div class="hof-stat-val">${districts.size}</div>
-          <div class="hof-stat-lbl">Districts Scouted</div>
+        <div class="metric-card" onclick="window.location.href='players.html'">
+          <div class="mc-top">
+            <div class="mc-icon amber">
+              <svg viewBox="0 0 16 16"><path d="M8 1v14M1 8h14"/></svg>
+            </div>
+          </div>
+          <div class="mc-value" data-count="${districts.size}">0</div>
+          <div class="mc-label">Districts Scouted</div>
         </div>
-        <div class="hof-stat">
-          <div class="hof-stat-val">${batchesThisYear.length}</div>
-          <div class="hof-stat-lbl">Tryout Batches</div>
+        <div class="metric-card" onclick="window.location.href='tryouts.html'">
+          <div class="mc-top">
+            <div class="mc-icon blue">
+              <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+            </div>
+          </div>
+          <div class="mc-value" data-count="${batchesThisYear.length}">0</div>
+          <div class="mc-label">Tryout Batches</div>
         </div>
       </div>
     </div>
@@ -621,17 +604,14 @@ function renderHero(players, batches) {
 }
 
 function renderDiscoveryReel(players) {
-  // Rank by rarity + velocity, keep top 8 with photos first
   const scored = players
     .map(p => {
       const rarity = classifyRarity(p);
       if (!rarity) return null;
-      const v = bestVelo(p);
-      return { p, rarity, v, hasPhoto: !!p.photo_url };
+      return { p, rarity, v: bestVelo(p) };
     })
     .filter(Boolean)
     .sort((a, b) => {
-      // Elite first, then by velocity desc
       if (a.rarity !== b.rarity) return a.rarity === 'ELITE' ? -1 : 1;
       return b.v - a.v;
     })
@@ -639,92 +619,93 @@ function renderDiscoveryReel(players) {
 
   if (scored.length === 0) {
     return `
-      <div class="hof-section">
-        <div class="hof-section-head">
-          <div class="hof-section-title">Rare Finds</div>
-          <div class="hof-section-sub">Your best discoveries</div>
-        </div>
-        <div class="hof-empty">
-          No rare finds yet. Add velocity readings to players and your best discoveries will show up here.
+      <div class="hof-sec d1 card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">Rare Finds</span></div>
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 16 16"><path d="M8 2l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z"/></svg>
+          </div>
+          <div class="empty-title">No rare finds yet</div>
+          <div class="empty-sub">Add velocity readings to players and your best discoveries will surface here.</div>
         </div>
       </div>`;
   }
 
+  const eliteCount = scored.filter(s => s.rarity === 'ELITE').length;
+  const promiseCount = scored.filter(s => s.rarity === 'PROMISING').length;
+
   const cards = scored.map(({ p, rarity, v }) => {
     const photo = p.photo_url
-      ? `<div class="hof-find-photo" style="background-image:url('${p.photo_url}')"></div>`
-      : `<div class="hof-find-photo"><div class="hof-find-photo-initials">${initials(p.name)}</div></div>`;
+      ? `<div class="hof-find-photo" style="background-image:url('${escapeHtml(p.photo_url)}')"></div>`
+      : `<div class="hof-find-photo"><div class="hof-find-ini">${initials(p.name)}</div></div>`;
+    const pillClass = rarity === 'ELITE' ? 'pill-green' : 'pill-amber';
     return `
-      <a class="hof-find" href="profile.html?id=${p.id}">
+      <a class="hof-find" data-rarity="${rarity}" href="profile.html?id=${encodeURIComponent(p.id)}">
         ${photo}
-        <div class="hof-find-gem">${rarity}</div>
+        <span class="pill ${pillClass} hof-find-pill">${rarity}</span>
         <div class="hof-find-body">
-          <div class="hof-find-name">${p.name||'Unknown'}</div>
-          <div class="hof-find-meta">${p.district||'—'} · ${p.class||'—'}</div>
-          <div class="hof-find-stat">${v} mph velocity</div>
+          <div class="hof-find-name">${escapeHtml(p.name||'Unknown')}</div>
+          <div class="hof-find-meta">${escapeHtml(p.district||'—')} · ${escapeHtml(p.class||'—')}</div>
+          <div class="hof-find-stat">${v} <span class="hof-find-stat-sub">mph</span></div>
         </div>
       </a>
     `;
   }).join('');
 
   return `
-    <div class="hof-section">
-      <div class="hof-section-head">
-        <div class="hof-section-title">Rare Finds</div>
-        <div class="hof-section-sub">${scored.length} discoveries · tap to view</div>
+    <div class="hof-sec d1 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Rare Finds</span>
+        <div class="hof-filter-bar" id="hofFilterBar">
+          <button class="hof-filter-btn active" data-filter="ALL">All · ${scored.length}</button>
+          ${eliteCount ? `<button class="hof-filter-btn" data-filter="ELITE">Elite · ${eliteCount}</button>` : ''}
+          ${promiseCount ? `<button class="hof-filter-btn" data-filter="PROMISING">Promising · ${promiseCount}</button>` : ''}
+        </div>
       </div>
-      <div class="hof-reel">${cards}</div>
+      <div class="hof-reel" id="hofReel">${cards}</div>
     </div>
   `;
 }
 
 function renderDistricts(players) {
   const counts = {};
-  players.forEach(p => {
-    if (p.district) counts[p.district] = (counts[p.district]||0) + 1;
-  });
+  players.forEach(p => { if (p.district) counts[p.district] = (counts[p.district]||0) + 1; });
   const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]);
   if (entries.length === 0) {
     return `
-      <div class="hof-section">
-        <div class="hof-section-head">
-          <div class="hof-section-title">Your Territory</div>
-          <div class="hof-section-sub">Districts covered</div>
+      <div class="hof-sec d2 card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">Your Territory</span></div>
+        <div class="empty-state">
+          <div class="empty-title">No district data yet</div>
+          <div class="empty-sub">Add districts to your players to see your territory map.</div>
         </div>
-        <div class="hof-empty">No district data yet. Add districts to your players to see your territory map.</div>
       </div>`;
   }
-
   const max = entries[0][1];
   const pins = entries.map(([d, n]) => {
     const heavy = n >= Math.max(3, max * 0.5);
     return `
-      <div class="hof-district-pin${heavy ? ' heavy' : ''}">
-        <div class="d-name">${d}</div>
+      <div class="hof-district-tile${heavy ? ' heavy' : ''}" data-district="${escapeHtml(d)}">
         <div class="d-count">${n}</div>
-      </div>
-    `;
+        <div class="d-name">${escapeHtml(d)}</div>
+      </div>`;
   }).join('');
-
   const top5 = entries.slice(0, 5).map(([d, n]) => `
-    <div class="hof-rank-row">
-      <span class="d-name">${d}</span>
-      <span class="d-count">${n}</span>
-    </div>
-  `).join('');
+    <div class="hof-rank-row" data-district="${escapeHtml(d)}">
+      <span class="r-name">${escapeHtml(d)}</span>
+      <span class="r-count">${n}</span>
+    </div>`).join('');
 
   return `
-    <div class="hof-section">
-      <div class="hof-section-head">
-        <div class="hof-section-title">Your Territory</div>
-        <div class="hof-section-sub">${entries.length} districts · ${players.length} players</div>
+    <div class="hof-sec d2 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Your Territory</span>
+        <span class="hof-sub">${entries.length} districts</span>
       </div>
-      <div class="hof-map-wrap">
-        <div class="hof-districts-visual">
-          <div class="hof-districts-grid">${pins}</div>
-        </div>
-        <div class="hof-rankings">
-          <h4>Top districts</h4>
+      <div class="grid-2-1">
+        <div class="hof-districts-grid" id="hofDistrictsGrid">${pins}</div>
+        <div id="hofTop5">
+          <div class="hof-sub" style="margin-bottom:8px">Top districts</div>
           ${top5}
         </div>
       </div>
@@ -733,89 +714,77 @@ function renderDistricts(players) {
 }
 
 function renderVelocityChart(players) {
-  // Take admitted players with velo and dob, sort by first-seen order (by id or created_at if available)
   const pts = players
     .filter(p => p.outcome === 'admitted')
     .map(p => {
       const v = bestVelo(p);
       if (v === null) return null;
-      const created = p.created_at ? new Date(p.created_at).getTime() : null;
-      return { v, created, name: p.name };
+      const created = p.created_at ? new Date(p.created_at).getTime() : 0;
+      return { v, created, name: p.name||'Unknown' };
     })
     .filter(Boolean)
-    .sort((a,b) => (a.created||0) - (b.created||0));
+    .sort((a,b) => a.created - b.created);
 
   if (pts.length < 3) {
     return `
-      <div class="hof-section">
-        <div class="hof-section-head">
-          <div class="hof-section-title">Velocity Trajectory</div>
-          <div class="hof-section-sub">Your admits over time</div>
+      <div class="hof-sec d3 card" style="margin-bottom:14px">
+        <div class="card-head"><span class="card-title">Velocity Trajectory</span></div>
+        <div class="empty-state">
+          <div class="empty-title">Need more data</div>
+          <div class="empty-sub">At least 3 admitted players with velocity readings required.</div>
         </div>
-        <div class="hof-empty">Need at least 3 admitted players with velocity readings to chart the trend.</div>
       </div>`;
   }
 
-  // SVG line chart
-  const w = 600, h = 180, padL = 30, padR = 12, padT = 12, padB = 22;
-  const chartW = w - padL - padR;
-  const chartH = h - padT - padB;
+  const w = 640, h = 180, padL = 34, padR = 14, padT = 14, padB = 24;
+  const chartW = w - padL - padR, chartH = h - padT - padB;
   const vs = pts.map(p => p.v);
-  const vMax = Math.max(...vs);
-  const vMin = Math.min(...vs);
+  const vMax = Math.max(...vs), vMin = Math.min(...vs);
   const range = Math.max(1, vMax - vMin);
+  const xAt = i => padL + (pts.length === 1 ? chartW/2 : (i/(pts.length-1)) * chartW);
+  const yAt = v => padT + (1 - (v - vMin) / range) * chartH;
 
-  const x = i => padL + (pts.length === 1 ? chartW/2 : (i/(pts.length-1)) * chartW);
-  const y = v => padT + (1 - (v - vMin) / range) * chartH;
+  let linePath = '';
+  pts.forEach((p, i) => { linePath += (i === 0 ? 'M' : 'L') + xAt(i) + ',' + yAt(p.v) + ' '; });
+  const areaPath = linePath + 'L' + xAt(pts.length-1) + ',' + (padT + chartH) + ' L' + xAt(0) + ',' + (padT + chartH) + ' Z';
 
-  let path = '';
-  pts.forEach((p, i) => {
-    path += (i === 0 ? 'M' : 'L') + x(i) + ',' + y(p.v) + ' ';
-  });
-  // Area fill path
-  const areaPath = path + 'L' + x(pts.length-1) + ',' + (padT + chartH) + ' L' + x(0) + ',' + (padT + chartH) + ' Z';
-
-  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="3" fill="#003A6B"/>`).join('');
+  const dots = pts.map((p, i) => {
+    const delay = 1.4 + (i / pts.length) * 0.5;
+    return `<circle class="hof-chart-dot" cx="${xAt(i)}" cy="${yAt(p.v)}" r="3.5"
+              style="animation-delay:${delay.toFixed(2)}s"
+              data-name="${escapeHtml(p.name)}" data-velo="${p.v}"></circle>`;
+  }).join('');
 
   const avg = (vs.reduce((s,v)=>s+v,0) / vs.length).toFixed(1);
-  const trend = vs.length > 1 ? (vs[vs.length-1] - vs[0]).toFixed(1) : '0';
+  const trend = (vs[vs.length-1] - vs[0]).toFixed(1);
   const trendSign = parseFloat(trend) >= 0 ? '+' : '';
 
   return `
-    <div class="hof-section">
-      <div class="hof-section-head">
-        <div class="hof-section-title">Velocity Trajectory</div>
-        <div class="hof-section-sub">${pts.length} admitted players</div>
+    <div class="hof-sec d3 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Velocity Trajectory</span>
+        <span class="hof-sub">${pts.length} admits · hover any point</span>
       </div>
-      <div class="hof-chart-wrap">
+      <div class="hof-chart-wrap" id="hofChartWrap">
         <svg class="hof-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
           <defs>
-            <linearGradient id="hofVeloFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#003A6B" stop-opacity=".3"/>
-              <stop offset="100%" stop-color="#003A6B" stop-opacity="0"/>
+            <linearGradient id="hofVeloArea" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#005A9C" stop-opacity=".28"/>
+              <stop offset="100%" stop-color="#005A9C" stop-opacity="0"/>
             </linearGradient>
           </defs>
-          <line x1="${padL}" y1="${padT+chartH}" x2="${w-padR}" y2="${padT+chartH}" stroke="#e0e6ee" stroke-width="1"/>
-          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="#e0e6ee" stroke-width="1"/>
-          <path d="${areaPath}" fill="url(#hofVeloFill)"/>
-          <path d="${path}" fill="none" stroke="#003A6B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <line x1="${padL}" y1="${padT+chartH}" x2="${w-padR}" y2="${padT+chartH}" stroke="#d8e4f0" stroke-width="1"/>
+          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+chartH}" stroke="#d8e4f0" stroke-width="1"/>
+          <path class="hof-chart-area" d="${areaPath}"/>
+          <path class="hof-chart-line" d="${linePath}"/>
           ${dots}
-          <text x="${padL-4}" y="${padT+6}" text-anchor="end" font-size="9" fill="#888" font-family="Nunito,sans-serif" font-weight="700">${vMax}</text>
-          <text x="${padL-4}" y="${padT+chartH}" text-anchor="end" font-size="9" fill="#888" font-family="Nunito,sans-serif" font-weight="700">${vMin}</text>
+          <text x="${padL-6}" y="${padT+5}" text-anchor="end" font-size="9" fill="#5B7A96" font-family="Nunito,sans-serif" font-weight="700">${vMax}</text>
+          <text x="${padL-6}" y="${padT+chartH+2}" text-anchor="end" font-size="9" fill="#5B7A96" font-family="Nunito,sans-serif" font-weight="700">${vMin}</text>
         </svg>
         <div class="hof-chart-stats">
-          <div class="hof-chart-stat">
-            <div class="n">${avg}</div>
-            <div class="l">Avg mph</div>
-          </div>
-          <div class="hof-chart-stat">
-            <div class="n">${vMax}</div>
-            <div class="l">Peak mph</div>
-          </div>
-          <div class="hof-chart-stat">
-            <div class="n">${trendSign}${trend}</div>
-            <div class="l">Season trend</div>
-          </div>
+          <div class="hof-chart-stat"><div class="n">${avg}</div><div class="l">Avg mph</div></div>
+          <div class="hof-chart-stat"><div class="n">${vMax}</div><div class="l">Peak mph</div></div>
+          <div class="hof-chart-stat"><div class="n">${trendSign}${trend}</div><div class="l">Season trend</div></div>
         </div>
       </div>
     </div>
@@ -824,57 +793,47 @@ function renderVelocityChart(players) {
 
 function renderGoals(players, batches) {
   const admitted = players.filter(p => p.outcome === 'admitted');
-  const districts = new Set(players.map(p => p.district).filter(Boolean));
-
-  // Goal 1: Reach all 4 regions (proxy: count distinct divisions)
   const divisions = new Set(players.map(p => p.division).filter(Boolean));
-  const regionsTarget = 4;
-  const regionsDone = Math.min(regionsTarget, divisions.size);
 
-  // Goal 2: Admit 50 players this season
-  const admitTarget = 50;
-  const admitDone = Math.min(admitTarget, admitted.length);
+  const goals = [
+    { label: 'Cover all regions of Uganda',       done: divisions.size, target: 4  },
+    { label: 'Admit 50 players to the program',   done: admitted.length, target: 50 },
+    { label: 'Run 10 tryout batches',              done: batches.length,  target: 10 },
+  ];
 
-  // Goal 3: Complete 10 tryout batches
-  const batchTarget = 10;
-  const batchDone = Math.min(batchTarget, (batches||[]).length);
-
-  const goalCard = (label, title, done, target, unit) => {
-    const pct = Math.min(100, Math.round((done / target) * 100));
-    const complete = done >= target;
+  const cards = goals.map(g => {
+    const done = Math.min(g.done, g.target);
+    const pct = Math.round((done / g.target) * 100);
+    const complete = done >= g.target;
     return `
-      <div class="hof-goal${complete ? ' complete' : ''}">
-        <div class="hof-goal-check">✓</div>
-        <div class="hof-goal-label">${label}</div>
-        <div class="hof-goal-title">${title}</div>
-        <div class="hof-goal-bar"><div class="hof-goal-bar-fill" style="width:${pct}%"></div></div>
-        <div class="hof-goal-progress">${done} / ${target} ${unit}</div>
-      </div>
-    `;
-  };
+      <div class="hof-goal${complete ? ' done' : ''}">
+        <div class="hof-goal-head">
+          <div class="hof-goal-title">${g.label}</div>
+          ${complete ? '<span class="pill pill-green">Done</span>' : ''}
+        </div>
+        <div class="hof-goal-bar-row">
+          <div class="bar-track"><div class="bar-fill g" data-pct="${pct}" style="width:0%"></div></div>
+          <div class="hof-goal-progress">${done}/${g.target}</div>
+        </div>
+      </div>`;
+  }).join('');
 
   return `
-    <div class="hof-section">
-      <div class="hof-section-head">
-        <div class="hof-section-title">Season Goals</div>
-        <div class="hof-section-sub">Progress toward ${currentYear} targets</div>
+    <div class="hof-sec d4 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Season Goals</span>
+        <span class="hof-sub">${currentYear} targets</span>
       </div>
-      <div class="hof-goals">
-        ${goalCard('Territory', 'Cover all regions of Uganda', regionsDone, regionsTarget, 'regions')}
-        ${goalCard('Admissions', 'Admit 50 players to the program', admitDone, admitTarget, 'players')}
-        ${goalCard('Tryouts', 'Run 10 tryout batches', batchDone, batchTarget, 'batches')}
-      </div>
+      <div class="col-stack">${cards}</div>
     </div>
   `;
 }
 
 function renderRecords(players) {
   let fastest = null, tallest = null, youngest = null, heaviest = null, mostRecent = null;
-
   players.forEach(p => {
     const v = bestVelo(p);
     if (v !== null && (!fastest || v > fastest.v)) fastest = { v, p };
-
     const h = bestHeight(p);
     if (h) {
       const m = String(h).match(/^(\d+)'(\d+(?:\.\d+)?)/);
@@ -883,15 +842,12 @@ function renderRecords(players) {
         if (!tallest || totalIn > tallest.totalIn) tallest = { totalIn, h, p };
       }
     }
-
     const a = age(p.dob);
     if (a !== null && p.outcome === 'admitted') {
       if (!youngest || a < youngest.a) youngest = { a, p };
     }
-
     const w = bestWeight(p);
     if (w !== null && (!heaviest || w > heaviest.w)) heaviest = { w, p };
-
     if (p.created_at) {
       const t = new Date(p.created_at).getTime();
       if (!mostRecent || t > mostRecent.t) mostRecent = { t, p };
@@ -899,31 +855,30 @@ function renderRecords(players) {
   });
 
   const records = [];
-  if (fastest)    records.push({ label: 'Fastest Velocity', value: fastest.v + ' mph', sub: fastest.p.name });
-  if (tallest)    records.push({ label: 'Tallest Player',   value: tallest.h,         sub: tallest.p.name });
-  if (youngest)   records.push({ label: 'Youngest Admit',   value: youngest.a.toFixed(1) + ' yrs', sub: youngest.p.name });
-  if (heaviest)   records.push({ label: 'Heaviest Player',  value: heaviest.w + ' lbs', sub: heaviest.p.name });
-  if (mostRecent) records.push({ label: 'Most Recent Find', value: fmtDate(mostRecent.p.created_at), sub: mostRecent.p.name });
-  records.push({ label: 'Total Pipeline', value: players.length + ' players', sub: 'across all tiers' });
-
-  if (records.length === 0) {
-    return '';
-  }
+  if (fastest)    records.push({ label: 'Fastest Velocity', value: fastest.v + ' mph',          sub: fastest.p.name,   id: fastest.p.id });
+  if (tallest)    records.push({ label: 'Tallest Player',   value: tallest.h,                   sub: tallest.p.name,   id: tallest.p.id });
+  if (youngest)   records.push({ label: 'Youngest Admit',   value: youngest.a.toFixed(1) + ' yrs', sub: youngest.p.name, id: youngest.p.id });
+  if (heaviest)   records.push({ label: 'Heaviest Player',  value: heaviest.w + ' lbs',         sub: heaviest.p.name,  id: heaviest.p.id });
+  if (mostRecent) records.push({ label: 'Most Recent Find', value: fmtDate(mostRecent.p.created_at), sub: mostRecent.p.name, id: mostRecent.p.id });
+  records.push({ label: 'Total Pipeline', value: players.length + ' players', sub: 'across all tiers', id: null });
 
   const rows = records.map(r => `
-    <div class="hof-record">
+    <div class="hof-record" ${r.id ? `onclick="window.location.href='profile.html?id=${encodeURIComponent(r.id)}'"` : ''}>
       <div class="hof-record-label">${r.label}</div>
-      <div class="hof-record-value">${r.value}<span class="sub">${r.sub||''}</span></div>
+      <div class="hof-record-val">
+        <div class="v">${escapeHtml(r.value)}</div>
+        <span class="sub">${escapeHtml(r.sub||'')}</span>
+      </div>
     </div>
   `).join('');
 
   return `
-    <div class="hof-section">
-      <div class="hof-section-head">
-        <div class="hof-section-title">Personal Records</div>
-        <div class="hof-section-sub">Your superlatives this season</div>
+    <div class="hof-sec d5 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Personal Records</span>
+        <span class="hof-sub">Your superlatives</span>
       </div>
-      <div class="hof-records">${rows}</div>
+      <div class="grid-2">${rows}</div>
     </div>
   `;
 }
@@ -931,8 +886,6 @@ function renderRecords(players) {
 function renderWrapUp(players) {
   const admitted = players.filter(p => p.outcome === 'admitted');
   const districts = new Set(players.map(p => p.district).filter(Boolean));
-
-  // Top find = highest-velocity admitted player
   let topFind = null;
   admitted.forEach(p => {
     const v = bestVelo(p);
@@ -941,60 +894,114 @@ function renderWrapUp(players) {
 
   let story;
   if (topFind) {
-    story = `
-      You've scouted <strong>${players.length} players</strong> across
-      <strong>${districts.size} districts</strong> this season, admitting
-      <strong>${admitted.length}</strong> to the program.
-      Your top find so far? <strong>${topFind.p.name}</strong> out of
-      <strong>${topFind.p.district || 'Uganda'}</strong>, throwing
-      <strong>${topFind.v} mph</strong>.
-    `;
+    story = `You've scouted <strong>${players.length} players</strong> across <strong>${districts.size} districts</strong> this season, admitting <strong>${admitted.length}</strong> to the program. Your top find so far? <em>${escapeHtml(topFind.p.name)}</em> out of <strong>${escapeHtml(topFind.p.district || 'Uganda')}</strong>, throwing <strong>${topFind.v} mph</strong>.`;
   } else {
-    story = `
-      You've scouted <strong>${players.length} players</strong> across
-      <strong>${districts.size} districts</strong> this season. Keep the
-      measurements coming and your top finds will surface here.
-    `;
+    story = `You've scouted <strong>${players.length} players</strong> across <strong>${districts.size} districts</strong> this season. Keep the measurements coming and your top finds will surface here.`;
   }
 
   return `
-    <div class="hof-section">
-      <div class="hof-wrap">
-        <div class="hof-wrap-label">The Season So Far</div>
-        <div class="hof-wrap-text">${story}</div>
-      </div>
+    <div class="hof-sec d6 card hof-wrap">
+      <div class="hof-wrap-label">The Season So Far</div>
+      <div class="hof-wrap-text">${story}</div>
     </div>
   `;
 }
 
-// ── MAIN ────────────────────────────────────────────────────────
+// ── POST-RENDER INTERACTIONS ────────────────────────────────────
 
-// Normalize any API response into an array. Handles:
-//   [...]                  (direct array)
-//   { players: [...] }     (wrapped under .players)
-//   { batches: [...] }     (wrapped under .batches)
-//   { data: [...] }        (wrapped under .data)
-//   { rows: [...] }        (wrapped under .rows)
-//   anything else          → []
-function toArray(res) {
-  if (Array.isArray(res)) return res;
-  if (!res || typeof res !== 'object') return [];
-  if (Array.isArray(res.players)) return res.players;
-  if (Array.isArray(res.batches)) return res.batches;
-  if (Array.isArray(res.data))    return res.data;
-  if (Array.isArray(res.rows))    return res.rows;
-  // Last resort: find the first array-valued property
-  for (const k of Object.keys(res)) {
-    if (Array.isArray(res[k])) return res[k];
-  }
-  return [];
+function runCountUps() {
+  document.querySelectorAll('.mc-value[data-count]').forEach(el => {
+    const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    setTimeout(() => countUp(el, target, 950), 200);
+  });
 }
 
+function animateProgressBars() {
+  // bar-fill has transition: width 0.8s cubic-bezier baked in - just flip the width.
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill[data-pct]').forEach(el => {
+      const pct = parseInt(el.getAttribute('data-pct'), 10) || 0;
+      el.style.width = pct + '%';
+    });
+  }, 600);
+}
+
+function wireFilterBar() {
+  const bar = document.getElementById('hofFilterBar');
+  if (!bar) return;
+  bar.addEventListener('click', e => {
+    const btn = e.target.closest('.hof-filter-btn');
+    if (!btn) return;
+    const filter = btn.getAttribute('data-filter');
+    bar.querySelectorAll('.hof-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+    const reel = document.getElementById('hofReel');
+    if (!reel) return;
+    reel.querySelectorAll('.hof-find').forEach(card => {
+      const r = card.getAttribute('data-rarity');
+      card.style.display = (filter === 'ALL' || r === filter) ? '' : 'none';
+    });
+  });
+}
+
+function wireDistrictHover() {
+  const grid = document.getElementById('hofDistrictsGrid');
+  const top5 = document.getElementById('hofTop5');
+  if (!grid || !top5) return;
+
+  function highlight(district, on) {
+    grid.querySelectorAll('.hof-district-tile').forEach(t => {
+      t.classList.toggle('highlight', on && t.getAttribute('data-district') === district);
+    });
+    top5.querySelectorAll('.hof-rank-row').forEach(r => {
+      r.classList.toggle('highlight', on && r.getAttribute('data-district') === district);
+    });
+  }
+
+  grid.addEventListener('mouseover', e => {
+    const tile = e.target.closest('.hof-district-tile');
+    if (tile) highlight(tile.getAttribute('data-district'), true);
+  });
+  grid.addEventListener('mouseout', e => {
+    const tile = e.target.closest('.hof-district-tile');
+    if (tile) highlight(tile.getAttribute('data-district'), false);
+  });
+  top5.addEventListener('mouseover', e => {
+    const row = e.target.closest('.hof-rank-row');
+    if (row) highlight(row.getAttribute('data-district'), true);
+  });
+  top5.addEventListener('mouseout', e => {
+    const row = e.target.closest('.hof-rank-row');
+    if (row) highlight(row.getAttribute('data-district'), false);
+  });
+}
+
+function wireChartTooltips() {
+  const wrap = document.getElementById('hofChartWrap');
+  const tip = document.getElementById('hofTooltip');
+  if (!wrap || !tip) return;
+
+  wrap.addEventListener('mouseover', e => {
+    const dot = e.target.closest('.hof-chart-dot');
+    if (!dot) return;
+    const name = dot.getAttribute('data-name');
+    const velo = dot.getAttribute('data-velo');
+    tip.innerHTML = `<strong>${name}</strong> &middot; ${velo} mph`;
+    const rect = dot.getBoundingClientRect();
+    tip.style.left = (rect.left + rect.width/2) + 'px';
+    tip.style.top  = (rect.top - 8) + 'px';
+    tip.classList.add('show');
+  });
+  wrap.addEventListener('mouseout', e => {
+    if (e.target.closest('.hof-chart-dot')) tip.classList.remove('show');
+  });
+}
+
+// ── MAIN ────────────────────────────────────────────────────────
 async function loadHallOfFame() {
   try {
     const [playersRes, batchesRes] = await Promise.all([
       PlayerAPI.getAll().catch(() => []),
-      TryoutAPI.getAll().catch(() => [])
+      TryoutAPI.getAll().catch(() => []),
     ]);
     const players = toArray(playersRes);
     const batches = toArray(batchesRes);
@@ -1006,13 +1013,23 @@ async function loadHallOfFame() {
       renderVelocityChart(players),
       renderGoals(players, batches),
       renderRecords(players),
-      renderWrapUp(players)
+      renderWrapUp(players),
     ].join('');
 
     document.getElementById('hofLoading').style.display = 'none';
     const content = document.getElementById('hofContent');
     content.innerHTML = html;
     content.style.display = 'block';
+
+    const admitted = players.filter(p => p.outcome === 'admitted').length;
+    document.getElementById('hofTopSub').textContent =
+      `${admitted} admitted · ${players.length} total · ${currentYear} season`;
+
+    runCountUps();
+    animateProgressBars();
+    wireFilterBar();
+    wireDistrictHover();
+    wireChartTooltips();
   } catch (e) {
     document.getElementById('hofLoading').innerHTML =
       'Could not load Hall of Fame. ' + (e.message || 'Please try again.');
