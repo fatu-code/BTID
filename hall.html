@@ -1180,6 +1180,149 @@
     flex-shrink: 0;
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     BADGE COLLECTION
+     ══════════════════════════════════════════════════════════════ */
+  @keyframes hofBadgePop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes hofBadgeGlow {
+    0%, 100% { box-shadow: 0 2px 8px var(--green-shadow); }
+    50%      { box-shadow: 0 4px 16px rgba(0,90,156,0.45); }
+  }
+
+  .hof-badges-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .hof-badges-count {
+    font-family: var(--font1);
+    font-size: 0.95rem;
+    color: var(--green-dark);
+  }
+  .hof-badges-count strong { color: var(--text); }
+  .hof-badges-toggle {
+    font-family: var(--font2);
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--green);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .hof-badges-toggle:hover { color: var(--green-dark); }
+  .hof-badges-toggle svg {
+    width: 10px; height: 10px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    transition: transform 0.2s;
+  }
+  .hof-badges-toggle.open svg { transform: rotate(180deg); }
+
+  .hof-badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px;
+  }
+  .hof-badge {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .hof-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,37,77,0.08);
+  }
+  .hof-badge.earned {
+    background: var(--green-pale);
+    border-color: var(--green-mid);
+  }
+  .hof-badge.earned:hover {
+    border-color: var(--green);
+    box-shadow: 0 6px 16px var(--green-shadow);
+  }
+  .hof-badge.locked { opacity: 0.45; }
+  .hof-badge.locked .hof-badge-icon { filter: grayscale(1); }
+  .hof-badge.new {
+    animation: hofBadgePop 0.5s cubic-bezier(0.4,0,0.2,1) forwards,
+               hofBadgeGlow 2s ease-in-out 0.5s 2;
+  }
+  .hof-badge-icon {
+    font-size: 1.9rem;
+    line-height: 1;
+    margin-bottom: 5px;
+    display: block;
+  }
+  .hof-badge-name {
+    font-family: var(--font2);
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.15;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+  .hof-badge.earned .hof-badge-name { color: var(--green-dark); }
+
+  .hof-badge-tip {
+    position: fixed;
+    background: var(--dark);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.35;
+    max-width: 240px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 50;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  .hof-badge-tip.show { opacity: 1; }
+  .hof-badge-tip-name {
+    font-family: var(--font1);
+    font-size: 0.85rem;
+    color: var(--green-light);
+    margin-bottom: 3px;
+  }
+  .hof-badge-tip-desc {
+    font-family: var(--font2);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+  }
+  .hof-badge-tip-status {
+    margin-top: 6px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .hof-badge-tip-status.earned { color: var(--green-light); }
+  .hof-badge-tip-status.locked { color: rgba(255,255,255,0.45); }
+
   /* Mobile tightening */
   @media (max-width: 768px) {
     .hof-find { flex-basis: 160px; }
@@ -1192,6 +1335,10 @@
     .hof-avatar-ini { font-size: 1.5rem; }
     .hof-hv-row { grid-template-columns: 1fr 1fr 1fr; }
     .hof-rhythm { gap: 3px; height: 90px; }
+    .hof-badges-grid { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 8px; }
+    .hof-badge { padding: 10px 6px 8px; }
+    .hof-badge-icon { font-size: 1.6rem; }
+    .hof-badge-name { font-size: 0.56rem; }
   }
 </style>
 </head>
@@ -1224,6 +1371,9 @@
       <div id="hofLightbox" class="hof-lightbox" onclick="closeAvatarLightbox()">
         <img id="hofLightboxImg" alt="" onclick="event.stopPropagation()">
       </div>
+
+      <!-- Badge tooltip -->
+      <div id="hofBadgeTip" class="hof-badge-tip"></div>
     </div>
 
   </div>
@@ -1253,6 +1403,7 @@ const LS_MOTTO    = LS_PREFIX + 'motto';
 const LS_LOCATION = LS_PREFIX + 'location';
 const LS_AVATAR   = LS_PREFIX + 'avatar';
 const LS_DISMISSED_ACH = LS_PREFIX + 'dismissed_achievements';
+const LS_EARNED_BADGES = LS_PREFIX + 'earned_badges';
 
 // Default location (can be edited)
 const DEFAULT_LOCATION = 'Senegal · Until August';
@@ -1645,6 +1796,432 @@ function renderAchievements(players, batches) {
 }
 
 // ── RARE FINDS ──────────────────────────────────────────────────
+// ── 50 SCOUT BADGES ─────────────────────────────────────────────
+// White-hat only. Locked badges are visible but grey, showing what's
+// possible without shaming what's missing. No streaks-to-lose, no
+// daily-login guilt, no cross-scout comparisons.
+
+const HOF_BADGES = [
+  // ── Discovery volume (8) ────────────────
+  { id: 'first_find',      icon: '🌱', name: 'First Find',       desc: "Added your very first player. Every scout starts here." },
+  { id: 'first_admit',     icon: '🎯', name: 'Opening Pitch',    desc: "Admitted your first player to the program." },
+  { id: 'admits_10',       icon: '🔟', name: 'Double Digits',    desc: "10 players admitted. The pipeline is real now." },
+  { id: 'admits_25',       icon: '🥈', name: 'Quarter Century',  desc: "25 admits. Serious coverage." },
+  { id: 'admits_50',       icon: '🥇', name: 'Half Ton',         desc: "50 players admitted. Building a class." },
+  { id: 'admits_100',      icon: '💯', name: 'Century Club',     desc: "100 admits. You are a force in this program." },
+  { id: 'admits_250',      icon: '🏅', name: 'Dugout Hall',      desc: "250 admits. The dugout has your name on it." },
+  { id: 'admits_500',      icon: '👑', name: 'Living Legend',    desc: "500 players scouted. Generational impact." },
+
+  // ── Territory (5) ───────────────────────
+  { id: 'first_district',  icon: '🗺️', name: 'Cartographer',     desc: "Scouted your first district. The map begins." },
+  { id: 'districts_5',     icon: '🧭', name: 'Five Points',      desc: "5 districts covered. Reach is expanding." },
+  { id: 'districts_10',    icon: '🌍', name: 'Wide Net',         desc: "10 districts. You are casting everywhere." },
+  { id: 'districts_20',    icon: '🌐', name: 'Twenty Flags',     desc: "20 districts. Nationwide footprint." },
+  { id: 'all_regions',     icon: '🇺🇬', name: 'All Regions',      desc: "Players from all 4 regions of Uganda." },
+
+  // ── Talent eye — rarity & tiers (7) ─────
+  { id: 'first_elite',     icon: '💎', name: 'Rough Diamond',    desc: "First Elite-rarity player discovered." },
+  { id: 'elite_5',         icon: '💍', name: 'Jewel Box',        desc: "5 Elite-rarity players in your pipeline." },
+  { id: 'elite_10',        icon: '👁️', name: 'The Eye',          desc: "10 Elite-rarity players. You see what others miss." },
+  { id: 'first_t1',        icon: '⭐', name: 'Top Shelf',         desc: "First Tier 1 admit. The best of the best." },
+  { id: 't1_10',           icon: '🌟', name: 'Gold Standard',    desc: "10 Tier 1 admits. Elite program builder." },
+  { id: 'velo_80',         icon: '⚡', name: 'Lightning Arm',    desc: "Scouted a player throwing 80+ mph." },
+  { id: 'tall_order',      icon: '📏', name: 'Tall Order',       desc: "Player projected at 6'4\" or taller adult height." },
+
+  // ── Operations — tryouts (5) ────────────
+  { id: 'first_batch',     icon: '📋', name: 'Open For Business', desc: "First tryout batch completed." },
+  { id: 'big_batch',       icon: '🎪', name: 'Big Top',          desc: "10+ players measured in a single batch." },
+  { id: 'hat_trick',       icon: '🎩', name: 'Hat Trick',        desc: "3 tryout batches in one season." },
+  { id: 'batches_10',      icon: '🎟️', name: 'Ten Events',       desc: "10 tryout batches overall." },
+  { id: 'batches_25',      icon: '🏟️', name: 'Stadium Builder',  desc: "25 tryout batches. Infrastructure achieved." },
+
+  // ── Home visits (3) ─────────────────────
+  { id: 'first_visit',     icon: '🏠', name: 'Doorstep',         desc: "First home visit completed." },
+  { id: 'visits_10',       icon: '🏘️', name: 'Home Tour',        desc: "10 home visits completed." },
+  { id: 't1_visits',       icon: '🤝', name: 'Full Coverage',    desc: "Home visits on every Tier 1 player." },
+
+  // ── Data craft (5) ──────────────────────
+  { id: 'data_10',         icon: '📊', name: 'Data Doctor',      desc: "Complete dev metrics on 10 players." },
+  { id: 'kr_25',           icon: '📐', name: 'Measure Twice',    desc: "KR calculator used on 25 players." },
+  { id: 'dev_50',          icon: '🧪', name: 'Deep Tracking',    desc: "Development data on 50+ players." },
+  { id: 'photos_t1',       icon: '📸', name: 'Picture Perfect',  desc: "Photos on every Tier 1 player." },
+  { id: 'storyteller',     icon: '📝', name: 'Storyteller',      desc: "20+ players with detailed scouting notes." },
+
+  // ── Cadence — white hat only (4) ────────
+  { id: 'streak_3',        icon: '📅', name: 'Regular',          desc: "3 consecutive months with new admits." },
+  { id: 'streak_6',        icon: '⏳', name: 'Half a Year',      desc: "6 consecutive months with new admits." },
+  { id: 'streak_12',       icon: '🗓️', name: 'Full Year',        desc: "12 consecutive months of new admits." },
+  { id: 'fast_start',      icon: '🚀', name: 'Fast Start',       desc: "10+ admits in the first 60 days of a season." },
+
+  // ── Season highlights (4) ───────────────
+  { id: 'season_opener',   icon: '🌅', name: 'Season Opener',    desc: "First admit of a new season." },
+  { id: 'season_mvp',      icon: '🏆', name: 'Season MVP',       desc: "50+ admits in a single season." },
+  { id: 'hot_week',        icon: '🔥', name: 'Hot Streak',       desc: "5 admits in a single week." },
+  { id: 'hot_month',       icon: '📈', name: 'Hot Month',        desc: "15+ admits in one month." },
+
+  // ── Diversity & reach (3) ───────────────
+  { id: 'schools_5',       icon: '🏫', name: 'Schoolhouse',      desc: "Players from 5+ different schools." },
+  { id: 'schools_10',      icon: '🎓', name: 'Campus Tour',      desc: "Players from 10+ different schools." },
+  { id: 'ages_4',          icon: '👥', name: 'All Ages',         desc: "Players across 4+ age classes." },
+
+  // ── Pipeline depth (3) ──────────────────
+  { id: 'deep_bench',      icon: '🪑', name: 'Deep Bench',       desc: "30+ active players in your pipeline." },
+  { id: 'self_made',       icon: '🌟', name: 'Self-Made',        desc: "A player improved from Tier 3 up to Tier 1." },
+  { id: 'pipeline_100',    icon: '🏗️', name: 'Pipeline Builder', desc: "100+ players in your pipeline overall." },
+
+  // ── Tenure & loyalty (1) ────────────────
+  { id: 'day_one',         icon: '🏛️', name: 'Day One',          desc: "Scouting for BTID since 2019. Foundation." },
+
+  // ── Fun / flavor (2) ────────────────────
+  { id: 'early_bird',      icon: '🌄', name: 'Early Bird',       desc: "Added a player before 7am." },
+  { id: 'night_owl',       icon: '🦉', name: 'Night Owl',        desc: "Added a player after 10pm." },
+];
+
+// ── Badge rule engine ──────────────────────────────────────────
+// Takes the full players array + batches + derived stats. Returns set of badge ids.
+function computeEarnedBadges(players, batches) {
+  const earned = new Set();
+  if (!players || players.length === 0) return earned;
+
+  const admitted = players.filter(p => p.outcome === 'admitted');
+  const districts = new Set(players.map(p => p.district).filter(Boolean));
+  const divisions = new Set(players.map(p => p.division).filter(Boolean));
+  const schools   = new Set(players.map(p => p.school).filter(Boolean));
+  const classes   = new Set(players.map(p => p.class).filter(Boolean));
+
+  // ── Volume ──
+  if (players.length >= 1)         earned.add('first_find');
+  if (admitted.length >= 1)        earned.add('first_admit');
+  if (admitted.length >= 10)       earned.add('admits_10');
+  if (admitted.length >= 25)       earned.add('admits_25');
+  if (admitted.length >= 50)       earned.add('admits_50');
+  if (admitted.length >= 100)      earned.add('admits_100');
+  if (admitted.length >= 250)      earned.add('admits_250');
+  if (admitted.length >= 500)      earned.add('admits_500');
+
+  // ── Territory ──
+  if (districts.size >= 1)         earned.add('first_district');
+  if (districts.size >= 5)         earned.add('districts_5');
+  if (districts.size >= 10)        earned.add('districts_10');
+  if (districts.size >= 20)        earned.add('districts_20');
+  if (divisions.size >= 4)         earned.add('all_regions');
+
+  // ── Rarity & tiers ──
+  const rarities = players.map(classifyRarity).filter(Boolean);
+  const eliteN = rarities.filter(r => r === 'ELITE').length;
+  if (eliteN >= 1)                 earned.add('first_elite');
+  if (eliteN >= 5)                 earned.add('elite_5');
+  if (eliteN >= 10)                earned.add('elite_10');
+
+  const t1s = admitted.filter(p => String(p.tier) === '1').length;
+  if (t1s >= 1)                    earned.add('first_t1');
+  if (t1s >= 10)                   earned.add('t1_10');
+
+  // Velocity 80+
+  const velo80 = players.some(p => {
+    const v = bestVelo(p);
+    return v !== null && v >= 80;
+  });
+  if (velo80)                      earned.add('velo_80');
+
+  // Tall order: projected adult height >= 6'4" via dev_height_ft or height_ft
+  const tallOrder = players.some(p => {
+    const h = bestHeight(p);
+    if (!h) return false;
+    const m = String(h).match(/^(\d+)'(\d+(?:\.\d+)?)/);
+    if (!m) return false;
+    const totalIn = parseInt(m[1])*12 + parseFloat(m[2]);
+    return totalIn >= 76; // 6'4"
+  });
+  if (tallOrder)                   earned.add('tall_order');
+
+  // ── Operations / Tryouts ──
+  if (batches.length >= 1)         earned.add('first_batch');
+  if (batches.length >= 10)        earned.add('batches_10');
+  if (batches.length >= 25)        earned.add('batches_25');
+
+  // Hat trick: 3+ batches in current/any single season
+  const batchesBySeason = {};
+  batches.forEach(b => {
+    const y = b.start_date ? new Date(b.start_date).getFullYear() :
+              b.created_at ? new Date(b.created_at).getFullYear() : null;
+    if (y) batchesBySeason[y] = (batchesBySeason[y]||0) + 1;
+  });
+  if (Object.values(batchesBySeason).some(n => n >= 3)) earned.add('hat_trick');
+
+  // Big batch: 10+ players in one batch_id
+  const playersByBatch = {};
+  players.forEach(p => {
+    if (p.batch_id) playersByBatch[p.batch_id] = (playersByBatch[p.batch_id]||0) + 1;
+  });
+  if (Object.values(playersByBatch).some(n => n >= 10)) earned.add('big_batch');
+
+  // ── Home visits ──
+  const visitedPlayers = admitted.filter(p =>
+    p.home_visit_at || p.home_visit_date || p.home_visit_completed || p.visited_home
+  );
+  if (visitedPlayers.length >= 1)  earned.add('first_visit');
+  if (visitedPlayers.length >= 10) earned.add('visits_10');
+
+  const t1Players = admitted.filter(p => String(p.tier) === '1');
+  if (t1Players.length >= 1 && t1Players.every(p =>
+    p.home_visit_at || p.home_visit_date || p.home_visit_completed || p.visited_home
+  )) earned.add('t1_visits');
+
+  // ── Data craft ──
+  const hasDevMetrics = p =>
+    (num(p.dev_velo) !== null || num(p.dev_weight_lbs) !== null || p.dev_height_ft || num(p.dev_kr) !== null);
+  const devCount = players.filter(hasDevMetrics).length;
+  if (devCount >= 10)              earned.add('data_10');
+  if (devCount >= 50)              earned.add('dev_50');
+
+  const krCount = players.filter(p => num(p.kr) !== null || num(p.dev_kr) !== null).length;
+  if (krCount >= 25)               earned.add('kr_25');
+
+  // Photos on all T1
+  if (t1Players.length >= 1 && t1Players.every(p => p.photo_url))
+    earned.add('photos_t1');
+
+  // Storyteller: 20+ players with substantial notes
+  const storied = players.filter(p => {
+    const n = (p.notes || '') + ' ' + (p.init_notes || '') + ' ' + (p.dev_notes || '');
+    return n.trim().length >= 40;
+  }).length;
+  if (storied >= 20)               earned.add('storyteller');
+
+  // ── Cadence — consecutive months with admits ──
+  const admitDates = admitted.map(p => p.created_at ? new Date(p.created_at) : null).filter(d => d && !isNaN(d.getTime()));
+  let maxStreak = 0;
+  if (admitDates.length > 0) {
+    // Build set of "YYYY-MM" keys with at least one admit
+    const monthsWithAdmits = new Set();
+    admitDates.forEach(d => {
+      monthsWithAdmits.add(d.getFullYear() + '-' + String(d.getMonth()).padStart(2,'0'));
+    });
+    // Walk backward from current month, counting consecutive
+    const now = new Date();
+    let curY = now.getFullYear(), curM = now.getMonth();
+    let streak = 0;
+    for (let i = 0; i < 60; i++) {
+      const key = curY + '-' + String(curM).padStart(2,'0');
+      if (monthsWithAdmits.has(key)) streak++;
+      else if (streak > 0) break;
+      // Decrement month
+      curM--; if (curM < 0) { curM = 11; curY--; }
+    }
+    maxStreak = streak;
+  }
+  if (maxStreak >= 3)              earned.add('streak_3');
+  if (maxStreak >= 6)              earned.add('streak_6');
+  if (maxStreak >= 12)             earned.add('streak_12');
+
+  // Fast start: 10+ admits within first 60 days of any season
+  const admitsBySeasonEarly = {};
+  admitted.forEach(p => {
+    if (!p.created_at) return;
+    const d = new Date(p.created_at);
+    if (isNaN(d.getTime())) return;
+    const seasonStart = new Date(d.getFullYear(), 0, 1).getTime();
+    const days = (d.getTime() - seasonStart) / 86400000;
+    if (days <= 60) {
+      admitsBySeasonEarly[d.getFullYear()] = (admitsBySeasonEarly[d.getFullYear()]||0) + 1;
+    }
+  });
+  if (Object.values(admitsBySeasonEarly).some(n => n >= 10)) earned.add('fast_start');
+
+  // ── Season highlights ──
+  // Season opener: an admit in January of any season year
+  if (admitted.some(p => {
+    if (!p.created_at) return false;
+    const d = new Date(p.created_at);
+    return !isNaN(d.getTime()) && d.getMonth() === 0;
+  })) earned.add('season_opener');
+
+  // Season MVP: any season with 50+ admits
+  const admitsBySeason = {};
+  admitted.forEach(p => {
+    const s = getSeasonOf(p);
+    if (s) admitsBySeason[s] = (admitsBySeason[s]||0) + 1;
+  });
+  if (Object.values(admitsBySeason).some(n => n >= 50)) earned.add('season_mvp');
+
+  // Hot week: 5+ admits in any single 7-day window
+  if (admitDates.length >= 5) {
+    const ts = admitDates.map(d => d.getTime()).sort((a,b) => a-b);
+    for (let i = 0; i <= ts.length - 5; i++) {
+      if (ts[i+4] - ts[i] <= 7 * 86400000) { earned.add('hot_week'); break; }
+    }
+  }
+
+  // Hot month: 15+ admits in any single calendar month
+  const admitsByMonth = {};
+  admitDates.forEach(d => {
+    const key = d.getFullYear() + '-' + d.getMonth();
+    admitsByMonth[key] = (admitsByMonth[key]||0) + 1;
+  });
+  if (Object.values(admitsByMonth).some(n => n >= 15)) earned.add('hot_month');
+
+  // ── Diversity & reach ──
+  if (schools.size >= 5)           earned.add('schools_5');
+  if (schools.size >= 10)          earned.add('schools_10');
+  if (classes.size >= 4)           earned.add('ages_4');
+
+  // ── Pipeline depth ──
+  const activePipeline = players.filter(p => p.outcome !== 'eliminated').length;
+  if (activePipeline >= 30)        earned.add('deep_bench');
+  if (players.length >= 100)       earned.add('pipeline_100');
+
+  // Self-made: tier improvement (init tier 3 → current tier 1)
+  // We don't track tier history, so use a proxy: admitted player whose init_notes
+  // or dev_notes mention tier movement. If we can't detect this reliably, leave locked.
+  // Simpler check: any admitted player whose dev_velo significantly exceeds velo (+10mph)
+  if (admitted.some(p => {
+    const iv = num(p.velo), dv = num(p.dev_velo);
+    return iv !== null && dv !== null && (dv - iv) >= 10;
+  })) earned.add('self_made');
+
+  // ── Tenure & loyalty ──
+  // Day One: player record with created_at <= 2019
+  if (players.some(p => {
+    if (!p.created_at) return false;
+    const d = new Date(p.created_at);
+    return !isNaN(d.getTime()) && d.getFullYear() <= 2019;
+  })) earned.add('day_one');
+
+  // ── Fun / flavor ──
+  admitDates.forEach(d => {
+    const h = d.getHours();
+    if (h < 7)   earned.add('early_bird');
+    if (h >= 22) earned.add('night_owl');
+  });
+
+  return earned;
+}
+
+function renderBadges(players, batches) {
+  const earned = computeEarnedBadges(players, batches);
+  const total = HOF_BADGES.length;
+  const earnedCount = earned.size;
+
+  // Detect newly earned (first render only)
+  let previouslyEarned = [];
+  try { previouslyEarned = JSON.parse(localStorage.getItem(LS_EARNED_BADGES) || '[]'); } catch(e) {}
+  const prevSet = new Set(previouslyEarned);
+  const newlyEarned = [...earned].filter(id => !prevSet.has(id));
+  // Persist current state so next visit doesn't re-animate
+  localStorage.setItem(LS_EARNED_BADGES, JSON.stringify([...earned]));
+
+  // Sort: earned first (by definition order), then locked (by definition order)
+  const sorted = [
+    ...HOF_BADGES.filter(b => earned.has(b.id)),
+    ...HOF_BADGES.filter(b => !earned.has(b.id)),
+  ];
+
+  const tiles = sorted.map((b, i) => {
+    const isEarned = earned.has(b.id);
+    const isNew = newlyEarned.includes(b.id);
+    const classes = [
+      'hof-badge',
+      isEarned ? 'earned' : 'locked',
+      isNew ? 'new' : '',
+    ].filter(Boolean).join(' ');
+    const animDelay = isNew ? `style="animation-delay:${(0.1 + i*0.05).toFixed(2)}s"` : '';
+    return `
+      <div class="${classes}" ${animDelay}
+           data-bid="${b.id}"
+           data-name="${escapeHtml(b.name)}"
+           data-desc="${escapeHtml(b.desc)}"
+           data-earned="${isEarned ? '1' : '0'}">
+        <span class="hof-badge-icon">${b.icon}</span>
+        <div class="hof-badge-name">${escapeHtml(b.name)}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="hof-sec d4 card" style="margin-bottom:14px">
+      <div class="card-head">
+        <span class="card-title">Scout Badges</span>
+        <button class="hof-badges-toggle" id="hofBadgesToggle" onclick="toggleBadges()">
+          <span id="hofBadgesToggleLabel">Show locked (${total - earnedCount})</span>
+          <svg viewBox="0 0 16 16"><path d="M3 6l5 5 5-5"/></svg>
+        </button>
+      </div>
+      <div class="hof-badges-head">
+        <div class="hof-badges-count">
+          <strong>${earnedCount}</strong> of ${total} earned
+        </div>
+      </div>
+      <div class="hof-badges-grid" id="hofBadgesGrid">${tiles}</div>
+    </div>
+  `;
+}
+
+function toggleBadges() {
+  const grid = document.getElementById('hofBadgesGrid');
+  const btn = document.getElementById('hofBadgesToggle');
+  const lbl = document.getElementById('hofBadgesToggleLabel');
+  if (!grid || !btn) return;
+  const showing = btn.classList.toggle('open');
+  const locked = grid.querySelectorAll('.hof-badge.locked');
+  locked.forEach(el => { el.style.display = showing ? '' : 'none'; });
+  if (lbl) {
+    lbl.textContent = showing
+      ? 'Hide locked'
+      : `Show locked (${locked.length})`;
+  }
+}
+
+function wireBadgeTooltips() {
+  const grid = document.getElementById('hofBadgesGrid');
+  const tip = document.getElementById('hofBadgeTip');
+  if (!grid || !tip) return;
+
+  function showTip(badgeEl) {
+    const name = badgeEl.getAttribute('data-name');
+    const desc = badgeEl.getAttribute('data-desc');
+    const isEarned = badgeEl.getAttribute('data-earned') === '1';
+    tip.innerHTML = `
+      <div class="hof-badge-tip-name">${escapeHtml(name)}</div>
+      <div class="hof-badge-tip-desc">${escapeHtml(desc)}</div>
+      <div class="hof-badge-tip-status ${isEarned ? 'earned' : 'locked'}">
+        ${isEarned ? '✓ Earned' : '🔒 Locked'}
+      </div>`;
+    const rect = badgeEl.getBoundingClientRect();
+    // Position above the badge, clamped within viewport
+    const tipRect = tip.getBoundingClientRect();
+    let left = rect.left + rect.width/2;
+    const top = rect.top - 10;
+    tip.style.left = left + 'px';
+    tip.style.top  = top + 'px';
+    tip.style.transform = 'translate(-50%, -100%)';
+    tip.classList.add('show');
+  }
+  function hideTip() { tip.classList.remove('show'); }
+
+  grid.addEventListener('mouseover', e => {
+    const b = e.target.closest('.hof-badge');
+    if (b) showTip(b);
+  });
+  grid.addEventListener('mouseout', e => {
+    const b = e.target.closest('.hof-badge');
+    if (b) hideTip();
+  });
+  // Mobile: tap shows tooltip briefly
+  grid.addEventListener('click', e => {
+    const b = e.target.closest('.hof-badge');
+    if (!b) return;
+    showTip(b);
+    setTimeout(hideTip, 2800);
+  });
+}
+
+// Hide locked badges by default on initial render
+function initBadgesCollapsed() {
+  const grid = document.getElementById('hofBadgesGrid');
+  if (!grid) return;
+  grid.querySelectorAll('.hof-badge.locked').forEach(el => { el.style.display = 'none'; });
+}
+
 function renderDiscoveryReel(players) {
   const scored = players
     .map(p => {
@@ -2580,6 +3157,7 @@ async function loadHallOfFame() {
       renderMetrics(players, batches),
       renderOnThisDay(players),
       renderAchievements(players, batches),
+      renderBadges(players, batches),
       renderDiscoveryReel(players),
       renderMoment(players),
       renderRecentAdmits(players),
@@ -2612,6 +3190,8 @@ async function loadHallOfFame() {
     wireChartTooltips();
     wireBannerSpotlight();
     wireSeasonSelector();
+    initBadgesCollapsed();
+    wireBadgeTooltips();
   } catch (e) {
     document.getElementById('hofLoading').innerHTML =
       'Could not load Hall of Fame. ' + (e.message || 'Please try again.');
