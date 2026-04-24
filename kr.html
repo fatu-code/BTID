@@ -52,6 +52,11 @@
     font-family: var(--font2); font-size: 1rem; font-weight: 800;
     color: var(--text); text-align: center;
   }
+
+  @keyframes krPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .35; transform: scale(.75); }
+  }
 </style>
 </head>
 <body>
@@ -162,7 +167,13 @@
 
         <!-- STEP 4: Save back to player -->
         <div class="kr-save-card" id="saveCard" style="display:none">
-          <div class="kr-save-label">Step 4 · Save projected height</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+            <div class="kr-save-label" style="margin-bottom:0">Step 4 · Save projected height</div>
+            <div id="calcOpenIndicator" style="display:none;align-items:center;gap:6px;font-family:var(--font2);font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;opacity:.9">
+              <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#fff;animation:krPulse 1.2s ease-in-out infinite"></span>
+              Calculator open
+            </div>
+          </div>
           <div style="font-family:var(--font2);font-size:0.85rem;font-weight:700;margin-bottom:12px;line-height:1.5" id="saveCardIntro">
             Enter the projected adult height from the calculation below, then save it to <span id="saveCardPlayerName" style="font-weight:900"></span>'s KR field.
           </div>
@@ -261,7 +272,8 @@ function loadFromPlayer() {
   document.getElementById('krDadFt').value = dad.ft;
   document.getElementById('krDadIn').value = dad.in;
 
-  hideSaveCard();
+  // Reveal the save card right away so the destination is visible from the start
+  showSaveCard();
 }
 
 // ── RUN CALCULATION ───────────────────────────────────────────────
@@ -306,10 +318,30 @@ function runCalculation() {
     x: 'Calculate'
   });
   const url = 'https://www.calculator.net/height-calculator.html?' + params.toString();
-  window.open(url, '_blank');
 
-  // Reveal the save card so Joshua can type the result back
+  // Open calculator.net as a centered popup window.
+  // Feature-string triggers a real popup on desktop; on mobile,
+  // browsers generally ignore the size and fall back to a new tab (which is fine).
+  const popupWidth = 620;
+  const popupHeight = 760;
+  const left = Math.max(0, Math.round((screen.width  - popupWidth)  / 2));
+  const top  = Math.max(0, Math.round((screen.height - popupHeight) / 2));
+  const features =
+    'popup=yes,' +
+    'width=' + popupWidth + ',height=' + popupHeight + ',' +
+    'left=' + left + ',top=' + top + ',' +
+    'scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no';
+
+  let popup = window.open(url, 'btidKrCalc', features);
+  if (!popup || popup.closed) {
+    // Popup was blocked - fall back to a new tab
+    popup = window.open(url, '_blank');
+  }
+
+  // Reveal the save card and focus the first input so Joshua can type/paste immediately
   showSaveCard();
+  startPopupWatch(popup);
+  focusResultInput();
 }
 
 // ── SAVE CARD VISIBILITY ──────────────────────────────────────────
@@ -325,8 +357,8 @@ function showSaveCard() {
 
   if (loadedPlayer) {
     document.getElementById('saveCardPlayerName').textContent = loadedPlayer.name;
-    intro.innerHTML = 'Copy the projected height from the calculator tab, then save it to <span style="font-weight:900">' + loadedPlayer.name + "'s</span> KR field.";
-    hint.textContent = 'The value will be saved as this player\'s projected adult height.';
+    intro.innerHTML = 'After running the calculation, enter the projected adult height here and save it to <span style="font-weight:900">' + loadedPlayer.name + "'s</span> record. You can paste the full result - BTID will parse \"5'9\\\"\", \"5 ft 9 in\", or even \"175 cm\" automatically.";
+    hint.textContent = 'Press Enter after typing the inches to save.';
     btn.disabled = false;
     btn.style.opacity = '1';
     btn.style.cursor = 'pointer';
@@ -375,6 +407,116 @@ function resetForm() {
   document.getElementById('krSex').value = 'm';
   hideSaveCard();
   loadedPlayer = null;
+}
+
+// ── FRICTION REDUCERS (popup watch, auto-focus, smart paste, enter-to-save) ──
+
+// Put cursor focus on the ft input so Joshua can type/paste immediately
+// when he comes back from the calculator.net popup.
+function focusResultInput() {
+  // Small delay so the save card has finished rendering before we focus.
+  setTimeout(function() {
+    const el = document.getElementById('krResultFt');
+    if (el) { el.focus(); el.select && el.select(); }
+  }, 80);
+}
+
+// Show a subtle "Calculator open" indicator while the popup is alive.
+// Poll the popup window; when it closes, clear the indicator and
+// return focus to the BTID input so Joshua can type the result.
+let popupWatchTimer = null;
+function startPopupWatch(popup) {
+  stopPopupWatch();
+  const indicator = document.getElementById('calcOpenIndicator');
+  if (indicator) indicator.style.display = 'inline-flex';
+
+  if (!popup) return;
+  popupWatchTimer = setInterval(function() {
+    if (popup.closed) {
+      stopPopupWatch();
+      // When the user closes calculator.net, assume they've got the number
+      // in hand - put focus back on the BTID input.
+      focusResultInput();
+    }
+  }, 500);
+}
+function stopPopupWatch() {
+  if (popupWatchTimer) { clearInterval(popupWatchTimer); popupWatchTimer = null; }
+  const indicator = document.getElementById('calcOpenIndicator');
+  if (indicator) indicator.style.display = 'none';
+}
+
+// Parse a pasted string like "5'9\"", "5 ft 9 in", "5'9", "69", "175 cm", "175.3cm"
+// into { ft, in }. Returns null if it can't figure it out.
+function parsePastedHeight(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim().toLowerCase();
+  if (!s) return null;
+
+  // "175 cm" or "175.3cm"
+  const cm = s.match(/^(\d+(?:\.\d+)?)\s*cm$/);
+  if (cm) {
+    const totalIn = parseFloat(cm[1]) / 2.54;
+    return { ft: String(Math.floor(totalIn / 12)), in: String(Math.round(totalIn % 12)) };
+  }
+
+  // "5 ft 9 in" or "5ft 9in" or "5 feet 9 inches"
+  const worded = s.match(/^(\d+)\s*(?:ft|feet|foot|')\s*(\d+(?:\.\d+)?)?\s*(?:in|inches|inch|")?$/);
+  if (worded) return { ft: worded[1], in: worded[2] || '0' };
+
+  // "5'9\"" or "5'9" or "5' 9"
+  const shorthand = s.match(/^(\d+)\s*[''']\s*(\d+(?:\.\d+)?)?\s*["'"]?$/);
+  if (shorthand) return { ft: shorthand[1], in: shorthand[2] || '0' };
+
+  // Plain number: 69 -> 5 ft 9 in (total inches), but only if >= 40 and <= 90
+  const plain = s.match(/^(\d+(?:\.\d+)?)$/);
+  if (plain) {
+    const n = parseFloat(plain[1]);
+    if (n >= 40 && n <= 90) {
+      return { ft: String(Math.floor(n / 12)), in: String(Math.round(n % 12)) };
+    }
+    // Treat as just the feet value otherwise (e.g. 5, 6) - leave inches blank
+    if (n >= 3 && n <= 7) return { ft: String(Math.floor(n)), in: '' };
+  }
+
+  return null;
+}
+
+// Hook up paste + enter-to-save on the result inputs.
+function wireResultInputHandlers() {
+  const ftInput = document.getElementById('krResultFt');
+  const inInput = document.getElementById('krResultIn');
+  if (!ftInput || !inInput) return;
+
+  // Smart paste: if Joshua pastes a full height string into either field,
+  // parse it and fill BOTH ft + in automatically.
+  function handlePaste(e) {
+    const pasted = (e.clipboardData || window.clipboardData).getData('text');
+    const parsed = parsePastedHeight(pasted);
+    if (parsed) {
+      e.preventDefault();
+      ftInput.value = parsed.ft;
+      inInput.value = parsed.in;
+      inInput.focus();
+    }
+  }
+  ftInput.addEventListener('paste', handlePaste);
+  inInput.addEventListener('paste', handlePaste);
+
+  // Enter-to-save on either field
+  function handleEnter(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveToPlayer();
+    }
+  }
+  ftInput.addEventListener('keydown', handleEnter);
+  inInput.addEventListener('keydown', handleEnter);
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireResultInputHandlers);
+} else {
+  wireResultInputHandlers();
 }
 </script>
 </body>
