@@ -968,14 +968,36 @@ function renderWrapUp(players) {
 }
 
 // ── MAIN ────────────────────────────────────────────────────────
+
+// Normalize any API response into an array. Handles:
+//   [...]                  (direct array)
+//   { players: [...] }     (wrapped under .players)
+//   { batches: [...] }     (wrapped under .batches)
+//   { data: [...] }        (wrapped under .data)
+//   { rows: [...] }        (wrapped under .rows)
+//   anything else          → []
+function toArray(res) {
+  if (Array.isArray(res)) return res;
+  if (!res || typeof res !== 'object') return [];
+  if (Array.isArray(res.players)) return res.players;
+  if (Array.isArray(res.batches)) return res.batches;
+  if (Array.isArray(res.data))    return res.data;
+  if (Array.isArray(res.rows))    return res.rows;
+  // Last resort: find the first array-valued property
+  for (const k of Object.keys(res)) {
+    if (Array.isArray(res[k])) return res[k];
+  }
+  return [];
+}
+
 async function loadHallOfFame() {
   try {
     const [playersRes, batchesRes] = await Promise.all([
-      PlayerAPI.getAll(),
+      PlayerAPI.getAll().catch(() => []),
       TryoutAPI.getAll().catch(() => [])
     ]);
-    const players = playersRes.players || playersRes || [];
-    const batches = batchesRes.batches || batchesRes || [];
+    const players = toArray(playersRes);
+    const batches = toArray(batchesRes);
 
     const html = [
       renderHero(players, batches),
