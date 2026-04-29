@@ -431,6 +431,19 @@
     opacity: 0.35;
   }
   .hof-find-pill { position: absolute; top: 8px; right: 8px; }
+  .hof-find-pill-stack {
+    position: absolute;
+    top: 8px; right: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    max-width: calc(100% - 16px);
+  }
+  .hof-find-pill-stack .pill {
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  }
   .hof-find-body { padding: 10px 12px 12px; }
   .hof-find-name {
     font-family: var(--font2);
@@ -1467,25 +1480,40 @@ function inSeason(p, year) {
   return s !== null && s === year;
 }
 
-function classifyRarity(p) {
+// ── Velocity tier — ABSOLUTE thresholds, no age adjustment ──────
+// Joshua's call: Elite is 92+ mph regardless of age. Strong, Solid follow
+// the same scout-grade absolute scale. Anything below 80 doesn't get a tier.
+function classifyVelo(p) {
   const v = bestVelo(p);
-  const a = age(p.dob);
   if (v === null) return null;
-  const baselines = [
-    { maxAge: 10, baseline: 45 },
-    { maxAge: 12, baseline: 52 },
-    { maxAge: 14, baseline: 60 },
-    { maxAge: 16, baseline: 68 },
-    { maxAge: 18, baseline: 74 },
-    { maxAge: 99, baseline: 78 },
-  ];
-  let base = 60;
-  if (a !== null) { for (const t of baselines) { if (a <= t.maxAge) { base = t.baseline; break; } } }
-  const delta = v - base;
-  if (delta >= 10) return 'ELITE';
-  if (delta >= 5)  return 'PROMISING';
+  if (v >= 92) return 'ELITE';
+  if (v >= 85) return 'STRONG';
+  if (v >= 80) return 'SOLID';
   return null;
 }
+
+// ── Ahead of his age — separate signal ──────────────────────────
+// 5+ mph above the age baseline. Independent from velocity tier — a kid
+// can be both "Strong" AND "Ahead of his age", or just one, or neither.
+const AGE_BASELINES = [
+  { maxAge: 10, baseline: 45 },
+  { maxAge: 12, baseline: 52 },
+  { maxAge: 14, baseline: 60 },
+  { maxAge: 16, baseline: 68 },
+  { maxAge: 18, baseline: 74 },
+  { maxAge: 99, baseline: 78 },
+];
+function isAheadOfAge(p) {
+  const v = bestVelo(p);
+  const a = age(p.dob);
+  if (v === null || a === null) return false;
+  let base = 60;
+  for (const t of AGE_BASELINES) { if (a <= t.maxAge) { base = t.baseline; break; } }
+  return (v - base) >= 5;
+}
+
+// Backwards-compat shim — anything still calling classifyRarity() gets mapped to the new tier
+function classifyRarity(p) { return classifyVelo(p); }
 
 function countUp(el, target, duration) {
   duration = duration || 900;
@@ -1730,15 +1758,15 @@ function computeAchievements(players, batches) {
     });
   }
 
-  // 5. Rare find in the reel
-  const rarities = players.map(classifyRarity).filter(Boolean);
-  const eliteCount = rarities.filter(r => r === 'ELITE').length;
+  // 5. Elite finds
+  const tiers = players.map(classifyVelo).filter(Boolean);
+  const eliteCount = tiers.filter(r => r === 'ELITE').length;
   if (eliteCount >= 1) {
     achievements.push({
       id: 'first_elite',
       emoji: '💎',
-      title: eliteCount === 1 ? 'First Elite-rarity discovery' : eliteCount + ' Elite-rarity players in your pipeline',
-      sub: 'Age-adjusted velocity · top 1%',
+      title: eliteCount === 1 ? 'First Elite-velocity discovery' : eliteCount + ' Elite-velocity players in your pipeline',
+      sub: '92+ mph · scout-grade arm',
     });
   }
   if (eliteCount >= 5) {
@@ -1747,6 +1775,19 @@ function computeAchievements(players, batches) {
       emoji: '🔥',
       title: '5+ Elite players discovered',
       sub: 'Remarkable scouting eye',
+    });
+  }
+
+  // 6. Ahead-of-age finds
+  const aheadCount = players.filter(isAheadOfAge).length;
+  if (aheadCount >= 1) {
+    achievements.push({
+      id: 'first_ahead_of_age',
+      emoji: '🌱',
+      title: aheadCount === 1
+        ? 'First "Ahead of his age" player spotted'
+        : aheadCount + ' players ahead of their age',
+      sub: 'Eye for projection',
     });
   }
 
@@ -1819,10 +1860,11 @@ const HOF_BADGES = [
   { id: 'districts_20',    icon: '🌐', name: 'Twenty Flags',     desc: "20 districts. Nationwide footprint." },
   { id: 'all_regions',     icon: '🇺🇬', name: 'All Regions',      desc: "Players from all 4 regions of Uganda." },
 
-  // ── Talent eye — rarity & tiers (7) ─────
-  { id: 'first_elite',     icon: '💎', name: 'Rough Diamond',    desc: "First Elite-rarity player discovered." },
-  { id: 'elite_5',         icon: '💍', name: 'Jewel Box',        desc: "5 Elite-rarity players in your pipeline." },
-  { id: 'elite_10',        icon: '👁️', name: 'The Eye',          desc: "10 Elite-rarity players. You see what others miss." },
+  // ── Talent eye — rarity & tiers (8) ─────
+  { id: 'first_elite',     icon: '💎', name: 'Rough Diamond',    desc: "First 92+ mph player discovered. Scout-grade arm." },
+  { id: 'elite_5',         icon: '💍', name: 'Jewel Box',        desc: "5 players throwing 92+ mph in your pipeline." },
+  { id: 'elite_10',        icon: '👁️', name: 'The Eye',          desc: "10 players throwing 92+ mph. You see what others miss." },
+  { id: 'eye_projection',  icon: '🌱', name: 'Eye for Projection', desc: "First \"ahead of his age\" player spotted. The future is already here." },
   { id: 'first_t1',        icon: '⭐', name: 'Top Shelf',         desc: "First Tier 1 admit. The best of the best." },
   { id: 't1_10',           icon: '🌟', name: 'Gold Standard',    desc: "10 Tier 1 admits. Elite program builder." },
   { id: 'velo_80',         icon: '⚡', name: 'Lightning Arm',    desc: "Scouted a player throwing 80+ mph." },
@@ -1864,10 +1906,9 @@ const HOF_BADGES = [
   { id: 'schools_10',      icon: '🎓', name: 'Campus Tour',      desc: "Players from 10+ different schools." },
   { id: 'ages_4',          icon: '👥', name: 'All Ages',         desc: "Players across 4+ age classes." },
 
-  // ── Pipeline depth (3) ──────────────────
+  // ── Pipeline depth (2) ──────────────────
   { id: 'deep_bench',      icon: '🪑', name: 'Deep Bench',       desc: "30+ active players in your pipeline." },
   { id: 'self_made',       icon: '🌟', name: 'Self-Made',        desc: "A player improved from Tier 3 up to Tier 1." },
-  { id: 'pipeline_100',    icon: '🏗️', name: 'Pipeline Builder', desc: "100+ players in your pipeline overall." },
 
   // ── Tenure & loyalty (1) ────────────────
   { id: 'day_one',         icon: '🏛️', name: 'Day One',          desc: "Scouting for BTID since 2019. Foundation." },
@@ -1906,12 +1947,15 @@ function computeEarnedBadges(players, batches) {
   if (districts.size >= 20)        earned.add('districts_20');
   if (divisions.size >= 4)         earned.add('all_regions');
 
-  // ── Rarity & tiers ──
-  const rarities = players.map(classifyRarity).filter(Boolean);
-  const eliteN = rarities.filter(r => r === 'ELITE').length;
+  // ── Rarity & tiers (absolute velocity) ──
+  const tiers = players.map(classifyVelo).filter(Boolean);
+  const eliteN = tiers.filter(r => r === 'ELITE').length;
   if (eliteN >= 1)                 earned.add('first_elite');
   if (eliteN >= 5)                 earned.add('elite_5');
   if (eliteN >= 10)                earned.add('elite_10');
+
+  // Eye for Projection — first ahead-of-age player
+  if (players.some(isAheadOfAge))  earned.add('eye_projection');
 
   const t1s = admitted.filter(p => String(p.tier) === '1').length;
   if (t1s >= 1)                    earned.add('first_t1');
@@ -2069,7 +2113,6 @@ function computeEarnedBadges(players, batches) {
   // ── Pipeline depth ──
   const activePipeline = players.filter(p => p.outcome !== 'eliminated').length;
   if (activePipeline >= 30)        earned.add('deep_bench');
-  if (players.length >= 100)       earned.add('pipeline_100');
 
   // Self-made: tier improvement (init tier 3 → current tier 1)
   // We don't track tier history, so use a proxy: admitted player whose init_notes
@@ -2225,14 +2268,20 @@ function initBadgesCollapsed() {
 function renderDiscoveryReel(players) {
   const scored = players
     .map(p => {
-      const rarity = classifyRarity(p);
-      if (!rarity) return null;
-      return { p, rarity, v: bestVelo(p) };
+      const tier = classifyVelo(p);
+      const ahead = isAheadOfAge(p);
+      // Show in reel if they have a velocity tier OR they're ahead of their age
+      if (!tier && !ahead) return null;
+      return { p, tier, ahead, v: bestVelo(p) };
     })
     .filter(Boolean)
     .sort((a, b) => {
-      if (a.rarity !== b.rarity) return a.rarity === 'ELITE' ? -1 : 1;
-      return b.v - a.v;
+      // Sort by tier rank first (Elite > Strong > Solid > none), then by velocity desc
+      const rank = { ELITE: 3, STRONG: 2, SOLID: 1 };
+      const ar = a.tier ? rank[a.tier] : 0;
+      const br = b.tier ? rank[b.tier] : 0;
+      if (ar !== br) return br - ar;
+      return (b.v||0) - (a.v||0);
     })
     .slice(0, 8);
 
@@ -2250,36 +2299,60 @@ function renderDiscoveryReel(players) {
       </div>`;
   }
 
-  const eliteCount = scored.filter(s => s.rarity === 'ELITE').length;
-  const promiseCount = scored.filter(s => s.rarity === 'PROMISING').length;
+  const eliteCount   = scored.filter(s => s.tier === 'ELITE').length;
+  const strongCount  = scored.filter(s => s.tier === 'STRONG').length;
+  const solidCount   = scored.filter(s => s.tier === 'SOLID').length;
+  const aheadCount   = scored.filter(s => s.ahead).length;
 
-  const cards = scored.map(({ p, rarity, v }) => {
+  const tierPillClass = {
+    'ELITE':  'pill-green',
+    'STRONG': 'pill-blue',
+    'SOLID':  'pill-muted',
+  };
+
+  const cards = scored.map(({ p, tier, ahead, v }) => {
     const photo = p.photo_url
       ? `<div class="hof-find-photo" style="background-image:url('${escapeHtml(p.photo_url)}')"></div>`
       : `<div class="hof-find-photo"><div class="hof-find-ini">${initials(p.name)}</div></div>`;
-    const pillClass = rarity === 'ELITE' ? 'pill-green' : 'pill-amber';
+
+    // Build stacked pills: tier pill on top, ahead-of-age underneath if applicable
+    const pills = [];
+    if (tier)  pills.push(`<span class="pill ${tierPillClass[tier]}">${tier}</span>`);
+    if (ahead) pills.push(`<span class="pill pill-amber">🌱 AHEAD OF AGE</span>`);
+    const pillStack = `<div class="hof-find-pill-stack">${pills.join('')}</div>`;
+
+    // For filter data attributes — combine tier + ahead so filters can target either
+    const filterTags = [];
+    if (tier)  filterTags.push(tier);
+    if (ahead) filterTags.push('AHEAD');
+
     return `
-      <a class="hof-find" data-rarity="${rarity}" href="profile.html?id=${encodeURIComponent(p.id)}">
+      <a class="hof-find" data-tags="${filterTags.join(',')}" href="profile.html?id=${encodeURIComponent(p.id)}">
         ${photo}
-        <span class="pill ${pillClass} hof-find-pill">${rarity}</span>
+        ${pillStack}
         <div class="hof-find-body">
           <div class="hof-find-name">${escapeHtml(p.name||'Unknown')}</div>
           <div class="hof-find-meta">${escapeHtml(p.district||'—')} · ${escapeHtml(p.class||'—')}</div>
-          <div class="hof-find-stat">${v} <span class="hof-find-stat-sub">mph</span></div>
+          <div class="hof-find-stat">${v||'—'} <span class="hof-find-stat-sub">mph</span></div>
         </div>
       </a>
     `;
   }).join('');
 
+  // Build filter pills only for tiers that actually have entries
+  const filterButtons = [
+    `<button class="hof-filter-btn active" data-filter="ALL">All · ${scored.length}</button>`,
+    eliteCount  ? `<button class="hof-filter-btn" data-filter="ELITE">Elite · ${eliteCount}</button>` : '',
+    strongCount ? `<button class="hof-filter-btn" data-filter="STRONG">Strong · ${strongCount}</button>` : '',
+    solidCount  ? `<button class="hof-filter-btn" data-filter="SOLID">Solid · ${solidCount}</button>` : '',
+    aheadCount  ? `<button class="hof-filter-btn" data-filter="AHEAD">🌱 Ahead · ${aheadCount}</button>` : '',
+  ].filter(Boolean).join('');
+
   return `
     <div class="hof-sec d5 card" style="margin-bottom:14px">
       <div class="card-head">
         <span class="card-title">Rare Finds</span>
-        <div class="hof-filter-bar" id="hofFilterBar">
-          <button class="hof-filter-btn active" data-filter="ALL">All · ${scored.length}</button>
-          ${eliteCount ? `<button class="hof-filter-btn" data-filter="ELITE">Elite · ${eliteCount}</button>` : ''}
-          ${promiseCount ? `<button class="hof-filter-btn" data-filter="PROMISING">Promising · ${promiseCount}</button>` : ''}
-        </div>
+        <div class="hof-filter-bar" id="hofFilterBar">${filterButtons}</div>
       </div>
       <div class="hof-reel" id="hofReel">${cards}</div>
     </div>
@@ -2852,8 +2925,9 @@ function wireFilterBar() {
     const reel = document.getElementById('hofReel');
     if (!reel) return;
     reel.querySelectorAll('.hof-find').forEach(card => {
-      const r = card.getAttribute('data-rarity');
-      card.style.display = (filter === 'ALL' || r === filter) ? '' : 'none';
+      const tags = (card.getAttribute('data-tags') || '').split(',').filter(Boolean);
+      const matches = filter === 'ALL' || tags.includes(filter);
+      card.style.display = matches ? '' : 'none';
     });
   });
 }
