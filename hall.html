@@ -396,7 +396,6 @@
 
   /* Tier-specific accents — each gets its own color signature */
   .hof-tier.elite  { --tier-color: var(--green); }
-  .hof-tier.strong { --tier-color: var(--blue); }
   .hof-tier.ahead  { --tier-color: var(--amber); }
 
   .hof-tier-head {
@@ -426,7 +425,6 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
   .hof-tier.elite  .hof-tier-badge { background: var(--green); }
-  .hof-tier.strong .hof-tier-badge { background: var(--blue); }
   .hof-tier.ahead  .hof-tier-badge { background: var(--amber); }
 
   .hof-tier-title {
@@ -454,7 +452,6 @@
     line-height: 1;
   }
   .hof-tier.elite  .hof-tier-count { color: var(--green-dark); }
-  .hof-tier.strong .hof-tier-count { color: var(--blue); }
   .hof-tier.ahead  .hof-tier-count { color: var(--amber-text, var(--amber)); }
 
   .hof-reel {
@@ -500,11 +497,6 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 18px var(--green-shadow);
   }
-  .hof-tier.strong .hof-find:hover {
-    border-color: var(--blue);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(59,130,246,0.18);
-  }
   .hof-tier.ahead .hof-find:hover {
     border-color: var(--amber);
     transform: translateY(-2px);
@@ -519,7 +511,6 @@
     border-bottom: 1.5px solid var(--border);
   }
   /* Tier-aware initials background tints */
-  .hof-tier.strong .hof-find-photo:not([style]) { background: var(--blue-pale, #e0ecfd); }
   .hof-tier.ahead  .hof-find-photo:not([style]) { background: var(--amber-pale, #fef3c7); }
 
   .hof-find-ini {
@@ -528,12 +519,23 @@
     color: var(--green-dark);
     opacity: 0.35;
   }
-  .hof-tier.strong .hof-find-ini { color: var(--blue); }
   .hof-tier.ahead  .hof-find-ini { color: var(--amber-text, #92400e); }
 
   /* Velocity stat text color matches tier */
-  .hof-tier.strong .hof-find-stat { color: var(--blue); }
   .hof-tier.ahead  .hof-find-stat { color: var(--amber-text, #92400e); }
+
+  /* Reason line for Ahead-of-his-age cards */
+  .hof-ahead-reason {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(245,158,11,0.3);
+    font-family: var(--font2);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--amber-text, #92400e);
+    line-height: 1.3;
+    font-style: italic;
+  }
 
   .hof-find-pill {
     position: absolute;
@@ -1560,15 +1562,14 @@ function inSeason(p, year) {
   return s !== null && s === year;
 }
 
-// ── Velocity tier — ABSOLUTE thresholds, no age adjustment ──────
-// Joshua's call: Elite is 92+ mph regardless of age. Strong, Solid follow
-// the same scout-grade absolute scale. Anything below 80 doesn't get a tier.
+// ── Velocity tier — ABSOLUTE threshold, no age adjustment ──────
+// Elite is the only absolute tier: 92+ mph. Below that, players are
+// surfaced via the "Ahead of his age" signal instead. Strong/Solid
+// were dropped because they overlapped heavily with Ahead-of-age.
 function classifyVelo(p) {
   const v = bestVelo(p);
   if (v === null) return null;
   if (v >= 92) return 'ELITE';
-  if (v >= 85) return 'STRONG';
-  if (v >= 80) return 'SOLID';
   return null;
 }
 
@@ -1590,6 +1591,48 @@ function isAheadOfAge(p) {
   let base = 60;
   for (const t of AGE_BASELINES) { if (a <= t.maxAge) { base = t.baseline; break; } }
   return (v - base) >= 5;
+}
+
+// Compute WHY a player is ahead of his age. Returns:
+//   { mphOverBaseline, ageOf, ageEquivalent, scoutLine, statLine }
+// scoutLine = human framing ("Throws like a 16yo")
+// statLine  = analytical framing ("+13 mph over age 13 baseline")
+// ageEquivalent = the higher age bracket this kid's velocity matches
+function aheadOfAgeReason(p) {
+  const v = bestVelo(p);
+  const a = age(p.dob);
+  if (v === null || a === null) return null;
+  let base = 60;
+  for (const t of AGE_BASELINES) { if (a <= t.maxAge) { base = t.baseline; break; } }
+  const delta = v - base;
+  if (delta < 5) return null;
+
+  // "Throws like a Xyo" — find the highest age bracket whose baseline this kid's velo meets/exceeds
+  // Walk through baselines and find the highest maxAge whose baseline <= v
+  let ageEquivalent = null;
+  for (const t of AGE_BASELINES) {
+    if (v >= t.baseline) ageEquivalent = t.maxAge;
+  }
+  // Cap the display: if ageEquivalent is 99 (the catch-all bracket), say "adult"
+  const ageOfDisplay = Math.floor(a);
+  let scoutLine;
+  if (ageEquivalent === null || ageEquivalent <= ageOfDisplay) {
+    // Edge case: somehow above age but not above next bracket. Fall back to mph-over.
+    scoutLine = `+${Math.round(delta)} mph over age ${ageOfDisplay} baseline`;
+  } else if (ageEquivalent >= 99) {
+    scoutLine = `Throws like an adult · age ${ageOfDisplay}`;
+  } else {
+    scoutLine = `Throws like a ${ageEquivalent}-year-old · age ${ageOfDisplay}`;
+  }
+
+  return {
+    mphOverBaseline: Math.round(delta),
+    ageOf: ageOfDisplay,
+    baseline: base,
+    ageEquivalent,
+    scoutLine,
+    statLine: `${v} mph · +${Math.round(delta)} over age ${ageOfDisplay} baseline (${base})`,
+  };
 }
 
 // Backwards-compat shim — anything still calling classifyRarity() gets mapped to the new tier
@@ -2346,33 +2389,28 @@ function initBadgesCollapsed() {
 }
 
 // ── TALENT TIERS ────────────────────────────────────────────────
-// Three independent color-coded sections. Each shows up to 8 of its own
-// players. Players appear in a tier honestly — a Strong + ahead-of-age
-// kid will show in BOTH sections. Sections with zero players are
-// hidden entirely (they don't render an empty card on the page).
+// Two color-coded sections: Elite (absolute 92+ mph) and Ahead of his age
+// (5+ mph above age baseline). Each section is independent — players can
+// appear in both if they qualify for both, which signals exceptional talent.
+// Sections with zero players don't render at all.
 
 function renderTalentTiers(players) {
-  // Bucket players into the three groups by their actual qualifications
   const elite = [];
-  const strong = [];
   const ahead = [];
 
   players.forEach(p => {
     const tier = classifyVelo(p);
     const v = bestVelo(p);
-    if (tier === 'ELITE')  elite.push({ p, v });
-    if (tier === 'STRONG') strong.push({ p, v });
-    if (isAheadOfAge(p))   ahead.push({ p, v });
+    if (tier === 'ELITE') elite.push({ p, v });
+    if (isAheadOfAge(p))  ahead.push({ p, v, reason: aheadOfAgeReason(p) });
   });
 
-  // Sort each by velocity desc, take top 8
   const sortAndCap = arr => arr.sort((a,b) => (b.v||0) - (a.v||0)).slice(0, 8);
-  const eliteTop  = sortAndCap(elite);
-  const strongTop = sortAndCap(strong);
-  const aheadTop  = sortAndCap(ahead);
+  const eliteTop = sortAndCap(elite);
+  const aheadTop = sortAndCap(ahead);
 
-  // If everything is empty, show one combined empty state instead of three
-  if (eliteTop.length === 0 && strongTop.length === 0 && aheadTop.length === 0) {
+  // Combined empty state if both sections have nothing
+  if (eliteTop.length === 0 && aheadTop.length === 0) {
     return `
       <div class="hof-sec d5 card" style="margin-bottom:14px">
         <div class="card-head"><span class="card-title">Talent Tiers</span></div>
@@ -2381,75 +2419,43 @@ function renderTalentTiers(players) {
             <svg viewBox="0 0 16 16"><path d="M8 2l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z"/></svg>
           </div>
           <div class="empty-title">No tiered players yet</div>
-          <div class="empty-sub">Add velocity readings to see Elite, Strong, and Ahead-of-Age finds.</div>
+          <div class="empty-sub">Add velocity readings and date-of-birth to see Elite and Ahead-of-Age finds.</div>
         </div>
       </div>`;
   }
 
   return [
-    renderTierSection({
-      key: 'elite',
-      delayClass: 'd5',
-      title: 'Elite',
-      rule: '92+ mph · Scout-grade arm',
-      icon: '💎',
-      pillClass: 'pill-green',
-      items: eliteTop,
-      lockedMessage: null,  // Always render even if empty when others have data
-    }),
-    renderTierSection({
-      key: 'strong',
-      delayClass: 'd6',
-      title: 'Strong',
-      rule: '85–91 mph · Real heat',
-      icon: '⚡',
-      pillClass: 'pill-blue',
-      items: strongTop,
-      lockedMessage: null,
-    }),
-    renderTierSection({
-      key: 'ahead',
-      delayClass: 'd7',
-      title: 'Ahead of his age',
-      rule: '5+ mph above age baseline · Future talent',
-      icon: '🌱',
-      pillClass: 'pill-amber',
-      items: aheadTop,
-      lockedMessage: null,
-    }),
+    renderEliteSection(eliteTop),
+    renderAheadSection(aheadTop),
   ].filter(Boolean).join('');
 }
 
-function renderTierSection({ key, delayClass, title, rule, icon, pillClass, items }) {
-  // Don't render the section at all if it has zero players. Cleaner than empty cards.
+function renderEliteSection(items) {
   if (items.length === 0) return '';
-
   const cards = items.map(({ p, v }) => {
     const photo = p.photo_url
       ? `<div class="hof-find-photo" style="background-image:url('${escapeHtml(p.photo_url)}')"></div>`
       : `<div class="hof-find-photo"><div class="hof-find-ini">${initials(p.name)}</div></div>`;
-    const pillLabel = key === 'ahead' ? '🌱' : (v ? v + ' mph' : '');
     return `
       <a class="hof-find" href="profile.html?id=${encodeURIComponent(p.id)}">
         ${photo}
-        ${pillLabel ? `<span class="pill ${pillClass} hof-find-pill">${pillLabel}</span>` : ''}
+        <span class="pill pill-green hof-find-pill">${v} mph</span>
         <div class="hof-find-body">
           <div class="hof-find-name">${escapeHtml(p.name||'Unknown')}</div>
           <div class="hof-find-meta">${escapeHtml(p.district||'—')} · ${escapeHtml(p.class||'—')}</div>
-          <div class="hof-find-stat">${v != null ? v : '—'} <span class="hof-find-stat-sub">mph</span></div>
+          <div class="hof-find-stat">${v} <span class="hof-find-stat-sub">mph</span></div>
         </div>
       </a>
     `;
   }).join('');
-
   return `
-    <div class="hof-sec ${delayClass} hof-tier ${key}">
+    <div class="hof-sec d5 hof-tier elite">
       <div class="hof-tier-head">
         <div class="hof-tier-title-wrap">
-          <div class="hof-tier-badge">${icon}</div>
+          <div class="hof-tier-badge">💎</div>
           <div>
-            <div class="hof-tier-title">${title}</div>
-            <div class="hof-tier-rule">${rule}</div>
+            <div class="hof-tier-title">Elite</div>
+            <div class="hof-tier-rule">92+ mph · Scout-grade arm</div>
           </div>
         </div>
         <div class="hof-tier-count">${items.length}</div>
@@ -2459,7 +2465,53 @@ function renderTierSection({ key, delayClass, title, rule, icon, pillClass, item
   `;
 }
 
-// Backwards-compat wrapper so the main loadHallOfFame() call still works
+function renderAheadSection(items) {
+  if (items.length === 0) return '';
+  const cards = items.map(({ p, v, reason }) => {
+    const photo = p.photo_url
+      ? `<div class="hof-find-photo" style="background-image:url('${escapeHtml(p.photo_url)}')"></div>`
+      : `<div class="hof-find-photo"><div class="hof-find-ini">${initials(p.name)}</div></div>`;
+
+    // The reason line below velocity — human framing always shown
+    const reasonLine = reason
+      ? `<div class="hof-ahead-reason">${escapeHtml(reason.scoutLine)}</div>`
+      : '';
+
+    // data-* attrs for hover tooltip (analytical detail)
+    const tipData = reason
+      ? `data-tip-name="${escapeHtml(p.name||'Unknown')}" data-tip-stat="${escapeHtml(reason.statLine)}"`
+      : '';
+
+    return `
+      <a class="hof-find hof-find-ahead" href="profile.html?id=${encodeURIComponent(p.id)}" ${tipData}>
+        ${photo}
+        <span class="pill pill-amber hof-find-pill">🌱</span>
+        <div class="hof-find-body">
+          <div class="hof-find-name">${escapeHtml(p.name||'Unknown')}</div>
+          <div class="hof-find-meta">${escapeHtml(p.district||'—')} · ${escapeHtml(p.class||'—')}</div>
+          <div class="hof-find-stat">${v != null ? v : '—'} <span class="hof-find-stat-sub">mph</span></div>
+          ${reasonLine}
+        </div>
+      </a>
+    `;
+  }).join('');
+  return `
+    <div class="hof-sec d6 hof-tier ahead" id="hofAheadSection">
+      <div class="hof-tier-head">
+        <div class="hof-tier-title-wrap">
+          <div class="hof-tier-badge">🌱</div>
+          <div>
+            <div class="hof-tier-title">Ahead of his age</div>
+            <div class="hof-tier-rule">5+ mph above age baseline · Future talent</div>
+          </div>
+        </div>
+        <div class="hof-tier-count">${items.length}</div>
+      </div>
+      <div class="hof-reel">${cards}</div>
+    </div>
+  `;
+}
+
 function renderDiscoveryReel(players) { return renderTalentTiers(players); }
 
 // ── MOMENT OF THE SEASON ────────────────────────────────────────
@@ -3072,6 +3124,44 @@ function wireChartTooltips() {
   });
 }
 
+// Wire tooltips for Ahead-of-his-age cards: shows the analytical detail
+// (e.g. "+13 mph over age 13 baseline (60)") on hover. The card itself
+// already shows the human-friendly "Throws like a 16yo" line inline.
+function wireAheadTooltips() {
+  const section = document.getElementById('hofAheadSection');
+  const tip = document.getElementById('hofTooltip');
+  if (!section || !tip) return;
+
+  function showTip(card) {
+    const name = card.getAttribute('data-tip-name');
+    const stat = card.getAttribute('data-tip-stat');
+    if (!name || !stat) return;
+    tip.innerHTML = '<strong>' + escapeHtml(name) + '</strong><br>' + escapeHtml(stat);
+    const rect = card.getBoundingClientRect();
+    tip.style.left = (rect.left + rect.width/2) + 'px';
+    tip.style.top  = (rect.top - 8) + 'px';
+    tip.classList.add('show');
+  }
+  function hideTip() { tip.classList.remove('show'); }
+
+  section.addEventListener('mouseover', e => {
+    const card = e.target.closest('.hof-find-ahead');
+    if (card) showTip(card);
+  });
+  section.addEventListener('mouseout', e => {
+    if (e.target.closest('.hof-find-ahead')) hideTip();
+  });
+  // Touch support: tap shows tooltip briefly without navigating.
+  // We don't preventDefault — the link still works on a second tap.
+  section.addEventListener('touchstart', e => {
+    const card = e.target.closest('.hof-find-ahead');
+    if (card) {
+      showTip(card);
+      setTimeout(hideTip, 2500);
+    }
+  }, { passive: true });
+}
+
 function wireBannerSpotlight() {
   const banner = document.getElementById('hofBanner');
   if (!banner) return;
@@ -3352,6 +3442,7 @@ async function loadHallOfFame() {
     wireFilterBar();
     wireDistrictHover();
     wireChartTooltips();
+    wireAheadTooltips();
     wireBannerSpotlight();
     wireSeasonSelector();
     initBadgesCollapsed();
